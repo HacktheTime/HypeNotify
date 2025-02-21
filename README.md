@@ -11,6 +11,7 @@ for now though:
 - if you have credits anywhere you need to mention this project.
 - you need to react within 1 month of a tried contact.
 - i have the right to request a deletion of your fork. (if i find it abusive, ...)
+- you can not be active in the Enchanted Redstone Lamp market. If you look at the Sources you will know why.
 
 While this Project is under work this is a first licensing version, HOWEVER It is quite likely that it will change in the future.
 
