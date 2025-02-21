@@ -20,3 +20,4 @@ local.properties
 /annotations/build/classes/java/main/
 /processor/build/
 /processor/build/classes/java/main/
+/app/src/google-services.json
