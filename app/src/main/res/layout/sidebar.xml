@@ -4,7 +4,8 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-              android:paddingTop="?attr/actionBarSize">
+              android:paddingTop="?attr/actionBarSize"
+              android:gravity="top">
 
     <EditText
             android:id="@+id/search_box"
@@ -16,7 +17,6 @@
             android:hint="@string/search"
             android:inputType="textMultiLine"
             android:gravity="top"/>
-
     <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"

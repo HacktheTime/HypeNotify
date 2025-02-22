@@ -1,23 +1,30 @@
 package de.hype.hypenotify.layouts;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.graphics.Color;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.widget.*;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import de.hype.hypenotify.Core;
-import de.hype.hypenotify.NotificationUtils;
+import de.hype.hypenotify.R;
 import de.hype.hypenotify.layouts.autodetection.Layout;
+import de.hype.hypenotify.tools.bazaar.BazaarProduct;
+import de.hype.hypenotify.tools.bazaar.BazaarResponse;
+import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
+import de.hype.hypenotify.tools.notification.NotificationBuilder;
+import de.hype.hypenotify.tools.notification.NotificationChannels;
 
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.NumberFormat;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+
+import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
+
 @Layout(name = "Enchanted Redstone Lamps Notifier")
 
 public class SkyblockEnchantedRedstoneLampsNotifier extends LinearLayout {
@@ -25,240 +32,201 @@ public class SkyblockEnchantedRedstoneLampsNotifier extends LinearLayout {
     private static final String ITEM_NAME = "ENCHANTED_REDSTONE_LAMP";
     private static final String CHANNEL_ID = "price_update_channel";
     private final Core core;
+    private final Context context;
     private TextView priceLabel;
-    private JsonObject previousResponse = null;
     private Integer checkWifiStateCounter = 0;
-    private ToggleButton toggleTrackingButton;
+    private Switch toggleTrackingButton;
     private Button checkNowButton;
     private ScheduledFuture<?> nextCheck;
+    private ProgressBar progressBar;
+    private ObjectAnimator progressBarAnimation;
+    private BazaarService bazaarService;
+    /**
+     * DO NOT MODIFY THIS LIST DIRECTLY. Use the {@link #addTrackedItem(TrackedBazaarItem)} and {@link #removeTrackedItem(TrackedBazaarItem)} methods instead!
+     */
+    private List<TrackedBazaarItem> toTrackItems = new ArrayList<>();
+    private Map<String, TextView> trackedItemLabels = new HashMap<>();
+    private Map<String, TableLayout> trackedItemTables = new HashMap<>();
+    private LinearLayout trackedItemsLayout;
 
     public SkyblockEnchantedRedstoneLampsNotifier(Core core) {
         super(core.context);
+        this.context = core.context;
         this.core = core;
-        init(core.context);
+        bazaarService = core.getBazaarService();
+        init();
+        initItems();
     }
 
-    private void init(Context context) {
-        toggleTrackingButton = new ToggleButton(context);
-        toggleTrackingButton.setChecked(true);
-        toggleTrackingButton.setTextOn("Currently Tracking API");
-        toggleTrackingButton.setTextOff("Currently NOT Tracking API");
-
-        checkNowButton = new Button(context);
-        checkNowButton.setText("Check Now");
-        checkNowButton.setOnClickListener(v -> checkPrice(context));
-
-        setOrientation(VERTICAL);
-        LayoutParams layoutParams = new LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.MATCH_PARENT
+    /**
+     * Define the items you want to track by default here.
+     */
+    private void initItems() {
+        List<TrackedBazaarItem> addToTrack = List.of(
+                new TrackedBazaarItem("ENCHANTED_REDSTONE_LAMP", BazaarProduct.OfferType.INSTANT_BUY)
         );
-        setLayoutParams(layoutParams);
-        setGravity(Gravity.CENTER);
+        for (TrackedBazaarItem item : addToTrack) {
+            addTrackedItem(item);
+        }
+    }
 
-        priceLabel = new TextView(context);
-        priceLabel.setText("Loading...");
-        priceLabel.setGravity(Gravity.CENTER);
-        priceLabel.setTextSize(18);
-        priceLabel.setTextColor(Color.WHITE);
-        priceLabel.setPadding(16, 16, 16, 16);
-        addView(priceLabel, new LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT
-        ));
 
-        createNotificationChannel(context);
+    private void init() {
+        LayoutInflater.from(context).inflate(R.layout.skyblock_enchanted_redstone_lamps_notifier, this, true);
+        toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
+        checkNowButton = findViewById(R.id.check_now_button);
+        priceLabel = findViewById(R.id.price_label);
+        trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
+        progressBar = findViewById(R.id.next_bazaar_update);
 
         toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
                 nextCheck.cancel(false);
+                progressBarAnimation.cancel();
             } else {
-                checkPrice(context);
+                checkPrice();
                 registerNextCheck();
             }
         });
-        checkPrice(context);
-        registerNextCheck();
+
+        checkNowButton.setOnClickListener(v -> {
+            checkNowButton.setText(R.string.checking);
+            checkNowButton.requestLayout();
+            checkNowButton.invalidate();
+            checkPrice();
+            checkNowButton.setText(R.string.check_now);
+            checkNowButton.requestLayout();
+            checkNowButton.invalidate();
+        });
+
+        progressBar.setTooltipText("Time until next Refresh");
+        core.executionService.execute(() -> {
+            checkPrice();
+            registerNextCheck();
+        });
+    }
+
+    public void addTrackedItem(TrackedBazaarItem item) {
+        TableLayout tableLayout = new TableLayout(context);
+        tableLayout.setStretchAllColumns(true);
+        LinearLayout.LayoutParams tableLayoutParams = new LinearLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, // Change to MATCH_PARENT
+                LayoutParams.WRAP_CONTENT
+        );
+        tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
+        tableLayout.setLayoutParams(tableLayoutParams);
+        TextView itemLabel = new TextView(context);
+        trackedItemTables.put(item.itemId, tableLayout);
+        trackedItemLabels.put(item.itemId, itemLabel);
+        trackedItemsLayout.addView(itemLabel);
+        trackedItemsLayout.addView(tableLayout);
+        toTrackItems.add(item);
+    }
+
+    public void removeTrackedItem(TrackedBazaarItem item) {
+        TableLayout tableLayout = trackedItemTables.get(item.itemId);
+        TextView itemLabel = trackedItemLabels.get(item.itemId);
+        trackedItemsLayout.removeView(tableLayout);
+        trackedItemsLayout.removeView(itemLabel);
+        toTrackItems.remove(item);
     }
 
     private void registerNextCheck() {
+        int timeBetweenChecks = 15;
+        startProgressBarCountdown(timeBetweenChecks);
         nextCheck = core.executionService.schedule(() -> {
-            checkPrice(core.context);
+            checkPrice();
             checkWifiStateCounter++;
             if (checkWifiStateCounter >= 40) {
                 if (!core.isInHomeNetwork()) {
-                    NotificationUtils.createNotification(core.context,"Bazaar Price Checker","You are not in the home network. Tracking stopped.");
+                    NotificationBuilder notificationBuilder = new NotificationBuilder(core, "Bazaar Price Checker", "You are not in the home network. Tracking stopped.", NotificationChannels.BAZAAR_TRACKER);
+                    notificationBuilder.send();
                     return;
                 }
             }
             if (toggleTrackingButton.isChecked()) registerNextCheck();
-        }, 15, java.util.concurrent.TimeUnit.SECONDS);
+        }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
     }
 
-    // In SkyblockEnchantedRedstoneLampsNotifier.java:
-    private void checkPrice(Context context) {
-        try {
-            HttpURLConnection connection =
-                    (HttpURLConnection) new URL(API_URL).openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.connect();
-
-            InputStreamReader reader =
-                    new InputStreamReader(connection.getInputStream());
-            JsonObject response = JsonParser.parseReader(reader).getAsJsonObject();
-            JsonArray buySummary =
-                    response.getAsJsonObject("products")
-                            .getAsJsonObject(ITEM_NAME)
-                            .getAsJsonArray("buy_summary");
-
-            // 1) Format
-            NumberFormat amountFormat = NumberFormat.getInstance(java.util.Locale.US);
-            NumberFormat priceFormat = NumberFormat.getInstance(java.util.Locale.US);
-            priceFormat.setMinimumFractionDigits(1);
-            priceFormat.setMaximumFractionDigits(1);
-
-            // 2) Get top 3 new orders
-            JsonArray newTop3 = new JsonArray();
-            for (int i = 0; i < Math.min(3, buySummary.size()); i++) {
-                newTop3.add(buySummary.get(i));
+    private void startProgressBarCountdown(int timeBetweenChecks) {
+        post(() -> {
+            if (progressBarAnimation != null) {
+                progressBarAnimation.cancel();
             }
 
-            // 3) Compare only top 3 changes (price or amount goes up)
-            boolean hasChange = false;
-            if (previousResponse != null) {
-                JsonArray oldBuySummary =
-                        previousResponse.getAsJsonObject("products")
-                                .getAsJsonObject(ITEM_NAME)
-                                .getAsJsonArray("buy_summary");
-                for (int i = 0; i < newTop3.size(); i++) {
-                    if (i >= oldBuySummary.size()) {
-                        hasChange = true;
-                        break;
-                    }
-                    JsonObject oldObj = oldBuySummary.get(i).getAsJsonObject();
-                    JsonObject newObj = newTop3.get(i).getAsJsonObject();
-                    double oldPrice = oldObj.get("pricePerUnit").getAsDouble();
-                    double newPrice = newObj.get("pricePerUnit").getAsDouble();
-                    int oldAmount = oldObj.get("amount").getAsInt();
-                    int newAmount = newObj.get("amount").getAsInt();
+            long max = ((long) timeBetweenChecks) * 1000;
+            int countDownSteps = 500;
+            progressBar.setMax((int) (max / countDownSteps));
+            progressBar.setProgress(progressBar.getMax());
 
-                    // Only price change or amount increase
-                    if (Double.compare(oldPrice, newPrice) != 0 || newAmount > oldAmount) {
-                        hasChange = true;
-                        break;
-                    }
+
+            progressBarAnimation = ObjectAnimator.ofInt(progressBar, "progress", progressBar.getMax(), 0);
+            progressBarAnimation.setDuration(max); // Duration of the progressBarAnimation in milliseconds
+
+            progressBarAnimation.start();
+        });
+    }
+
+    private void checkPrice() {
+        try {
+            BazaarResponse response = bazaarService.getMaxAgeResponse(Duration.ofSeconds(15));
+            Map<String, BazaarProduct> items = response.getProducts();
+            Map<String, List<BazaarProduct.Offer>> displayTables = new HashMap<>();
+            for (TrackedBazaarItem toTrackItem : toTrackItems) {
+                BazaarProduct product = items.get(toTrackItem.itemId);
+                if (product == null) {
+                    Toast.makeText(context, "Item not found: %s. Skipping it".formatted(toTrackItem.itemId), Toast.LENGTH_SHORT).show();
+                    continue;
+                }
+                TrackedBazaarItem.TrackChanges wrappedChanges = toTrackItem.checkForChanges(product);
+                List<BazaarProduct.Offer> tableOrders = wrappedChanges.getOfferTableValues();
+                if (tableOrders != null) displayTables.put(product.getDisplayName(), tableOrders);
+                String notificationText = wrappedChanges.getNotificationText();
+                if (notificationText != null) {
+                    NotificationBuilder notificationBuilder = new NotificationBuilder(core, "Bazaar Price Checker", notificationText, NotificationChannels.BAZAAR_TRACKER);
+                    notificationBuilder.send();
                 }
             }
             post(() -> {
-                // Clear or remove any previous views if needed
-                removeAllViews();
-                addView(toggleTrackingButton);
-                StringBuilder priceText = new StringBuilder("Orders:\n");
-                priceText.append("Item: Enchanted Redstone Lamp\n");
-                priceLabel.setText(priceText.toString());
-                addView(priceLabel);
+                for (Map.Entry<String, List<BazaarProduct.Offer>> stringListEntry : displayTables.entrySet()) {
+                    String displayName = stringListEntry.getKey();
+                    List<BazaarProduct.Offer> toDisplayOrders = stringListEntry.getValue();
+                    TextView priceLabel = trackedItemLabels.get(displayName);
+                    priceLabel.setText("Item: %s\n".formatted(displayName));
+                    if (toDisplayOrders.isEmpty()) {
+                        priceLabel.append("No orders found");
+                        continue;
+                    }
+                    TableLayout orderTable = trackedItemTables.get(displayName);
+                    orderTable.removeAllViews();
 
-                LinearLayout tableContainer = new LinearLayout(context);
-                tableContainer.setOrientation(LinearLayout.VERTICAL);
-                tableContainer.setGravity(Gravity.CENTER);
-                LinearLayout.LayoutParams containerLayoutParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                containerLayoutParams.gravity = Gravity.CENTER_HORIZONTAL;
-                tableContainer.setLayoutParams(containerLayoutParams);
+                    TableRow headerRow = new TableRow(context);
+                    TextView headerAmount = new TextView(context);
+                    headerAmount.setText(R.string.amount);
+                    headerAmount.setGravity(Gravity.CENTER); // Center the text
+                    TextView headerCoins = new TextView(context);
+                    headerCoins.setText(R.string.coins);
+                    headerCoins.setGravity(Gravity.CENTER); // Center the text
+                    headerRow.addView(headerAmount);
+                    headerRow.addView(headerCoins);
+                    orderTable.addView(headerRow);
 
-                // Change the layout parameters for the TableLayout
-                TableLayout tableLayout = new TableLayout(context);
-                tableLayout.setStretchAllColumns(true);
-                LinearLayout.LayoutParams tableLayoutParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, // Change to MATCH_PARENT
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
-                tableLayout.setLayoutParams(tableLayoutParams);
-
-// Header row
-                TableRow headerRow = new TableRow(context);
-                TextView headerAmount = new TextView(context);
-                headerAmount.setText("Amount");
-                headerAmount.setGravity(Gravity.CENTER); // Center the text
-                TextView headerCoins = new TextView(context);
-                headerCoins.setText("Coins");
-                headerCoins.setGravity(Gravity.CENTER); // Center the text
-                headerRow.addView(headerAmount);
-                headerRow.addView(headerCoins);
-                tableLayout.addView(headerRow);
-
-// Data rows from newTop3
-                for (int i = 0; i < newTop3.size(); i++) {
-                    JsonObject o = newTop3.get(i).getAsJsonObject();
-                    TableRow dataRow = new TableRow(context);
-
-                    TextView amountCell = new TextView(context);
-                    amountCell.setText(amountFormat.format(o.get("amount").getAsInt()));
-                    amountCell.setGravity(Gravity.CENTER); // Center the text
-
-                    TextView coinsCell = new TextView(context);
-                    coinsCell.setText(priceFormat.format(o.get("pricePerUnit").getAsDouble()));
-                    coinsCell.setGravity(Gravity.CENTER); // Center the text
-
-                    dataRow.addView(amountCell);
-                    dataRow.addView(coinsCell);
-                    tableLayout.addView(dataRow);
+                    for (BazaarProduct.Offer order : toDisplayOrders) {
+                        TableRow dataRow = new TableRow(context);
+                        TextView amountCell = new TextView(context);
+                        amountCell.setText(amountFormat.format(order.amount()));
+                        amountCell.setGravity(Gravity.CENTER); // Center the text
+                        TextView coinsCell = new TextView(context);
+                        coinsCell.setText(amountFormat.format(order.pricePerUnit()));
+                        coinsCell.setGravity(Gravity.CENTER); // Center the text
+                        dataRow.addView(amountCell);
+                        dataRow.addView(coinsCell);
+                        orderTable.addView(dataRow);
+                    }
                 }
-
-                // Add the table to the container
-                tableContainer.addView(tableLayout);
-
-                // Finally, add the container to this layout
-                addView(tableContainer);
             });
-
-            // 4) Send notification if changed
-            if (hasChange) {
-                StringBuilder msg = new StringBuilder("Changed top 3 orders:\n");
-                for (int i = 0; i < newTop3.size(); i++) {
-                    JsonObject o = newTop3.get(i).getAsJsonObject();
-                    msg.append("[").append(i + 1).append("] ");
-                    msg.append(amountFormat.format(o.get("amount").getAsInt()));
-                    msg.append(" @ ");
-                    msg.append(priceFormat.format(o.get("pricePerUnit").getAsDouble()));
-                    msg.append("\n");
-                }
-                android.app.NotificationManager notificationManager =
-                        (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                if (notificationManager != null) {
-                    androidx.core.app.NotificationCompat.Builder builder =
-                            new androidx.core.app.NotificationCompat.Builder(context, CHANNEL_ID)
-                                    .setSmallIcon(de.hype.hypenotify.R.mipmap.icon)
-                                    .setContentTitle("Bazaar Price Update")
-                                    .setContentText("Enchanted Redstone Lamp Bazaar changed!")
-                                    .setStyle(new androidx.core.app.NotificationCompat.BigTextStyle()
-                                            .bigText(msg.toString()))
-                                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
-                                    .setAutoCancel(true);
-                    notificationManager.notify(2, builder.build());
-                }
-            }
-
-            previousResponse = response;
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void createNotificationChannel(Context context) {
-        CharSequence name = "Bazaar Notifications";
-        String description = "Channel for price updates from the Hypixel Skyblock Bazaar API";
-        int importance = NotificationManager.IMPORTANCE_HIGH;
-        NotificationChannel channel =
-                new NotificationChannel(CHANNEL_ID, name, importance);
-        channel.setDescription(description);
-        NotificationManager notificationManager =
-                context.getSystemService(NotificationManager.class);
-        notificationManager.createNotificationChannel(channel);
     }
 }

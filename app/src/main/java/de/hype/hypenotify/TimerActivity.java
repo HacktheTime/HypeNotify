@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -38,9 +39,12 @@ public class TimerActivity extends AppCompatActivity {
         Thread newMainThread = new Thread(() -> {
             try {
                 Intent intent = getIntent();
-                if (intent != null && intent.getAction().equals("TIMER_ALARM_ACTION")) {
-                    alarmAction(this, intent);
-                    return;
+                if (intent != null) {
+                    Log.i(TAG, "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent, intent.getAction()));
+                    if (intent.getAction().equals("TIMER_ALARM_ACTION")) {
+                        alarmAction(this, intent);
+                        return;
+                    }
                 }
                 Intent serviceIntent = new Intent(this, TimerService.class);
                 startForegroundService(serviceIntent);
@@ -62,7 +66,6 @@ public class TimerActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     setContentView(sidebar);
                 });
-                NotificationUtils.createNotificationChannel(this);
                 registerReceiver(new BootReceiver(core), new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
             } catch (Exception e) {
                 Log.e(TAG, "Error: ", e);
@@ -124,6 +127,17 @@ public class TimerActivity extends AppCompatActivity {
             getLayoutInflater().inflate(layoutResID, scrollView);
         } else {
             super.setContentView(layoutResID);
+        }
+    }
+
+    @Override
+    public void setContentView(View view) {
+        NestedScrollView scrollView = findViewById(R.id.scroll_view);
+        if (scrollView != null) {
+            scrollView.removeAllViews();
+            scrollView.addView(view);
+        } else {
+            super.setContentView(view);
         }
     }
 }

@@ -2,12 +2,14 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
                                                      android:layout_width="match_parent"
                                                      android:layout_height="match_parent"
-                                                     xmlns:app="http://schemas.android.com/apk/res-auto">
+                                                     xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            android:fitsSystemWindows="true">
 
         <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -23,14 +25,5 @@
             android:id="@+id/scroll_view"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingTop="?attr/actionBarSize">
-
-            <!-- Your other views go here -->
-
-        </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

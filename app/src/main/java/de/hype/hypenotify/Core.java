@@ -17,12 +17,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
+import de.hype.hypenotify.tools.bazaar.BazaarService;
 
 import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static android.content.Context.ALARM_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
@@ -39,9 +38,12 @@ public class Core {
     public String userAPIKey;
     public Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private SharedPreferences prefs;
-    public ScheduledExecutorService executionService = new ScheduledThreadPoolExecutor(10);
+    public ExecutionService executionService = new ExecutionService(30);
     private DebugThread debugThread = new DebugThread(this);
     public TimerService timerService;
+    private BazaarService bazaarService = new BazaarService(this);
+    private NotificationService notificationService;
+
 
     public Core(Context context) throws ExecutionException, InterruptedException {
         this.context = context;
@@ -51,6 +53,10 @@ public class Core {
         userId = prefs.getInt(KEY_USER_ID, -1);
         deviceName = prefs.getString(KEY_DEVICE, "");
         wakeLock = new WakeLockManager(this);
+        notificationService = new NotificationService(this);
+        debugThread.setDaemon(true);
+        debugThread.setName("DebugThread");
+        debugThread.start();
     }
 
     public boolean areKeysSet() {
@@ -165,5 +171,9 @@ public class Core {
         Task<String> tokenTask = FirebaseMessaging.getInstance().getToken();
         Tasks.await(tokenTask);
         fireBaseToken = tokenTask.getResult();
+    }
+
+    public BazaarService getBazaarService() {
+        return bazaarService;
     }
 }

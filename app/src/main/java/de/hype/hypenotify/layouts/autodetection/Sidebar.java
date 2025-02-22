@@ -52,6 +52,7 @@ public class Sidebar extends LinearLayout {
                 TextView layoutItem = new TextView(getContext());
                 layoutItem.setText(entry.getKey());
                 layoutItem.setOnClickListener(v -> switchLayout(entry.getValue()));
+                layoutItem.setTextSize(20);
                 layoutList.addView(layoutItem);
             }
         }
@@ -59,28 +60,24 @@ public class Sidebar extends LinearLayout {
 
     private void switchLayout(Class<?> layoutClass) {
         try {
-            Object layoutInstance = layoutClass.getConstructor(Context.class).newInstance(getContext());
+            Object layoutInstance = layoutClass.getConstructor(Core.class).newInstance(core);
             if (layoutInstance instanceof View) {
                 View newView = (View) layoutInstance;
-                // Insert a back button if the new view is a container.
-                if (newView instanceof ViewGroup) {
-                    Button backButton = new Button(getContext());
-                    backButton.setText("Back");
-                    backButton.setOnClickListener(v -> ((AppCompatActivity) getContext()).setContentView(Sidebar.this));
+                // Create a container for the back button and the dynamic content.
+                LinearLayout container = new LinearLayout(context);
+                container.setOrientation(LinearLayout.VERTICAL);
 
-                    // If the view is a LinearLayout, add the back button at the top.
-                    if (newView instanceof LinearLayout) {
-                        ((LinearLayout) newView).addView(backButton, 0);
-                    } else {
-                        // Otherwise wrap it in a LinearLayout to add the button.
-                        LinearLayout wrapper = new LinearLayout(context);
-                        wrapper.setOrientation(LinearLayout.VERTICAL);
-                        wrapper.addView(backButton);
-                        wrapper.addView(newView);
-                        newView = wrapper;
-                    }
-                }
-                ((AppCompatActivity) getContext()).setContentView(newView);
+                // Create and add the back button.
+                Button backButton = new Button(getContext());
+                backButton.setText(R.string.back);
+                backButton.setOnClickListener(v -> ((AppCompatActivity) getContext()).setContentView(Sidebar.this));
+                container.addView(backButton);
+
+                // Add the dynamic content to the container.
+                container.addView(newView);
+
+                // Set the container as the content view.
+                ((AppCompatActivity) getContext()).setContentView(container);
             }
         } catch (Exception e) {
             e.printStackTrace();

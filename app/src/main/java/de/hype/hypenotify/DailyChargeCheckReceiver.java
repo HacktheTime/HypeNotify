@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BatteryManager;
+import de.hype.hypenotify.tools.notification.NotificationChannels;
+import de.hype.hypenotify.tools.notification.NotificationImportance;
 
 import java.util.concurrent.ExecutionException;
 
@@ -32,7 +34,7 @@ public class DailyChargeCheckReceiver extends BroadcastReceiver {
     }
 
     private void playPingSound(Context context) {
-        NotificationUtils.createNotification(context,"Charge the Battery","The Mobile Phone is not plugged in. Daily Reminder to charge it.");
+        NotificationUtils.createNotification(context,"Charge the Battery","The Mobile Phone is not plugged in. Daily Reminder to charge it.", NotificationChannels.BATTERY_WARNING, NotificationImportance.DEFAULT);
         MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm);
         mediaPlayer.setLooping(true);
         mediaPlayer.start();
