@@ -50,15 +50,15 @@ public class MainActivity extends AppCompatActivity {
                 PermissionUtils.requestPermissionsBlocking(this);
                 core.fullInit();
                 if (!core.areKeysSet()) {
+                    EnterDetailsLayout enterDetailsLayout = new EnterDetailsLayout(core);
                     runOnUiThread(() -> {
-                        EnterDetailsLayout enterDetailsLayout = new EnterDetailsLayout(core);
                         setContentView(enterDetailsLayout);
-                        try {
-                            enterDetailsLayout.awaitDone();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
                     });
+                    try {
+                        enterDetailsLayout.awaitDone();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 core.loadTimers();
                 Sidebar sidebar = new Sidebar(core);
