@@ -8,20 +8,13 @@ import android.os.BatteryManager;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
 
-import java.util.concurrent.ExecutionException;
-
 import static android.content.Context.BATTERY_SERVICE;
 
 public class DailyChargeCheckReceiver extends BroadcastReceiver {
-    Core core;
+    Core core = Core.getInstance();
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        try {
-            core = new Core(context);
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
         if (core.isInHomeNetwork() && isBatteryLow(context)) {
             playPingSound(context);
         }
@@ -34,7 +27,7 @@ public class DailyChargeCheckReceiver extends BroadcastReceiver {
     }
 
     private void playPingSound(Context context) {
-        NotificationUtils.createNotification(context,"Charge the Battery","The Mobile Phone is not plugged in. Daily Reminder to charge it.", NotificationChannels.BATTERY_WARNING, NotificationImportance.DEFAULT);
+        NotificationUtils.createNotification(context, "Charge the Battery", "The Mobile Phone is not plugged in. Daily Reminder to charge it.", NotificationChannels.BATTERY_WARNING, NotificationImportance.DEFAULT);
         MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm);
         mediaPlayer.setLooping(true);
         mediaPlayer.start();

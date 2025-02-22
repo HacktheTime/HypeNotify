@@ -50,11 +50,11 @@ public class PermissionUtils {
         }
     }
 
-    static void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults, TimerActivity timerActivity) {
+    static void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults, MainActivity mainActivity) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    timerActivity.finish();
+                    mainActivity.finish();
                     return;
                 }
             }

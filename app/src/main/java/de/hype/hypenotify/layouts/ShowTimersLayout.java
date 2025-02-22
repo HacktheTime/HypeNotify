@@ -6,6 +6,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import de.hype.hypenotify.Core;
+import de.hype.hypenotify.R;
 import de.hype.hypenotify.layouts.autodetection.Layout;
 
 
@@ -22,7 +23,7 @@ public class ShowTimersLayout extends LinearLayout {
         this.context = core.context;
         timerListView = new ListView(context);
         checkValidityButton = new Button(context);
-        checkValidityButton.setText("Check Timers Validity");
+        checkValidityButton.setText(R.string.check_timers_validity);
 
         setOrientation(LinearLayout.VERTICAL);
         addView(timerListView);

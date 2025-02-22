@@ -13,7 +13,6 @@ import de.hype.hypenotify.R;
 public class NotificationBuilder {
     NotificationCompat.Builder builder;
     Context context;
-    private static int notificationId = 0;
 
     public NotificationBuilder(Context context, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
         this.context = context;
@@ -88,9 +87,9 @@ public class NotificationBuilder {
         return builder;
     }
 
-    public void send() {
-        NotificationUtils.sendNotification(context, this);
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(notificationId++, builder.build());
+    public de.hype.hypenotify.tools.notification.Notification send() {
+        de.hype.hypenotify.tools.notification.Notification notification = new de.hype.hypenotify.tools.notification.Notification(context, this);
+        notification.send();
+        return notification;
     }
 }

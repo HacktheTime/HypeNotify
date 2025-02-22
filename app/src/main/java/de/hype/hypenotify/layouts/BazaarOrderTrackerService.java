@@ -70,7 +70,6 @@ public class BazaarOrderTrackerService extends LinearLayout {
         LayoutInflater.from(context).inflate(R.layout.skyblock_enchanted_redstone_lamps_notifier, this, true);
         toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
         checkNowButton = findViewById(R.id.check_now_button);
-        priceLabel = findViewById(R.id.price_label);
         trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
         progressBar = findViewById(R.id.next_bazaar_update);
 

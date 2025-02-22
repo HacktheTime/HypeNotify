@@ -1,5 +1,6 @@
 package de.hype.hypenotify;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -28,7 +29,8 @@ import static android.content.Context.MODE_PRIVATE;
 import static de.hype.hypenotify.Constants.*;
 
 public class Core {
-    public Context context;
+    private static Core INSTANCE;
+    public MainActivity context;
     public Map<Integer, TimerData> timers;
     public WakeLockManager wakeLock;
     private String TAG = "Core";
@@ -45,8 +47,9 @@ public class Core {
     private NotificationService notificationService;
 
 
-    public Core(Context context) throws ExecutionException, InterruptedException {
+    public Core(MainActivity context) throws ExecutionException, InterruptedException {
         this.context = context;
+        INSTANCE = this;
         // Load stored values
         prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         userAPIKey = prefs.getString(KEY_API, "");
@@ -57,6 +60,11 @@ public class Core {
         debugThread.setDaemon(true);
         debugThread.setName("DebugThread");
         debugThread.start();
+        scheduleDailyBatteryCheck();
+    }
+
+    public static Core getInstance() {
+        return INSTANCE;
     }
 
     public boolean areKeysSet() {
@@ -96,8 +104,8 @@ public class Core {
         }
     }
 
-    private void modifyTimer(int id, TimerData timer) {
-        timers.put(id, timer);
+    public void modifyTimer(TimerData timer) {
+        timers.put(timer.id, timer);
         saveTimers();
         if (timer.active) {
             scheduleTimer(timer);
@@ -106,12 +114,10 @@ public class Core {
         }
     }
 
-    void cancelTimer(TimerData timer) {
+    public void cancelTimer(TimerData timer) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(context, TimerActivity.class);
-        intent.setAction("TIMER_ALARM_ACTION");
         PendingIntent pendingIntent = PendingIntent.getActivity(
-                context, timer.id, intent,
+                context, timer.id, Intents.TIMER_HIT.getAsIntent(context),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         if (alarmManager != null) {
@@ -119,18 +125,23 @@ public class Core {
         }
     }
 
-    void scheduleTimer(TimerData timer) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(context, TimerActivity.class);
-        intent.setAction("TIMER_ALARM_ACTION");
-        intent.putExtra("timerId", timer.id);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context, timer.id, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+    @SuppressLint("MissingPermission")
+    public void scheduleTimer(TimerData timer) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, timer.time, pendingIntent);
+            PendingIntent pendingIntent = getSchedulingIntent(timer);
+            AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(timer.getTime().toEpochMilli(), pendingIntent); // Set alarm to go off in 1 minute
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
         }
+    }
+
+    private PendingIntent getSchedulingIntent(TimerData timer) {
+        Intent intent = Intents.TIMER_HIT.getAsIntent(context);
+        intent.putExtra("timerId", timer.id);
+        return PendingIntent.getActivity(
+                context, timer.id, intent,
+                PendingIntent.FLAG_MUTABLE
+        );
     }
 
     public WifiInfo getCurrentWifiNetwork() {
@@ -148,7 +159,7 @@ public class Core {
         return PrivateConfig.isHomeNetwork(getCurrentWifiNetwork());
     }
 
-    public void scheduleDailyCheck() {
+    public void scheduleDailyBatteryCheck() {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, DailyChargeCheckReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);

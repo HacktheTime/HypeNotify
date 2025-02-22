@@ -1,13 +1,14 @@
 package de.hype.hypenotify;
 
+import android.app.ComponentCaller;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -16,10 +17,11 @@ import de.hype.hypenotify.layouts.EnterDetailsLayout;
 import de.hype.hypenotify.layouts.autodetection.Sidebar;
 import de.hype.hypenotify.services.TimerService;
 
-public class TimerActivity extends AppCompatActivity {
-    private static final String TAG = "TimerActivity";
-    private Core core;
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
+    Core core;
     private ServiceConnection connection;
+    private final EnumIntentReceiver enumIntentReceiver = new EnumIntentReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,12 +41,9 @@ public class TimerActivity extends AppCompatActivity {
         Thread newMainThread = new Thread(() -> {
             try {
                 Intent intent = getIntent();
-                if (intent != null) {
-                    Log.i(TAG, "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent, intent.getAction()));
-                    if (intent.getAction().equals("TIMER_ALARM_ACTION")) {
-                        alarmAction(this, intent);
-                        return;
-                    }
+                if (Intents.handleIntent(intent, core, this)) {
+                    finish();
+                    return;
                 }
                 Intent serviceIntent = new Intent(this, TimerService.class);
                 startForegroundService(serviceIntent);
@@ -84,20 +83,6 @@ public class TimerActivity extends AppCompatActivity {
         core.wakeLock.onDestroy();
     }
 
-    private void alarmAction(TimerActivity timerActivity, Intent intent) {
-        int timerId = intent.getIntExtra("timerId", -1);
-        TimerData timer = core.timers.get(timerId);
-        if (timer != null && timer.active) {
-            MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
-            mediaPlayer.setLooping(true);
-            mediaPlayer.start();
-        } else {
-            // Stop the alarm
-            finish();
-        }
-        finish();
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -109,6 +94,10 @@ public class TimerActivity extends AppCompatActivity {
         super.onStart();
         Intent intent = new Intent(this, TimerService.class);
         if (connection != null) bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+        IntentFilter filter = new IntentFilter("de.hype.hypenotify.ENUM_INTENT");
+        registerReceiver(enumIntentReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+
     }
 
     @Override
@@ -117,6 +106,7 @@ public class TimerActivity extends AppCompatActivity {
         if (connection != null) {
             unbindService(connection);
         }
+        unregisterReceiver(enumIntentReceiver);
     }
 
     @Override
@@ -139,5 +129,21 @@ public class TimerActivity extends AppCompatActivity {
         } else {
             super.setContentView(view);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Intents.handleIntent(intent, core, this);
+    }
+
+    public void setContentViewNoOverride(LinearLayout screen) {
+        super.setContentView(screen);
+    }
+
+    @Override
+    public void onNewIntent(@NonNull Intent intent, @NonNull ComponentCaller caller) {
+        super.onNewIntent(intent, caller);
+        Intents.handleIntent(intent, core, this);
     }
 }

@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import de.hype.hypenotify.Core;
+import de.hype.hypenotify.Intents;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 
@@ -17,14 +18,14 @@ public enum NotificationShowcase {
         @Override
         public void doCustom(NotificationCompat.Builder builder, Context context) {
             NotificationCompat.Action action = new NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_menu_send, "Reply", PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE)).build();
+                    android.R.drawable.ic_menu_send, "Reply", getIntent(context)).build();
             builder.addAction(action);
         }
     },
     ADD_ACTION_INT_CHARSEQUENCE_PENDINGINTENT("addAction(int icon, @Nullable CharSequence title, @Nullable PendingIntent intent)") {
         @Override
         public void doCustom(NotificationCompat.Builder builder, Context context) {
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent pendingIntent = getIntent(context);
             builder.addAction(android.R.drawable.ic_menu_view, "View", pendingIntent);
         }
     },
@@ -40,7 +41,7 @@ public enum NotificationShowcase {
         @Override
         public void doCustom(NotificationCompat.Builder builder, Context context) {
             NotificationCompat.Action invisibleAction = new NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_menu_call, "Call", PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE)).build();
+                    android.R.drawable.ic_menu_call, "Call", getIntent(context)).build();
             builder.addInvisibleAction(invisibleAction);
         }
     },
@@ -89,7 +90,7 @@ public enum NotificationShowcase {
         public void doCustom(NotificationCompat.Builder builder, Context context) {
             NotificationCompat.BubbleMetadata bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
                     .setDesiredHeight(600)
-                    .setIntent(PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE))
+                    .setIntent(PendingIntent.getActivity(context, 0, Intents.TIMER_HIT.getAsIntent(context), PendingIntent.FLAG_IMMUTABLE))
                     .build();
             builder.setBubbleMetadata(bubbleMetadata);
         }
@@ -110,7 +111,7 @@ public enum NotificationShowcase {
     SET_CONTENT_INTENT("setContentIntent(@Nullable PendingIntent intent)") {
         @Override
         public void doCustom(NotificationCompat.Builder builder, Context context) {
-            PendingIntent contentIntent = PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent contentIntent = getIntent(context);
             builder.setContentIntent(contentIntent);
         }
     },
@@ -138,7 +139,7 @@ public enum NotificationShowcase {
     SET_FULL_SCREEN_INTENT("setFullScreenIntent(@Nullable PendingIntent intent, boolean highPriority)") {
         @Override
         public void doCustom(NotificationCompat.Builder builder, Context context) {
-            PendingIntent fullScreenIntent = PendingIntent.getActivity(context, 0, new Intent().setAction(name()), PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent fullScreenIntent = getIntent(context);
             builder.setFullScreenIntent(fullScreenIntent, true);
         }
     },
@@ -213,4 +214,17 @@ public enum NotificationShowcase {
     }
 
     public abstract void doCustom(NotificationCompat.Builder builder, Context context);
+
+    public PendingIntent getIntent(Context context) {
+        Intent intent = Intents.TIMER_HIT.getAsIntent(context);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Optional: Adjust based on use case
+
+        return PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE // Use FLAG_IMMUTABLE if you don’t need mutability
+        );
+    }
+
 }

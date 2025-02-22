@@ -11,4 +11,6 @@
     <string name="amount">Amount</string>
     <string name="coins">Coins</string>
     <string name="back">Back</string>
+    <string name="alarm_going_off">Alarm Going Off!</string>
+    <string name="check_timers_validity">Check Timers Validity</string>
 </resources>
