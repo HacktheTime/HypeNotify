@@ -5,7 +5,6 @@ import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.widget.*;
-import com.google.gson.JsonObject;
 import de.hype.hypenotify.Core;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.layouts.autodetection.Layout;
@@ -25,15 +24,11 @@ import java.util.concurrent.ScheduledFuture;
 
 import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
 
-@Layout(name = "Enchanted Redstone Lamps Notifier")
+@Layout(name = "Bazaar Order Tracker")
 
-public class SkyblockEnchantedRedstoneLampsNotifier extends LinearLayout {
-    private static final String API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private static final String ITEM_NAME = "ENCHANTED_REDSTONE_LAMP";
-    private static final String CHANNEL_ID = "price_update_channel";
+public class BazaarOrderTrackerService extends LinearLayout {
     private final Core core;
     private final Context context;
-    private TextView priceLabel;
     private Integer checkWifiStateCounter = 0;
     private Switch toggleTrackingButton;
     private Button checkNowButton;
@@ -49,7 +44,7 @@ public class SkyblockEnchantedRedstoneLampsNotifier extends LinearLayout {
     private Map<String, TableLayout> trackedItemTables = new HashMap<>();
     private LinearLayout trackedItemsLayout;
 
-    public SkyblockEnchantedRedstoneLampsNotifier(Core core) {
+    public BazaarOrderTrackerService(Core core) {
         super(core.context);
         this.context = core.context;
         this.core = core;
