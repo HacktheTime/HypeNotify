@@ -13,4 +13,5 @@
     <string name="back">Back</string>
     <string name="alarm_going_off">Alarm Going Off!</string>
     <string name="check_timers_validity">Check Timers Validity</string>
+    <string name="save_device">Save Device</string>
 </resources>

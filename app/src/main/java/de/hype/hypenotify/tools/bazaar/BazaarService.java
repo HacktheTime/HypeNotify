@@ -2,6 +2,7 @@ package de.hype.hypenotify.tools.bazaar;
 
 import com.google.gson.Gson;
 import de.hype.hypenotify.Core;
+import de.hype.hypenotify.MiniCore;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,10 +13,10 @@ import java.time.Duration;
 public class BazaarService {
     private static final Gson gson = new Gson();
     private static final String API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private final Core core;
+    private final MiniCore core;
     private static BazaarResponse lastResponse;
 
-    public BazaarService(Core core) {
+    public BazaarService(MiniCore core) {
         this.core = core;
     }
 

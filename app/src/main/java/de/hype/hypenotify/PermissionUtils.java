@@ -2,6 +2,7 @@ package de.hype.hypenotify;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -29,7 +30,7 @@ public class PermissionUtils {
 
     private static CountDownLatch latch;
 
-    public static boolean checkPermissions(Activity activity) {
+    public static boolean checkPermissions(Context activity) {
         for (String permission : REQUIRED_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
                 return false;

@@ -3,9 +3,9 @@ package de.hype.hypenotify;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 
 public class NotificationService{
-    private final Core core;
+    private final MiniCore core;
 
-    public NotificationService(Core core) {
+    public NotificationService(MiniCore core) {
         this.core = core;
         NotificationUtils.synchronizeNotificationChannels(core.context);
     }

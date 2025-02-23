@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class WakeLockManager {
-    private final Core core;
+    private final MiniCore core;
     PowerManager powerManager;
     Map<WakeLockRequests, PowerManager.WakeLock> wakeLocks = new HashMap<>();
 
-    public WakeLockManager(Core core) {
+    public WakeLockManager(MiniCore core) {
         this.core = core;
         powerManager = (PowerManager) core.context.getSystemService(Context.POWER_SERVICE);
     }

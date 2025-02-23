@@ -13,6 +13,7 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
 import de.hype.hypenotify.Constants;
 import de.hype.hypenotify.Core;
+import de.hype.hypenotify.R;
 
 
 import java.util.concurrent.CountDownLatch;
@@ -43,7 +44,7 @@ public class EnterDetailsLayout extends LinearLayout {
         userIdInput.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         saveDeviceButton = new Button(context);
-        saveDeviceButton.setText("Save Device");
+        saveDeviceButton.setText(R.string.save_device);
 
         setOrientation(LinearLayout.VERTICAL);
 
@@ -62,7 +63,7 @@ public class EnterDetailsLayout extends LinearLayout {
                         sendTokenToServer(apiKey, deviceName, token, Integer.parseInt(userIdInput.getText().toString()), context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE));
                         latch.countDown();
                     } catch (Exception e) {
-                        Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        post(()->Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                         Log.e(TAG, "Error registering device: ", e);
                     }
                 }).start();
@@ -75,5 +76,9 @@ public class EnterDetailsLayout extends LinearLayout {
     }
     public void awaitDone() throws InterruptedException {
         latch.await();
+        core.userId = Integer.parseInt(userIdInput.getText().toString());
+        core.userAPIKey = apiKeyInput.getText().toString();
+        core.deviceName = deviceNameInput.getText().toString();
+        core.saveConfig();
     }
 }

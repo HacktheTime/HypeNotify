@@ -5,9 +5,9 @@ import android.media.MediaPlayer;
 import java.time.Instant;
 
 public class TimerData {
-    int id;
-    long time;
-    boolean active;
+    public int id;
+    public long time;
+    public boolean active;
 
     public TimerData(int id, long time, boolean active) {
         this.id = id;
@@ -18,6 +18,12 @@ public class TimerData {
         this.id = id;
         this.time = time.getEpochSecond();
         this.active = active;
+    }
+
+    public TimerData(TimerData data) {
+        this.id = data.id;
+        this.time = data.time;
+        this.active = data.active;
     }
 
     public int getSound(){

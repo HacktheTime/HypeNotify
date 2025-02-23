@@ -1,5 +1,7 @@
 package de.hype.hypenotify;
 
+import de.hype.hypenotify.services.TimerService;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ public class DebugThread extends Thread {
 
     public void test(){
         try {
-            core.scheduleTimer(new TimerData(1, Instant.now().plus(10, ChronoUnit.SECONDS), true));
+            core.timerService.addAlarm(Instant.now().plus(10,ChronoUnit.SECONDS),"test",()->true);
         }catch (Throwable e){
             e.printStackTrace();
         }

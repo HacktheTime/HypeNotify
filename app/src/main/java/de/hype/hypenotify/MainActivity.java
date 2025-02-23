@@ -19,9 +19,9 @@ import de.hype.hypenotify.services.TimerService;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    Core core;
+    private Core core;
     private ServiceConnection connection;
-    private final EnumIntentReceiver enumIntentReceiver = new EnumIntentReceiver();
+    private EnumIntentReceiver enumIntentReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,12 +60,10 @@ public class MainActivity extends AppCompatActivity {
                         throw new RuntimeException(e);
                     }
                 }
-                core.loadTimers();
                 Sidebar sidebar = new Sidebar(core);
                 runOnUiThread(() -> {
                     setContentView(sidebar);
                 });
-                registerReceiver(new BootReceiver(core), new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
             } catch (Exception e) {
                 Log.e(TAG, "Error: ", e);
                 finish();
@@ -74,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         });
         newMainThread.setName("New Main Thread");
         newMainThread.start();
+        enumIntentReceiver = new EnumIntentReceiver(core);
     }
 
     @Override

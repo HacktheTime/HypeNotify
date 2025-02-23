@@ -4,11 +4,12 @@ import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import de.hype.hypenotify.Core;
+import de.hype.hypenotify.MiniCore;
 
 public class HypeNotifyServiceConnection implements ServiceConnection {
-        private final Core core;
+        private final MiniCore core;
 
-        public HypeNotifyServiceConnection(Core core) {
+        public HypeNotifyServiceConnection(MiniCore core) {
             this.core = core;
         }
 
@@ -37,6 +38,6 @@ public class HypeNotifyServiceConnection implements ServiceConnection {
 
         @FunctionalInterface
         private interface ServiceAccessor {
-            void setValue(HypeNotifyService<?> service, Core core);
+            void setValue(HypeNotifyService<?> service, MiniCore core);
         }
     }
