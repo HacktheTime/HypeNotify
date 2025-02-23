@@ -4,7 +4,6 @@ import android.app.ComponentCaller;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,42 +12,47 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.widget.NestedScrollView;
+import de.hype.hypenotify.core.BackgroundService;
+import de.hype.hypenotify.core.Intents;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.EnterDetailsLayout;
 import de.hype.hypenotify.layouts.autodetection.Sidebar;
+import de.hype.hypenotify.services.HypeNotifyService;
+import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Core core;
-    private ServiceConnection connection;
+    private HypeNotifyServiceConnection serviceConnection;
     private EnumIntentReceiver enumIntentReceiver;
+    private BackgroundService backgroundService;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try {
-            core = new Core(this);
-        } catch (Exception e) {
-            Log.e(TAG, "Error: ", e);
-            finish();
-            throw new RuntimeException(e);
-        }
-        this.connection = core.getServiceConnection();
-        super.setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        setContentView(R.layout.activity_main);
+        this.serviceConnection = getServiceConnection();
+        Intents.startBackgroundService(this, serviceConnection);
         Thread newMainThread = new Thread(() -> {
+            try {
+                backgroundService = this.serviceConnection.getService(BackgroundService.class).get();
+                core = backgroundService.getCore(this);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            runOnUiThread(() -> {
+                super.setContentView(R.layout.activity_main);
+                setSupportActionBar(toolbar);
+                setContentView(R.layout.activity_main);
+            });
             try {
                 Intent intent = getIntent();
                 if (Intents.handleIntent(intent, core, this)) {
-                    finish();
                     return;
                 }
-                Intent serviceIntent = new Intent(this, TimerService.class);
-                startForegroundService(serviceIntent);
                 PermissionUtils.requestPermissionsBlocking(this);
-                core.fullInit();
                 if (!core.areKeysSet()) {
                     EnterDetailsLayout enterDetailsLayout = new EnterDetailsLayout(core);
                     runOnUiThread(() -> {
@@ -66,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error: ", e);
-                finish();
                 throw new RuntimeException(e);
             }
         });
@@ -75,11 +78,20 @@ public class MainActivity extends AppCompatActivity {
         enumIntentReceiver = new EnumIntentReceiver(core);
     }
 
+    private HypeNotifyServiceConnection getServiceConnection() {
+        return new HypeNotifyServiceConnection() {
+            @Override
+            public void serviceChange(String serviceName, HypeNotifyService<?> service) {
+                System.out.println("Service changed: " + serviceName);
+            }
+        };
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // Release WakeLock
-        core.wakeLock.onDestroy();
+        core.onDestroy();
     }
 
     @Override
@@ -92,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, TimerService.class);
-        if (connection != null) bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        if (serviceConnection != null) bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
 
         IntentFilter filter = new IntentFilter("de.hype.hypenotify.ENUM_INTENT");
         registerReceiver(enumIntentReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -102,8 +114,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        if (connection != null) {
-            unbindService(connection);
+        if (serviceConnection != null) {
+            unbindService(serviceConnection);
         }
         unregisterReceiver(enumIntentReceiver);
     }

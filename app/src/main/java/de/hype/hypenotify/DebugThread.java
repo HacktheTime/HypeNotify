@@ -1,6 +1,6 @@
 package de.hype.hypenotify;
 
-import de.hype.hypenotify.services.TimerService;
+import de.hype.hypenotify.core.interfaces.Core;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,14 +28,14 @@ public class DebugThread extends Thread {
                 passedOnce = true;
                 test();
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                break;
             }
         }
     }
 
     public void test(){
         try {
-            core.timerService.addAlarm(Instant.now().plus(10,ChronoUnit.SECONDS),"test",()->true);
+            core.timerService().addAlarm(Instant.now().plus(10,ChronoUnit.SECONDS),"test",()->true);
         }catch (Throwable e){
             e.printStackTrace();
         }

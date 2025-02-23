@@ -5,7 +5,7 @@ import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.widget.*;
-import de.hype.hypenotify.Core;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.layouts.autodetection.Layout;
 import de.hype.hypenotify.tools.bazaar.BazaarProduct;
@@ -45,10 +45,10 @@ public class BazaarOrderTrackerService extends LinearLayout {
     private LinearLayout trackedItemsLayout;
 
     public BazaarOrderTrackerService(Core core) {
-        super(core.context);
-        this.context = core.context;
+        super(core.context());
+        this.context = core.context();
         this.core = core;
-        bazaarService = core.getBazaarService();
+        bazaarService = core.bazaarService();
         init();
         initItems();
     }
@@ -94,7 +94,7 @@ public class BazaarOrderTrackerService extends LinearLayout {
         });
 
         progressBar.setTooltipText("Time until next Refresh");
-        core.executionService.execute(() -> {
+        core.executionService().execute(() -> {
             checkPrice();
             registerNextCheck();
         });
@@ -128,7 +128,7 @@ public class BazaarOrderTrackerService extends LinearLayout {
     private void registerNextCheck() {
         int timeBetweenChecks = 15;
         startProgressBarCountdown(timeBetweenChecks);
-        nextCheck = core.executionService.schedule(() -> {
+        nextCheck = core.executionService().schedule(() -> {
             checkPrice();
             checkWifiStateCounter++;
             if (checkWifiStateCounter >= 40) {

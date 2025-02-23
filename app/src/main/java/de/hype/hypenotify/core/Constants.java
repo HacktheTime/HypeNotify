@@ -1,4 +1,4 @@
-package de.hype.hypenotify;
+package de.hype.hypenotify.core;
 
 public class Constants {
     public static final String PREFS_NAME = "DevicePrefs";

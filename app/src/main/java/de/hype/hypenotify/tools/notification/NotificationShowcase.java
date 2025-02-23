@@ -8,10 +8,10 @@ import android.widget.RemoteViews;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.content.pm.ShortcutInfoCompat;
-import de.hype.hypenotify.Core;
-import de.hype.hypenotify.Intents;
+import de.hype.hypenotify.core.Intents;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.core.interfaces.Core;
 
 public enum NotificationShowcase {
     ADD_ACTION_NOTIFICATION_COMPAT_ACTION("addAction(@Nullable NotificationCompat.Action action)") {
@@ -209,8 +209,8 @@ public enum NotificationShowcase {
 
     public void run(Core core) {
         NotificationBuilder notificationBuilder = new NotificationBuilder(core, "Showcase", method, NotificationChannels.OTHER, NotificationImportance.LOW, NotificationVisibility.PUBLIC);
-        doCustom(notificationBuilder.getHiddenBuilder(), core.context);
-        NotificationUtils.sendNotification(core.context, notificationBuilder);
+        doCustom(notificationBuilder.getHiddenBuilder(), core.context());
+        notificationBuilder.send();
     }
 
     public abstract void doCustom(NotificationCompat.Builder builder, Context context);

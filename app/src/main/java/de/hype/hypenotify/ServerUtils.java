@@ -3,6 +3,8 @@ package de.hype.hypenotify;
 import android.content.SharedPreferences;
 import android.util.Log;
 import com.google.gson.JsonObject;
+import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.core.MiniCore;
 import de.hype.hypenotify.services.TimerService;
 
 import java.io.BufferedReader;
@@ -14,7 +16,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static de.hype.hypenotify.Constants.*;
+import static de.hype.hypenotify.core.Constants.*;
 
 public class ServerUtils {
     private static final String URL = "http://hackthetime.de:8085/hypenotify/";
@@ -54,8 +56,8 @@ public class ServerUtils {
     public static void checkTimersValidity(TimerService.SmartTimer smartTimer, Core core) {
         try {
             URL url = new URL(URL + "checkTimer?id="
-                    + smartTimer.id + "&apiKey=" + core.userAPIKey
-                    + "&userId=" + core.userId);
+                    + smartTimer.id + "&apiKey=" + core.userAPIKey()
+                    + "&userId=" + core.userId());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
@@ -63,7 +65,7 @@ public class ServerUtils {
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                JsonObject json = core.gson.fromJson(in, JsonObject.class);
+                JsonObject json = MiniCore.gson.fromJson(in, JsonObject.class);
                 in.close();
                 boolean valid = json.get("valid").getAsBoolean();
                 if (!valid) {

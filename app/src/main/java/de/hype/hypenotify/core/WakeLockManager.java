@@ -1,4 +1,4 @@
-package de.hype.hypenotify;
+package de.hype.hypenotify.core;
 
 import android.content.Context;
 import android.os.PowerManager;

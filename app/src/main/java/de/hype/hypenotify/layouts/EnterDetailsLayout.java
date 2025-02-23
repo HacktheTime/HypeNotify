@@ -1,6 +1,5 @@
 package de.hype.hypenotify.layouts;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.InputType;
 import android.util.Log;
@@ -11,8 +10,8 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
-import de.hype.hypenotify.Constants;
-import de.hype.hypenotify.Core;
+import de.hype.hypenotify.core.Constants;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
 
 
@@ -29,9 +28,9 @@ public class EnterDetailsLayout extends LinearLayout {
     private CountDownLatch latch = new CountDownLatch(1);
 
     public EnterDetailsLayout(Core core) {
-        super(core.context);
+        super(core.context());
         this.core = core;
-        this.context = core.context;
+        this.context = core.context();
         // New fields for entering API key and device name
         apiKeyInput = new EditText(context);
         apiKeyInput.setHint("Enter API Key");
@@ -76,9 +75,6 @@ public class EnterDetailsLayout extends LinearLayout {
     }
     public void awaitDone() throws InterruptedException {
         latch.await();
-        core.userId = Integer.parseInt(userIdInput.getText().toString());
-        core.userAPIKey = apiKeyInput.getText().toString();
-        core.deviceName = deviceNameInput.getText().toString();
-        core.saveConfig();
+        core.setUserData(Integer.parseInt(userIdInput.getText().toString()), apiKeyInput.getText().toString(), deviceNameInput.getText().toString());
     }
 }

@@ -15,12 +15,12 @@ public class Notification {
     }
 
     public void send() {
-        context.getSystemService(NotificationManager.class).notify(id, builder.build());
+        context.getSystemService(NotificationManager.class).notify(id, builder.builder.build());
     }
 
     public void update(NotificationBuilder builder) {
         this.builder = builder;
-        context.getSystemService(NotificationManager.class).notify(id, builder.build());
+        context.getSystemService(NotificationManager.class).notify(id, builder.builder.build());
     }
 
     /**
@@ -28,5 +28,13 @@ public class Notification {
      */
     public NotificationBuilder getBuilder() {
         return builder;
+    }
+
+    public android.app.Notification get() {
+        return builder.builder.build();
+    }
+
+    public int getID() {
+        return id;
     }
 }

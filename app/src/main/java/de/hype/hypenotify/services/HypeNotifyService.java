@@ -6,8 +6,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
-import de.hype.hypenotify.Core;
-import de.hype.hypenotify.MiniCore;
+import de.hype.hypenotify.core.MiniCore;
 
 public class HypeNotifyService<EXTENDING_CLASS extends HypeNotifyService<EXTENDING_CLASS>> extends Service {
     protected MiniCore core;
@@ -19,10 +18,6 @@ public class HypeNotifyService<EXTENDING_CLASS extends HypeNotifyService<EXTENDI
         return new HypeNotifyServiceBinder((EXTENDING_CLASS) this);
     }
 
-    public void setCore(MiniCore core) {
-        this.core = core;
-        this.context = core.context;
-    }
 
     public MiniCore getCore() {
         return core;

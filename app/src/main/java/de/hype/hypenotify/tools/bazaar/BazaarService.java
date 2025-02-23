@@ -1,8 +1,7 @@
 package de.hype.hypenotify.tools.bazaar;
 
 import com.google.gson.Gson;
-import de.hype.hypenotify.Core;
-import de.hype.hypenotify.MiniCore;
+import de.hype.hypenotify.core.MiniCore;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

@@ -8,7 +8,7 @@ import android.view.LayoutInflater;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import de.hype.hypenotify.Core;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.services.TimerService;
 
@@ -23,9 +23,9 @@ public class TimerAlarmScreen extends LinearLayout {
     private int previousVolume;
 
     public TimerAlarmScreen(Core core, TimerService.SmartTimer smartTimer) {
-        super(core.context);
+        super(core.context());
         this.core = core;
-        Context context = core.context;
+        Context context = core.context();
         LayoutInflater.from(context).inflate(R.layout.alarm_screen, this, true);
         mediaPlayer = MediaPlayer.create(context, smartTimer.getSound());
         mediaPlayer.setLooping(true);

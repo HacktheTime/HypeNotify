@@ -5,38 +5,30 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import androidx.core.app.NotificationCompat;
 import com.google.gson.JsonElement;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.*;
-import de.hype.hypenotify.tools.notification.NotificationBuilder;
-import de.hype.hypenotify.tools.notification.NotificationChannels;
+import de.hype.hypenotify.core.Intents;
+import de.hype.hypenotify.core.MiniCore;
 
-import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class TimerService extends HypeNotifyService<TimerService> {
+import static android.content.Context.ALARM_SERVICE;
+
+public class TimerService {
     public Map<Integer, SmartTimer> timers;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        NotificationBuilder notificationBuilder = new NotificationBuilder(this, "Background", "A HypeNotify Service is running in the background.", NotificationChannels.BACKGROUND_SERVICE);
-        notificationBuilder.setSmallIcon(R.mipmap.icon);
-        notificationBuilder.setLargeImage(R.mipmap.icon);
-        notificationBuilder.getHiddenBuilder().setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_DEFERRED);
-        startForeground(1, notificationBuilder.build());
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // Your background task code here
-        return START_NOT_STICKY;
+    private final MiniCore core;
+    private AlarmManager alarmManager;
+    private Context context;
+    public TimerService(MiniCore core){
+        this.core = core;
+        this.context = core.context;
+        this.alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        loadTimers();
     }
 
     private void saveTimers() {
@@ -62,7 +54,6 @@ public class TimerService extends HypeNotifyService<TimerService> {
     }
 
     private void cancelTimer(TimerData timer) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
         PendingIntent pendingIntent = getSchedulingIntent(timer);
         if (alarmManager != null) {
             alarmManager.cancel(pendingIntent);
@@ -71,7 +62,6 @@ public class TimerService extends HypeNotifyService<TimerService> {
 
     @SuppressLint("MissingPermission")
     private void scheduleTimer(TimerData timer) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
             PendingIntent pendingIntent = getSchedulingIntent(timer);
             AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(timer.getTime().toEpochMilli(), pendingIntent); // Set alarm to go off in 1 minute
@@ -86,12 +76,6 @@ public class TimerService extends HypeNotifyService<TimerService> {
                 context, timer.id, intent,
                 PendingIntent.FLAG_MUTABLE
         );
-    }
-
-    @Override
-    public void setCore(MiniCore core) {
-        super.setCore(core);
-        loadTimers();
     }
 
     private void loadTimers() {

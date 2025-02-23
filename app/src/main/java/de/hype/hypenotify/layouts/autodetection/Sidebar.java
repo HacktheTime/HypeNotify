@@ -5,11 +5,11 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import de.hype.hypenotify.Core;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
+
 import java.util.Map;
 
 public class Sidebar extends LinearLayout {
@@ -19,10 +19,10 @@ public class Sidebar extends LinearLayout {
     private final Context context;
 
     public Sidebar(Core core) {
-        super(core.context);
+        super(core.context());
         this.core = core;
-        this.context = core.context;
-        LayoutInflater.from(core.context).inflate(R.layout.sidebar, this, true);
+        this.context = core.context();
+        LayoutInflater.from(core.context()).inflate(R.layout.sidebar, this, true);
 
         searchBox = findViewById(R.id.search_box);
         layoutList = findViewById(R.id.layout_list);

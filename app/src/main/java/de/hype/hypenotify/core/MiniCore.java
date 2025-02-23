@@ -1,6 +1,5 @@
-package de.hype.hypenotify;
+package de.hype.hypenotify.core;
 
-import android.accessibilityservice.AccessibilityService;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -17,6 +16,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import de.hype.hypenotify.*;
+import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
@@ -25,23 +26,22 @@ import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 
 import static android.content.Context.MODE_PRIVATE;
-import static de.hype.hypenotify.Constants.*;
-import static de.hype.hypenotify.Constants.KEY_DEVICE;
+import static de.hype.hypenotify.core.Constants.*;
+import static de.hype.hypenotify.core.Constants.KEY_DEVICE;
 
 public class MiniCore {
-    public String fireBaseToken;
-    public WakeLockManager wakeLock;
-    public String deviceName;
-    public int userId;
-    public String userAPIKey;
-    public Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    protected String fireBaseToken;
+    protected WakeLockManager wakeLock;
+    protected String deviceName;
+    protected int userId;
+    protected String userAPIKey;
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public Context context;
-    private SharedPreferences prefs;
-    public ExecutionService executionService = new ExecutionService(30);
+    protected SharedPreferences prefs;
+    public final ExecutionService executionService = new ExecutionService(30);
 
-    private BazaarService bazaarService = new BazaarService(this);
-    private NotificationService notificationService;
-    public TimerService timerService;
+    protected BazaarService bazaarService = new BazaarService(this);
+    protected TimerService timerService;
 
     public MiniCore(Context context) {
         this.context = context;
@@ -50,9 +50,10 @@ public class MiniCore {
         userId = prefs.getInt(KEY_USER_ID, -1);
         deviceName = prefs.getString(KEY_DEVICE, "");
         wakeLock = new WakeLockManager(this);
-        notificationService = new NotificationService(this);
+        timerService = new TimerService(this);
         scheduleDailyBatteryCheck();
     }
+
     public WifiInfo getCurrentWifiNetwork() {
         ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         Network currentNetwork = manager.getActiveNetwork();
@@ -83,18 +84,10 @@ public class MiniCore {
         }
     }
 
-    public ServiceConnection getServiceConnection() {
-        return new HypeNotifyServiceConnection(this);
-    }
-
     public void fullInit() throws ExecutionException, InterruptedException {
         Task<String> tokenTask = FirebaseMessaging.getInstance().getToken();
         Tasks.await(tokenTask);
         fireBaseToken = tokenTask.getResult();
-    }
-
-    public BazaarService getBazaarService() {
-        return bazaarService;
     }
 
     public void saveData(String key, Object data) {

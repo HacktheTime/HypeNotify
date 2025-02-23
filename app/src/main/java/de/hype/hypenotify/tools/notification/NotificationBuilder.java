@@ -1,14 +1,11 @@
 package de.hype.hypenotify.tools.notification;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.drawable.Icon;
 import androidx.core.app.NotificationCompat;
-import de.hype.hypenotify.Core;
-import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.core.interfaces.Core;
 
 public class NotificationBuilder {
     NotificationCompat.Builder builder;
@@ -29,11 +26,11 @@ public class NotificationBuilder {
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel) {
-        this(core.context, title, message, channel);
+        this(core.context(), title, message, channel);
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
-        this(core.context, title, message, channel, importance, visibility);
+        this(core.context(), title, message, channel, importance, visibility);
     }
 
 
@@ -63,7 +60,7 @@ public class NotificationBuilder {
 
 
     public Notification build() {
-        return builder.build();
+        return new Notification(context, this);
     }
 
     public NotificationBuilder setVisibility(NotificationVisibility visibility) {

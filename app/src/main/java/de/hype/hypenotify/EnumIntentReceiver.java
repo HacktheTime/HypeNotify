@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.core.Intents;
 
 public class EnumIntentReceiver extends BroadcastReceiver {
     private static final String TAG = "EnumIntentReceiver";
@@ -19,7 +21,7 @@ public class EnumIntentReceiver extends BroadcastReceiver {
             String action = intent.getAction();
             if ("de.hype.hypenotify.ENUM_INTENT".equals(action)) {
                 Log.d(TAG, "ENUM_INTENT broadcast received");
-                Intents.handleIntent(intent, core, core.context);
+                Intents.handleIntent(intent, core, core.context());
             }
         }
     }

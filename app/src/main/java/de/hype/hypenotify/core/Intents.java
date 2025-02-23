@@ -1,15 +1,21 @@
-package de.hype.hypenotify;
+package de.hype.hypenotify.core;
 
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BatteryManager;
 import android.util.Log;
+import de.hype.hypenotify.MainActivity;
+import de.hype.hypenotify.NotificationUtils;
+import de.hype.hypenotify.R;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.TimerAlarmScreen;
+import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,11 +33,11 @@ public enum Intents {
                 notificationBuilder.send();
                 return;
             }
-            TimerService.SmartTimer timer = core.timerService.getTimerById(timerId);
+            TimerService.SmartTimer timer = core.timerService().getTimerById(timerId);
             if (timer != null && timer.active) {
                 TimerAlarmScreen timerAlarmScreen = new TimerAlarmScreen(core, timer);
-                context.runOnUiThread(()->{
-                    core.context.setContentViewNoOverride(timerAlarmScreen);
+                context.runOnUiThread(() -> {
+                    core.context().setContentViewNoOverride(timerAlarmScreen);
                 });
             }
         }
@@ -64,8 +70,7 @@ public enum Intents {
                 }
             }, 5 * 60 * 1000);
         }
-    }
-    ;
+    };
 
     private final String intentId;
     private static final String PACKAGE_NAME = "de.hype.hypenotify";
@@ -73,6 +78,18 @@ public enum Intents {
 
     Intents(String intentId) {
         this.intentId = intentId;
+    }
+
+    /**
+     * @param context the current context
+     * @param connection OPTIONAL: the service connection to use
+     */
+    public static void startBackgroundService(Context context, @Nullable HypeNotifyServiceConnection connection) {
+        Intent serviceIntent = new Intent(context, BackgroundService.class);
+        context.startService(serviceIntent);
+        if (connection != null) {
+            context.bindService(serviceIntent,connection, Context.BIND_AUTO_CREATE);
+        }
     }
 
     protected abstract void handleIntentInternal(Intent intent, Core core, MainActivity context);

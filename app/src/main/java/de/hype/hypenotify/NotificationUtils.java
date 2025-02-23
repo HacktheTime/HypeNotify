@@ -4,7 +4,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import androidx.core.app.NotificationCompat;
-import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
 
@@ -58,13 +57,6 @@ public class NotificationUtils {
             if (!enumChannelIds.contains(existingChannelId)) {
                 notificationManager.deleteNotificationChannel(existingChannelId);
             }
-        }
-    }
-
-    public static void sendNotification(Context context, NotificationBuilder notificationBuilder) {
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager != null) {
-            notificationManager.notify(1, notificationBuilder.build());
         }
     }
 }
