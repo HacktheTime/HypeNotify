@@ -3,11 +3,9 @@ package de.hype.hypenotify;
 import android.app.ComponentCaller;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -16,7 +14,7 @@ import de.hype.hypenotify.core.BackgroundService;
 import de.hype.hypenotify.core.Intents;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.EnterDetailsLayout;
-import de.hype.hypenotify.layouts.autodetection.Sidebar;
+import de.hype.hypenotify.layouts.autodetection.OverviewScreen;
 import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
@@ -25,9 +23,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Core core;
     private HypeNotifyServiceConnection serviceConnection;
-    private EnumIntentReceiver enumIntentReceiver;
     private BackgroundService backgroundService;
-
+    private OverviewScreen overviewScreen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,9 +61,9 @@ public class MainActivity extends AppCompatActivity {
                         throw new RuntimeException(e);
                     }
                 }
-                Sidebar sidebar = new Sidebar(core);
+                overviewScreen = new OverviewScreen(core);
                 runOnUiThread(() -> {
-                    setContentView(sidebar);
+                    setContentView(overviewScreen);
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error: ", e);
@@ -75,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
         });
         newMainThread.setName("New Main Thread");
         newMainThread.start();
-        enumIntentReceiver = new EnumIntentReceiver(core);
     }
 
     private HypeNotifyServiceConnection getServiceConnection() {
@@ -86,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
+
 
     @Override
     protected void onDestroy() {
@@ -105,10 +102,6 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         Intent intent = new Intent(this, TimerService.class);
         if (serviceConnection != null) bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-        IntentFilter filter = new IntentFilter("de.hype.hypenotify.ENUM_INTENT");
-        registerReceiver(enumIntentReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-
     }
 
     @Override
@@ -117,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
         if (serviceConnection != null) {
             unbindService(serviceConnection);
         }
-        unregisterReceiver(enumIntentReceiver);
     }
 
     @Override
@@ -148,13 +140,23 @@ public class MainActivity extends AppCompatActivity {
         Intents.handleIntent(intent, core, this);
     }
 
-    public void setContentViewNoOverride(LinearLayout screen) {
+    public void setContentViewNoOverride(View screen) {
         super.setContentView(screen);
+    }
+
+    public void setContentViewNoOverrideInlined(View screen) {
+        runOnUiThread(() -> super.setContentView(screen));
     }
 
     @Override
     public void onNewIntent(@NonNull Intent intent, @NonNull ComponentCaller caller) {
         super.onNewIntent(intent, caller);
         Intents.handleIntent(intent, core, this);
+    }
+
+    public void setOverviewPage() {
+        runOnUiThread(() -> {
+            super.setContentView(overviewScreen);
+        });
     }
 }

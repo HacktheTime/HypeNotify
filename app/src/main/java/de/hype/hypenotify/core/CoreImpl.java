@@ -1,5 +1,7 @@
 package de.hype.hypenotify.core;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.MainActivity;
@@ -53,10 +55,7 @@ class CoreImpl implements Core {
 
     @Override
     public void setUserData(int userId, String bbAPIKey, String deviceName) {
-        miniCore.userId = userId;
-        miniCore.userAPIKey = bbAPIKey;
-        miniCore.deviceName = deviceName;
-        miniCore.saveConfig();
+        miniCore.setUserData(userId, bbAPIKey, deviceName);
     }
 
     @Override
@@ -77,7 +76,21 @@ class CoreImpl implements Core {
     @Override
     public void onDestroy() {
         debugThread.interrupt();
-        miniCore.executionService.shutdown();
-        miniCore.wakeLock.onDestroy();
+        miniCore.onDestroy();
+    }
+
+    @Override
+    public void saveData(String key, Object data) {
+        miniCore.saveData(key, data);
+    }
+
+    @Override
+    public Gson gson() {
+        return miniCore.gson();
+    }
+
+    @Override
+    public <T> T getData(String timers, TypeToken<T> type) {
+        return miniCore.getData(timers, type);
     }
 }

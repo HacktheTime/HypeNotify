@@ -31,7 +31,7 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
 
     private void startCore() {
         // Start your service and perform initialization.
-        core = new MiniCore(this);
+        core = new ExpandedMiniCore(this);
 
         if (!PermissionUtils.checkPermissions(this)) {
             NotificationBuilder notificationBuilder = new NotificationBuilder(
@@ -43,21 +43,23 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
             notificationBuilder.send();
         }
 
-        try {
-            core.fullInit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        core.executionService.execute(() -> {
+            try {
+                core.fullInit();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-        if (!core.areKeysSet()) {
-            NotificationBuilder notificationBuilder = new NotificationBuilder(
-                    this,
-                    "Keys Missing",
-                    "We noticed that HypeNotify is lacking Keys. Please open the app and enter your keys.",
-                    NotificationChannels.ERROR
-            );
-            notificationBuilder.send();
-        }
+            if (!core.areKeysSet()) {
+                NotificationBuilder notificationBuilder = new NotificationBuilder(
+                        this,
+                        "Keys Missing",
+                        "We noticed that HypeNotify is lacking Keys. Please open the app and enter your keys.",
+                        NotificationChannels.ERROR
+                );
+                notificationBuilder.send();
+            }
+        });
     }
 
     @Override
@@ -75,7 +77,7 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
         isRunning = false;
     }
 
-    public Core getCore(MainActivity activity) {
-        return new CoreImpl(activity, core);
+    public Core getCore(MainActivity context) {
+        return new CoreImpl(context, core);
     }
 }

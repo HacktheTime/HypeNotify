@@ -4,7 +4,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import com.google.gson.JsonObject;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.core.MiniCore;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 import de.hype.hypenotify.services.TimerService;
 
 import java.io.BufferedReader;
@@ -65,7 +65,7 @@ public class ServerUtils {
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                JsonObject json = MiniCore.gson.fromJson(in, JsonObject.class);
+                JsonObject json = core.gson().fromJson(in, JsonObject.class);
                 in.close();
                 boolean valid = json.get("valid").getAsBoolean();
                 if (!valid) {

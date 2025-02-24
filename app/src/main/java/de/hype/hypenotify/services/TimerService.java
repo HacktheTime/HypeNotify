@@ -4,12 +4,13 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.*;
+import de.hype.hypenotify.ServerUtils;
+import de.hype.hypenotify.TimerData;
+import de.hype.hypenotify.core.IntentBuilder;
 import de.hype.hypenotify.core.Intents;
-import de.hype.hypenotify.core.MiniCore;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public class TimerService {
     private Context context;
     public TimerService(MiniCore core){
         this.core = core;
-        this.context = core.context;
+        this.context = core.context();
         this.alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
         loadTimers();
     }
@@ -70,12 +71,9 @@ public class TimerService {
     }
 
     private PendingIntent getSchedulingIntent(TimerData timer) {
-        Intent intent = Intents.TIMER_HIT.getAsIntent(context);
+        IntentBuilder intent = Intents.TIMER_HIT.getAsIntent(context);
         intent.putExtra("timerId", timer.id);
-        return PendingIntent.getActivity(
-                context, timer.id, intent,
-                PendingIntent.FLAG_MUTABLE
-        );
+        return intent.getAsPending();
     }
 
     private void loadTimers() {

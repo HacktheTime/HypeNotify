@@ -1,7 +1,7 @@
 package de.hype.hypenotify.tools.bazaar;
 
 import com.google.gson.Gson;
-import de.hype.hypenotify.core.MiniCore;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,7 +31,7 @@ public class BazaarService {
      * Returns the last fetched Bazaar response if it is not older than the given maxAge.
      */
     public BazaarResponse getMaxAgeResponse(Duration maxAge) throws IOException {
-        if (lastResponse.isOlderThan(maxAge)) fetchBazaar();
+        if (lastResponse == null || lastResponse.isOlderThan(maxAge)) fetchBazaar();
         return lastResponse;
     }
 

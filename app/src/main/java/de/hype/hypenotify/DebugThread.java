@@ -35,7 +35,7 @@ public class DebugThread extends Thread {
 
     public void test(){
         try {
-            core.timerService().addAlarm(Instant.now().plus(10,ChronoUnit.SECONDS),"test",()->true);
+            core.timerService().addAlarm(Instant.now().plus(5, ChronoUnit.SECONDS), "test", () -> true);
         }catch (Throwable e){
             e.printStackTrace();
         }

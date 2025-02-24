@@ -4,13 +4,16 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+>
 
     <TextView
             android:id="@+id/alarm_screen_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Timer Going Off!"
+            android:text="@string/timer_going_off"
             android:textSize="24sp"
             android:textStyle="bold"
             app:layout_constraintTop_toTopOf="parent"
@@ -22,7 +25,7 @@
             android:id="@+id/multi_line_text"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:text="Your multi-line text here"
+            android:text="@string/timer_did_not_specify_a_message"
             android:textSize="18sp"
             android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/alarm_screen_message"
@@ -46,7 +49,7 @@
                 android:id="@+id/alarm_screen_alarm_sleep"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sleep"/>
+                android:text="@string/sleep"/>
 
         <Space
                 android:layout_width="16dp"
@@ -56,6 +59,6 @@
                 android:id="@+id/alarm_screen_alarm_stop"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stop"/>
+                android:text="@string/stop"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

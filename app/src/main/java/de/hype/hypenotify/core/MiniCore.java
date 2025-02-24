@@ -3,8 +3,6 @@ package de.hype.hypenotify.core;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -16,9 +14,8 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.*;
-import de.hype.hypenotify.services.HypeNotifyService;
-import de.hype.hypenotify.services.HypeNotifyServiceConnection;
+import de.hype.hypenotify.ExecutionService;
+import de.hype.hypenotify.PrivateConfig;
 import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 
@@ -27,9 +24,8 @@ import java.util.concurrent.ExecutionException;
 
 import static android.content.Context.MODE_PRIVATE;
 import static de.hype.hypenotify.core.Constants.*;
-import static de.hype.hypenotify.core.Constants.KEY_DEVICE;
 
-public class MiniCore {
+abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
     protected String fireBaseToken;
     protected WakeLockManager wakeLock;
     protected String deviceName;
@@ -43,7 +39,7 @@ public class MiniCore {
     protected BazaarService bazaarService = new BazaarService(this);
     protected TimerService timerService;
 
-    public MiniCore(Context context) {
+    protected MiniCore(Context context) {
         this.context = context;
         prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         userAPIKey = prefs.getString(KEY_API, "");
@@ -71,8 +67,9 @@ public class MiniCore {
 
     public void scheduleDailyBatteryCheck() {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = Intents.BATTERY_REMINDER_CHECK.getAsIntent(context);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        IntentBuilder intent = Intents.BATTERY_REMINDER_CHECK.getAsIntent(context);
+
+        PendingIntent pendingIntent = intent.getAsPending();
 
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 19); // 7 PM
@@ -80,7 +77,7 @@ public class MiniCore {
         calendar.set(Calendar.SECOND, 0);
 
         if (alarmManager != null) {
-            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
         }
     }
 
@@ -104,6 +101,7 @@ public class MiniCore {
         }
         return gson.fromJson(json, clazz);
     }
+
     public <T> T getData(String key, TypeToken<T> clazz) {
         String json = prefs.getString(key, "");
         if (json.isEmpty()) {
@@ -125,5 +123,23 @@ public class MiniCore {
         editor.putInt(KEY_USER_ID, userId);
         editor.putString(KEY_DEVICE, deviceName);
         editor.apply();
+    }
+
+    @Override
+    public Gson gson() {
+        return gson;
+    }
+
+    @Override
+    public void setUserData(int userId, String bbAPIKey, String deviceName) {
+        this.userId = userId;
+        this.userAPIKey = bbAPIKey;
+        this.deviceName = deviceName;
+        saveConfig();
+    }
+
+    public void onDestroy() {
+        executionService.shutdown();
+        wakeLock.onDestroy();
     }
 }

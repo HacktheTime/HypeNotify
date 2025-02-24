@@ -9,6 +9,7 @@ import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 import de.hype.hypenotify.layouts.TimerAlarmScreen;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
@@ -17,16 +18,18 @@ import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static android.content.Context.BATTERY_SERVICE;
+import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_CREATE_NEW;
+import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_FRONT_OR_CREATE;
 
 public enum Intents {
     TIMER_HIT("timer_hit") {
         @Override
-        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
+        public void handleIntentInternal(Intent intent, MiniCore miniCore, Context miniContext) {
+            if (!(miniContext instanceof MainActivity context)) return;
+            if (!(miniCore instanceof Core core)) return;
             Integer timerId = intent.getIntExtra("timerId", 0);
             if (timerId == 0) {
                 NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
@@ -37,14 +40,19 @@ public enum Intents {
             if (timer != null && timer.active) {
                 TimerAlarmScreen timerAlarmScreen = new TimerAlarmScreen(core, timer);
                 context.runOnUiThread(() -> {
-                    core.context().setContentViewNoOverride(timerAlarmScreen);
+                    context.setContentViewNoOverride(timerAlarmScreen);
                 });
             }
+        }
+
+        @Override
+        public List<IntentBuilder.IntentFlag> getFlags() {
+            return DEFAULT_CREATE_NEW;
         }
     },
     BATTERY_REMINDER_CHECK("battery_reminder_check") {
         @Override
-        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
+        public void handleIntentInternal(Intent intent, MiniCore core, Context context) {
             if (core.isInHomeNetwork() && isBatteryLow(context)) {
                 notifyUser(context);
             }
@@ -70,31 +78,37 @@ public enum Intents {
                 }
             }, 5 * 60 * 1000);
         }
+
+        @Override
+        public List<IntentBuilder.IntentFlag> getFlags() {
+            return DEFAULT_FRONT_OR_CREATE;
+        }
     };
 
-    private final String intentId;
-    private static final String PACKAGE_NAME = "de.hype.hypenotify";
-    private static final String CLASS_NAME = "MainActivity";
+    public final String intentId;
+    public static final String PACKAGE_NAME = "de.hype.hypenotify";
+    public static final String DYNAMIC_INTENT = PACKAGE_NAME + ".ENUM_INTENT";
+
 
     Intents(String intentId) {
         this.intentId = intentId;
     }
 
     /**
-     * @param context the current context
+     * @param context    the current context
      * @param connection OPTIONAL: the service connection to use
      */
     public static void startBackgroundService(Context context, @Nullable HypeNotifyServiceConnection connection) {
         Intent serviceIntent = new Intent(context, BackgroundService.class);
         context.startService(serviceIntent);
         if (connection != null) {
-            context.bindService(serviceIntent,connection, Context.BIND_AUTO_CREATE);
+            context.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
         }
     }
 
-    protected abstract void handleIntentInternal(Intent intent, Core core, MainActivity context);
+    protected abstract void handleIntentInternal(Intent intent, MiniCore core, Context context);
 
-    public static boolean handleIntent(Intent intent, Core core, MainActivity context) {
+    public static boolean handleIntent(Intent intent, MiniCore core, Context context) {
         Log.i("Intents", "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent.getAction(), intent.getData()));
         Intents smartIntent = getIntentByAction(intent.getStringExtra("intentId"));
         if (smartIntent == null) return false;
@@ -112,79 +126,11 @@ public enum Intents {
         return null;
     }
 
-    public static List<IntentFlag> DEFAULT_FRONT_OR_CREATE = Collections.unmodifiableList(List.of(IntentFlag.FLAG_ACTIVITY_NEW_TASK, IntentFlag.FLAG_ACTIVITY_CLEAR_TOP));
-    public static List<IntentFlag> DEFAULT_CREATE_NEW = Collections.unmodifiableList(List.of(IntentFlag.FLAG_ACTIVITY_NEW_TASK, IntentFlag.FLAG_ACTIVITY_MULTIPLE_TASK));
-
-    public Intent getAsIntent(Context context) {
-        return getAsIntent(context, DEFAULT_FRONT_OR_CREATE);
+    public IntentBuilder getAsIntent(Context context) {
+        IntentBuilder builder = new IntentBuilder(context, this);
+        builder.setFlags(getFlags());
+        return builder;
     }
 
-    public Intent getAsIntent(Context context, List<IntentFlag> flags) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setAction("de.hype.hypenotify.ENUM_INTENT");
-        intent.putExtra("intentId", intentId);
-        for (IntentFlag flag : flags) {
-            flag.addFlags(intent);
-        }
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return intent;
-    }
-
-    public enum IntentFlag {
-        FLAG_GRANT_READ_URI_PERMISSION(Intent.FLAG_GRANT_READ_URI_PERMISSION),
-        FLAG_GRANT_WRITE_URI_PERMISSION(Intent.FLAG_GRANT_WRITE_URI_PERMISSION),
-        FLAG_FROM_BACKGROUND(Intent.FLAG_FROM_BACKGROUND),
-        FLAG_DEBUG_LOG_RESOLUTION(Intent.FLAG_DEBUG_LOG_RESOLUTION),
-        FLAG_EXCLUDE_STOPPED_PACKAGES(Intent.FLAG_EXCLUDE_STOPPED_PACKAGES),
-        FLAG_INCLUDE_STOPPED_PACKAGES(Intent.FLAG_INCLUDE_STOPPED_PACKAGES),
-        FLAG_GRANT_PERSISTABLE_URI_PERMISSION(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION),
-        FLAG_GRANT_PREFIX_URI_PERMISSION(Intent.FLAG_GRANT_PREFIX_URI_PERMISSION),
-        FLAG_DIRECT_BOOT_AUTO(Intent.FLAG_DIRECT_BOOT_AUTO),
-        FLAG_ACTIVITY_NO_HISTORY(Intent.FLAG_ACTIVITY_NO_HISTORY),
-        FLAG_ACTIVITY_SINGLE_TOP(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-        FLAG_ACTIVITY_NEW_TASK(Intent.FLAG_ACTIVITY_NEW_TASK),
-        FLAG_ACTIVITY_MULTIPLE_TASK(Intent.FLAG_ACTIVITY_MULTIPLE_TASK),
-        FLAG_ACTIVITY_CLEAR_TOP(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-        FLAG_ACTIVITY_FORWARD_RESULT(Intent.FLAG_ACTIVITY_FORWARD_RESULT),
-        FLAG_ACTIVITY_PREVIOUS_IS_TOP(Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP),
-        FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS),
-        FLAG_ACTIVITY_BROUGHT_TO_FRONT(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT),
-        FLAG_ACTIVITY_RESET_TASK_IF_NEEDED(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED),
-        FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY),
-        FLAG_ACTIVITY_NEW_DOCUMENT(Intent.FLAG_ACTIVITY_NEW_DOCUMENT),
-        FLAG_ACTIVITY_NO_USER_ACTION(Intent.FLAG_ACTIVITY_NO_USER_ACTION),
-        FLAG_ACTIVITY_REORDER_TO_FRONT(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
-        FLAG_ACTIVITY_NO_ANIMATION(Intent.FLAG_ACTIVITY_NO_ANIMATION),
-        FLAG_ACTIVITY_CLEAR_TASK(Intent.FLAG_ACTIVITY_CLEAR_TASK),
-        FLAG_ACTIVITY_TASK_ON_HOME(Intent.FLAG_ACTIVITY_TASK_ON_HOME),
-        FLAG_ACTIVITY_RETAIN_IN_RECENTS(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS),
-        FLAG_ACTIVITY_LAUNCH_ADJACENT(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT),
-        FLAG_ACTIVITY_MATCH_EXTERNAL(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL),
-        FLAG_ACTIVITY_REQUIRE_NON_BROWSER(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER),
-        FLAG_ACTIVITY_REQUIRE_DEFAULT(Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT);
-
-        private final int value;
-
-        IntentFlag(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public void addFlags(Intent intent) {
-            intent.addFlags(value);
-        }
-
-        public static List<IntentFlag> getFlags(Intent intent) {
-            List<IntentFlag> flags = new ArrayList<>();
-            for (IntentFlag flag : IntentFlag.values()) {
-                if ((intent.getFlags() & flag.getValue()) != 0) {
-                    flags.add(flag);
-                }
-            }
-            return flags;
-        }
-    }
+    public abstract List<IntentBuilder.IntentFlag> getFlags();
 }

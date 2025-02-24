@@ -14,4 +14,8 @@
     <string name="alarm_going_off">Alarm Going Off!</string>
     <string name="check_timers_validity">Check Timers Validity</string>
     <string name="save_device">Save Device</string>
+    <string name="timer_did_not_specify_a_message">Timer did not Specify a Message.</string>
+    <string name="sleep">Sleep</string>
+    <string name="stop">Stop</string>
+    <string name="timer_going_off">Timer Going Off!</string>
 </resources>

@@ -2,15 +2,13 @@ package de.hype.hypenotify.tools.notification;
 
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.RemoteViews;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.content.pm.ShortcutInfoCompat;
-import de.hype.hypenotify.core.Intents;
-import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.core.Intents;
 import de.hype.hypenotify.core.interfaces.Core;
 
 public enum NotificationShowcase {
@@ -90,7 +88,7 @@ public enum NotificationShowcase {
         public void doCustom(NotificationCompat.Builder builder, Context context) {
             NotificationCompat.BubbleMetadata bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
                     .setDesiredHeight(600)
-                    .setIntent(PendingIntent.getActivity(context, 0, Intents.TIMER_HIT.getAsIntent(context), PendingIntent.FLAG_IMMUTABLE))
+                    .setIntent(Intents.TIMER_HIT.getAsIntent(context).getAsPending())
                     .build();
             builder.setBubbleMetadata(bubbleMetadata);
         }
@@ -216,15 +214,8 @@ public enum NotificationShowcase {
     public abstract void doCustom(NotificationCompat.Builder builder, Context context);
 
     public PendingIntent getIntent(Context context) {
-        Intent intent = Intents.TIMER_HIT.getAsIntent(context);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP); // Optional: Adjust based on use case
-
-        return PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE // Use FLAG_IMMUTABLE if you don’t need mutability
-        );
+        PendingIntent intent = Intents.TIMER_HIT.getAsIntent(context).getAsPending();
+        return intent;
     }
 
 }

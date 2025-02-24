@@ -5,20 +5,23 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.core.interfaces.Core;
 
 import java.util.Map;
 
-public class Sidebar extends LinearLayout {
+public class OverviewScreen extends LinearLayout {
     private EditText searchBox;
     private final LinearLayout layoutList;
     private final Core core;
     private final Context context;
 
-    public Sidebar(Core core) {
+    public OverviewScreen(Core core) {
         super(core.context());
         this.core = core;
         this.context = core.context();
@@ -70,7 +73,7 @@ public class Sidebar extends LinearLayout {
                 // Create and add the back button.
                 Button backButton = new Button(getContext());
                 backButton.setText(R.string.back);
-                backButton.setOnClickListener(v -> ((AppCompatActivity) getContext()).setContentView(Sidebar.this));
+                backButton.setOnClickListener(v -> ((AppCompatActivity) getContext()).setContentView(OverviewScreen.this));
                 container.addView(backButton);
 
                 // Add the dynamic content to the container.

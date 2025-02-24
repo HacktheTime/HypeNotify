@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
-import de.hype.hypenotify.core.MiniCore;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 
 public class HypeNotifyService<EXTENDING_CLASS extends HypeNotifyService<EXTENDING_CLASS>> extends Service {
     protected MiniCore core;
@@ -14,6 +14,7 @@ public class HypeNotifyService<EXTENDING_CLASS extends HypeNotifyService<EXTENDI
 
     @Nullable
     @Override
+    @SuppressWarnings("unchecked")
     public IBinder onBind(Intent intent) {
         return new HypeNotifyServiceBinder((EXTENDING_CLASS) this);
     }
