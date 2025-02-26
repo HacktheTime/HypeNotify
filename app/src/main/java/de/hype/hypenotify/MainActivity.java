@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.widget.NestedScrollView;
 import de.hype.hypenotify.core.BackgroundService;
-import de.hype.hypenotify.core.Intents;
+import de.hype.hypenotify.core.DynamicIntents;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.EnterDetailsLayout;
 import de.hype.hypenotify.layouts.autodetection.OverviewScreen;
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.serviceConnection = getServiceConnection();
-        Intents.startBackgroundService(this, serviceConnection);
+        DynamicIntents.startBackgroundService(this, serviceConnection);
         Thread newMainThread = new Thread(() -> {
             try {
                 backgroundService = this.serviceConnection.getService(BackgroundService.class).get();
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
             });
             try {
                 Intent intent = getIntent();
-                if (Intents.handleIntent(intent, core, this)) {
+                if (DynamicIntents.handleIntent(intent, core, this)) {
                     return;
                 }
                 PermissionUtils.requestPermissionsBlocking(this);
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Intents.handleIntent(intent, core, this);
+        DynamicIntents.handleIntent(intent, core, this);
     }
 
     public void setContentViewNoOverride(View screen) {
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onNewIntent(@NonNull Intent intent, @NonNull ComponentCaller caller) {
         super.onNewIntent(intent, caller);
-        Intents.handleIntent(intent, core, this);
+        DynamicIntents.handleIntent(intent, core, this);
     }
 
     public void setOverviewPage() {

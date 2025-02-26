@@ -9,7 +9,6 @@ import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.core.interfaces.MiniCore;
 import de.hype.hypenotify.layouts.TimerAlarmScreen;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
@@ -24,15 +23,15 @@ import static android.content.Context.BATTERY_SERVICE;
 import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_CREATE_NEW;
 import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_FRONT_OR_CREATE;
 
-public enum Intents {
+public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
     TIMER_HIT("timer_hit") {
         @Override
-        public void handleIntentInternal(Intent intent, MiniCore miniCore, Context miniContext) {
-            if (!(miniContext instanceof MainActivity context)) return;
-            if (!(miniCore instanceof Core core)) return;
-            Integer timerId = intent.getIntExtra("timerId", 0);
+        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
+            context.setShowWhenLocked(true);
+            context.setTurnScreenOn(true);
+            NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
+            int timerId = intent.getIntExtra("timerId", 0);
             if (timerId == 0) {
-                NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
                 notificationBuilder.send();
                 return;
             }
@@ -52,7 +51,7 @@ public enum Intents {
     },
     BATTERY_REMINDER_CHECK("battery_reminder_check") {
         @Override
-        public void handleIntentInternal(Intent intent, MiniCore core, Context context) {
+        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
             if (core.isInHomeNetwork() && isBatteryLow(context)) {
                 notifyUser(context);
             }
@@ -87,10 +86,10 @@ public enum Intents {
 
     public final String intentId;
     public static final String PACKAGE_NAME = "de.hype.hypenotify";
-    public static final String DYNAMIC_INTENT = PACKAGE_NAME + ".ENUM_INTENT";
+    public static final String DYNAMIC_INTENT = PACKAGE_NAME + ".DYNAMIC_ENUM_INTENT";
 
 
-    Intents(String intentId) {
+    DynamicIntents(String intentId) {
         this.intentId = intentId;
     }
 
@@ -106,19 +105,20 @@ public enum Intents {
         }
     }
 
-    protected abstract void handleIntentInternal(Intent intent, MiniCore core, Context context);
+    @Override
+    public abstract void handleIntentInternal(Intent intent, Core core, MainActivity context);
 
-    public static boolean handleIntent(Intent intent, MiniCore core, Context context) {
-        Log.i("Intents", "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent.getAction(), intent.getData()));
-        Intents smartIntent = getIntentByAction(intent.getStringExtra("intentId"));
+    public static boolean handleIntent(Intent intent, Core core, MainActivity context) {
+        Log.i("DynamicIntents", "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent.getAction(), intent.getData()));
+        DynamicIntents smartIntent = getIntentByAction(intent.getStringExtra("intentId"));
         if (smartIntent == null) return false;
         smartIntent.handleIntentInternal(intent, core, context);
         return true;
     }
 
-    private static Intents getIntentByAction(String intentId) {
+    private static DynamicIntents getIntentByAction(String intentId) {
         if (intentId == null) return null;
-        for (Intents i : Intents.values()) {
+        for (DynamicIntents i : DynamicIntents.values()) {
             if (i.intentId.equals(intentId)) {
                 return i;
             }
@@ -133,4 +133,11 @@ public enum Intents {
     }
 
     public abstract List<IntentBuilder.IntentFlag> getFlags();
+
+    @Override
+    public String intentId() {
+        return intentId;
+    }
+
+
 }

@@ -2,7 +2,6 @@ package de.hype.hypenotify.core;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.core.interfaces.Core;
@@ -12,15 +11,12 @@ import de.hype.hypenotify.tools.bazaar.BazaarService;
 class CoreImpl implements Core {
     private String TAG = "CoreImpl";
     public MainActivity context;
-    private DebugThread debugThread = new DebugThread(this);
     MiniCore miniCore;
 
     public CoreImpl(MainActivity context, MiniCore core) {
         this.miniCore = core;
         this.context = context;
         // Load stored values
-        debugThread.setName("DebugThread");
-        debugThread.start();
     }
 
     @Override
@@ -75,8 +71,6 @@ class CoreImpl implements Core {
 
     @Override
     public void onDestroy() {
-        debugThread.interrupt();
-        miniCore.onDestroy();
     }
 
     @Override

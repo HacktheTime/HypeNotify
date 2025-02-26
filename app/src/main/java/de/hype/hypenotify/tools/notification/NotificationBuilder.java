@@ -1,6 +1,7 @@
 package de.hype.hypenotify.tools.notification;
 
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.graphics.drawable.Icon;
 import androidx.core.app.NotificationCompat;
@@ -88,5 +89,15 @@ public class NotificationBuilder {
         de.hype.hypenotify.tools.notification.Notification notification = new de.hype.hypenotify.tools.notification.Notification(context, this);
         notification.send();
         return notification;
+    }
+
+    public NotificationBuilder setCategory(NotificationCategory category) {
+        builder.setCategory(category.categoryId);
+        return this;
+    }
+
+    public NotificationBuilder setFullScreenIntent(PendingIntent intent) {
+        builder.setFullScreenIntent(intent, true);
+        return this;
     }
 }

@@ -14,6 +14,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.PrivateConfig;
 import de.hype.hypenotify.services.TimerService;
@@ -32,14 +33,15 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
     protected int userId;
     protected String userAPIKey;
     public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    public Context context;
+    public BackgroundService context;
     protected SharedPreferences prefs;
     public final ExecutionService executionService = new ExecutionService(30);
 
     protected BazaarService bazaarService = new BazaarService(this);
     protected TimerService timerService;
+    private DebugThread debugThread = new DebugThread(this);
 
-    protected MiniCore(Context context) {
+    protected MiniCore(BackgroundService context) {
         this.context = context;
         prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         userAPIKey = prefs.getString(KEY_API, "");
@@ -48,6 +50,8 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         wakeLock = new WakeLockManager(this);
         timerService = new TimerService(this);
         scheduleDailyBatteryCheck();
+        debugThread.setName("DebugThread");
+        debugThread.start();
     }
 
     public WifiInfo getCurrentWifiNetwork() {
@@ -67,7 +71,7 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
 
     public void scheduleDailyBatteryCheck() {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        IntentBuilder intent = Intents.BATTERY_REMINDER_CHECK.getAsIntent(context);
+        IntentBuilder intent = DynamicIntents.BATTERY_REMINDER_CHECK.getAsIntent(context);
 
         PendingIntent pendingIntent = intent.getAsPending();
 
@@ -140,6 +144,7 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
 
     public void onDestroy() {
         executionService.shutdown();
+        debugThread.interrupt();
         wakeLock.onDestroy();
     }
 }

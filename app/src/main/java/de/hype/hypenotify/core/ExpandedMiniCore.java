@@ -6,7 +6,7 @@ import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 
 public class ExpandedMiniCore extends MiniCore {
-    public ExpandedMiniCore(Context context) {
+    public ExpandedMiniCore(BackgroundService context) {
         super(context);
     }
 

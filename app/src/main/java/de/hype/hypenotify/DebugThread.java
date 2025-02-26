@@ -1,6 +1,6 @@
 package de.hype.hypenotify;
 
-import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.core.interfaces.MiniCore;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DebugThread extends Thread {
-    private Core core;
+    private MiniCore core;
     /**
      * Can be used to temporarily store objects for debugging purposes. such as variables so you dont need to restart the app creating it.
      */
     private List<Object> storage = new ArrayList<>();
 
-    public DebugThread(Core core) {
+    public DebugThread(MiniCore core) {
         super("Debug Thread");
         this.core = core;
     }

@@ -14,6 +14,10 @@ public class Notification {
         this.builder = builder;
     }
 
+    public static int generateId() {
+        return notificationId++;
+    }
+
     public void send() {
         context.getSystemService(NotificationManager.class).notify(id, builder.builder.build());
     }

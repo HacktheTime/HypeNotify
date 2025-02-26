@@ -8,7 +8,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import de.hype.hypenotify.R;
-import de.hype.hypenotify.core.Intents;
+import de.hype.hypenotify.core.DynamicIntents;
 import de.hype.hypenotify.core.interfaces.Core;
 
 public enum NotificationShowcase {
@@ -88,7 +88,7 @@ public enum NotificationShowcase {
         public void doCustom(NotificationCompat.Builder builder, Context context) {
             NotificationCompat.BubbleMetadata bubbleMetadata = new NotificationCompat.BubbleMetadata.Builder()
                     .setDesiredHeight(600)
-                    .setIntent(Intents.TIMER_HIT.getAsIntent(context).getAsPending())
+                    .setIntent(DynamicIntents.TIMER_HIT.getAsIntent(context).getAsPending())
                     .build();
             builder.setBubbleMetadata(bubbleMetadata);
         }
@@ -214,7 +214,7 @@ public enum NotificationShowcase {
     public abstract void doCustom(NotificationCompat.Builder builder, Context context);
 
     public PendingIntent getIntent(Context context) {
-        PendingIntent intent = Intents.TIMER_HIT.getAsIntent(context).getAsPending();
+        PendingIntent intent = DynamicIntents.TIMER_HIT.getAsIntent(context).getAsPending();
         return intent;
     }
 

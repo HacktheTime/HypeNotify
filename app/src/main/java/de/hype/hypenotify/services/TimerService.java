@@ -9,7 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.ServerUtils;
 import de.hype.hypenotify.TimerData;
 import de.hype.hypenotify.core.IntentBuilder;
-import de.hype.hypenotify.core.Intents;
+import de.hype.hypenotify.core.StaticIntents;
 import de.hype.hypenotify.core.interfaces.MiniCore;
 
 import java.time.Instant;
@@ -67,11 +67,12 @@ public class TimerService {
             PendingIntent pendingIntent = getSchedulingIntent(timer);
             AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(timer.getTime().toEpochMilli(), pendingIntent); // Set alarm to go off in 1 minute
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
+            AlarmManager.AlarmClockInfo next = alarmManager.getNextAlarmClock();
         }
     }
 
     private PendingIntent getSchedulingIntent(TimerData timer) {
-        IntentBuilder intent = Intents.TIMER_HIT.getAsIntent(context);
+        IntentBuilder intent = StaticIntents.TIMER_HIT.getAsIntent(context);
         intent.putExtra("timerId", timer.id);
         return intent.getAsPending();
     }
@@ -113,6 +114,10 @@ public class TimerService {
         public void sleep(int delay, TimeUnit timeUnit) {
             time += (timeUnit.toSeconds(delay));
             service.scheduleTimer(this);
+        }
+
+        public boolean shallRing() {
+            return active;
         }
     }
 

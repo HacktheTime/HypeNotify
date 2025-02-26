@@ -13,14 +13,12 @@ public class BroadcastIntentWatcher extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(Context context, Intent intent) {
-        Log.d("BroadcastIntentWatcher", "BroadcastIntentWatcher received intent: " + intent.getAction());
-        if ("de.hype.hypenotify.ENUM_INTENT".equals(intent.getAction())) {
-            // Send the intent to the service
-            Intent dynamicIntent = new Intent(context, DynamicIntentService.class);
-            dynamicIntent.setAction(intent.getAction());
-            dynamicIntent.putExtras(intent.getExtras());
-            context.startService(dynamicIntent);
+    public void onReceive(Context context, Intent receivedIntent) {
+        Log.d("BroadcastIntentWatcher", "BroadcastIntentWatcher received intent: " + receivedIntent.getAction());
+        if (StaticIntents.BASE_INTENT_NAME.equals(receivedIntent.getAction())) {
+            Intent serviceIntent = new Intent(context, BackgroundService.class);
+            context.startService(serviceIntent);
+            BackgroundService.executeWithBackgroundService((s) -> StaticIntents.onIntent(s.getCore(), context, receivedIntent));
         }
     }
 }

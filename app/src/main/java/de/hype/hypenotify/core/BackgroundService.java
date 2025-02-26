@@ -1,5 +1,6 @@
 package de.hype.hypenotify.core;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 import de.hype.hypenotify.MainActivity;
@@ -12,7 +13,11 @@ import de.hype.hypenotify.tools.notification.Notification;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 
+import java.util.function.Consumer;
+
 public class BackgroundService extends HypeNotifyService<BackgroundService> {
+    @SuppressLint("StaticFieldLeak")
+    public static BackgroundService instance;
     private static boolean isRunning = false;
     private MiniCore core;
 
@@ -27,6 +32,7 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
         Notification notification = notificationBuilder.build();
         startForeground(notification.getID(), notification.get());
         startCore();
+        instance = this;
     }
 
     private void startCore() {
@@ -74,10 +80,37 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        core.onDestroy();
         isRunning = false;
+        instance = null;
+    }
+
+    /**
+     * Will wait until
+     *
+     * @param consumer consumer to be run.
+     */
+    public static void executeWithBackgroundService(Consumer<BackgroundService> consumer) {
+        Thread thread = new Thread(() -> {
+            while (instance == null) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            consumer.accept(instance);
+        });
+        thread.start();
     }
 
     public Core getCore(MainActivity context) {
         return new CoreImpl(context, core);
     }
+
+    @Override
+    public de.hype.hypenotify.core.interfaces.MiniCore getCore() {
+        return core;
+    }
+
 }

@@ -3,6 +3,7 @@ package de.hype.hypenotify.core;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import de.hype.hypenotify.MainActivity;
 
 import java.util.*;
 
@@ -14,23 +15,37 @@ public class IntentBuilder {
     private final Set<ToDefineInBuilder> whatNeedsToBeSet = new HashSet<>(Set.of(ToDefineInBuilder.values()));
     private static int intentIdCounter = 1;
     private int intentId = intentIdCounter++;
+    public boolean staticIntent = false;
 
     public IntentBuilder(Context context, String action) {
         this.context = context;
         intent = new Intent(action);
     }
 
-    public IntentBuilder(Context context, Intents intent) {
+    public IntentBuilder(Context context, de.hype.hypenotify.core.Intent intent) {
         this.context = context;
-        this.intent = new Intent(context, BroadcastIntentWatcher.class);
-        this.intent.setAction(Intents.DYNAMIC_INTENT);
-        this.intent.putExtra("intentId", intent.intentId);
+        if (intent instanceof StaticIntents) {
+            this.staticIntent = true;
+            this.intent = new Intent(context, BroadcastIntentWatcher.class);
+            this.intent.setAction(StaticIntents.BASE_INTENT_NAME);
+        } else {
+            this.intent = new Intent(context, MainActivity.class);
+            this.intent.setAction(DynamicIntents.DYNAMIC_INTENT);
+        }
+
+        this.intent.putExtra("intentId", intent.intentId());
+    }
+
+    public static int generateId() {
+        return intentIdCounter++;
     }
 
     public PendingIntent getAsPending(boolean mutable) {
         Intent intent = getAsIntent();
-        PendingIntent pending = PendingIntent.getBroadcast(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
-        return pending;
+
+        if (staticIntent)
+            return PendingIntent.getBroadcast(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getActivity(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
     }
 
     public PendingIntent getAsPending() {
@@ -51,7 +66,7 @@ public class IntentBuilder {
         return this;
     }
 
-    private Intent getAsIntent() {
+    public Intent getAsIntent() {
         if (!whatNeedsToBeSet.isEmpty()) throw new IllegalStateException("You still need to set: " + whatNeedsToBeSet);
         return intent;
     }
@@ -71,7 +86,6 @@ public class IntentBuilder {
     private enum ToDefineInBuilder {
         FLAGS,
     }
-
 
     public enum IntentFlag {
         FLAG_GRANT_READ_URI_PERMISSION(Intent.FLAG_GRANT_READ_URI_PERMISSION),
