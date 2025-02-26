@@ -26,7 +26,6 @@ public class DebugThread extends Thread {
             try {
                 Thread.sleep(3_000);
                 passedOnce = true;
-                test();
             } catch (Throwable e) {
                 break;
             }

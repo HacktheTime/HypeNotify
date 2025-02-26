@@ -9,7 +9,7 @@ import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.layouts.TimerAlarmScreen;
+import de.hype.hypenotify.layouts.autodetection.TimerAlarmScreen;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;

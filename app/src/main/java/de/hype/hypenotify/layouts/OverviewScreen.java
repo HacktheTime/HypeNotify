@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts.autodetection;
+package de.hype.hypenotify.layouts;
 
 import android.content.Context;
 import android.text.Editable;
@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.layouts.autodetection.LayoutRegistry;
 
 import java.util.Map;
 

@@ -1,13 +1,12 @@
-package de.hype.hypenotify.layouts;
+package de.hype.hypenotify.layouts.autodetection;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
-import de.hype.hypenotify.layouts.autodetection.Layout;
+import de.hype.hypenotify.core.interfaces.Core;
 
 
 @Layout(name = "Timers")

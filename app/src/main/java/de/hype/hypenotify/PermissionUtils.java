@@ -1,36 +1,39 @@
 package de.hype.hypenotify;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import de.hype.hypenotify.layouts.autodetection.RequestPermissionScreen;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class PermissionUtils {
-    private static final int PERMISSION_REQUEST_CODE = 1;
-    private static final String[] REQUIRED_PERMISSIONS = {
+    private static final List<String> REQUIRED_PERMISSIONS = List.of(
             Manifest.permission.USE_EXACT_ALARM,
-            Manifest.permission.RECEIVE_BOOT_COMPLETED,
             Manifest.permission.RECEIVE_BOOT_COMPLETED,
             Manifest.permission.WAKE_LOCK,
             Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_NOTIFICATION_POLICY,
+            Manifest.permission.MODIFY_AUDIO_SETTINGS,
             Manifest.permission.POST_NOTIFICATIONS,
             Manifest.permission.FOREGROUND_SERVICE,
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.CHANGE_NETWORK_STATE,
-            "com.android.alarm.permission.SET_ALARM"
-    };
-
-    private static CountDownLatch latch;
+            Manifest.permission.VIBRATE,
+            Manifest.permission.MODIFY_AUDIO_SETTINGS,
+            Manifest.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING,
+            Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+            Manifest.permission.HIDE_OVERLAY_WINDOWS,
+            "com.android.alarm.permission.SET_ALARM");
 
     public static boolean checkPermissions(Context activity) {
-        for (String permission : REQUIRED_PERMISSIONS) {
+        List<String> permissions = new ArrayList<>(REQUIRED_PERMISSIONS);
+        for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
@@ -38,30 +41,18 @@ public class PermissionUtils {
         return true;
     }
 
-    public static void requestPermissions(Activity activity) {
-        ActivityCompat.requestPermissions(activity, REQUIRED_PERMISSIONS, PERMISSION_REQUEST_CODE);
-    }
-
-    public static void requestPermissionsBlocking(Activity activity) throws InterruptedException {
+    public static void requestPermissionsBlocking(MainActivity activity) throws InterruptedException {
         if (!checkPermissions(activity)) {
-            latch = new CountDownLatch(1);
-            requestPermissions(activity);
+            CountDownLatch latch = new CountDownLatch(1);
+            requestPermissions(activity, latch);
             latch.await();
         }
     }
 
+    private static void requestPermissions(MainActivity activity, CountDownLatch latch) {
+        activity.setContentViewNoOverrideInlined(new RequestPermissionScreen(activity, latch));
+    }
+
     static void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults, MainActivity mainActivity) {
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            for (int result : grantResults) {
-                if (result != PackageManager.PERMISSION_GRANTED) {
-                    mainActivity.finish();
-                    return;
-                }
-            }
-            // All permissions are granted
-            if (latch != null) {
-                latch.countDown();
-            }
-        }
     }
 }

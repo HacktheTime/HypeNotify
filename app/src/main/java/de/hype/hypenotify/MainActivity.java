@@ -14,7 +14,7 @@ import de.hype.hypenotify.core.BackgroundService;
 import de.hype.hypenotify.core.DynamicIntents;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.EnterDetailsLayout;
-import de.hype.hypenotify.layouts.autodetection.OverviewScreen;
+import de.hype.hypenotify.layouts.OverviewScreen;
 import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.services.TimerService;
@@ -158,5 +158,9 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             super.setContentView(overviewScreen);
         });
+    }
+
+    public Core getCore() {
+        return core;
     }
 }

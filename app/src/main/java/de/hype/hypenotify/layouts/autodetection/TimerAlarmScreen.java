@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts;
+package de.hype.hypenotify.layouts.autodetection;
 
 import android.content.Context;
 import android.media.AudioManager;

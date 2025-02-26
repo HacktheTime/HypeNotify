@@ -18,4 +18,14 @@
     <string name="sleep">Sleep</string>
     <string name="stop">Stop</string>
     <string name="timer_going_off">Timer Going Off!</string>
+    <string name="go_to_settings">Go to Settings</string>
+    <string name="request_permissions_in_settings_message">You are about to go into the settings app. Please enable all
+        the necessary permissions.
+    </string>
+    <string name="request_permissions_reasoning">"Which Permissions do we need and why:\n \nNotifications (should be
+        obvious)\n- Including Full Screen Intents (should be on by default though)\n\nUnoptimised background usage.
+        (Needed for Timers and other things such as Bazaar Order Tracking and notifications overall.)\n \nShow over
+        other Apps (Needed for Timers to work so we can open screens for it ANYWHERE. Including the locked Screen!)\n\n
+        "
+    </string>
 </resources>

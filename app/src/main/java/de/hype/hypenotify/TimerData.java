@@ -1,13 +1,15 @@
 package de.hype.hypenotify;
 
-import android.media.MediaPlayer;
-
 import java.time.Instant;
 
-public class TimerData {
+public abstract class TimerData {
     public int id;
     public long time;
     public boolean active;
+
+    /**
+     * If true this Alarm will ring even if the checks etc could not be run because the device was locked.
+     */
 
     public TimerData(int id, long time, boolean active) {
         this.id = id;

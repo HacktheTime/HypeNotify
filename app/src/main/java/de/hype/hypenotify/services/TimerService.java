@@ -4,13 +4,13 @@ import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.ServerUtils;
 import de.hype.hypenotify.TimerData;
 import de.hype.hypenotify.core.IntentBuilder;
 import de.hype.hypenotify.core.StaticIntents;
 import de.hype.hypenotify.core.interfaces.MiniCore;
+import de.hype.hypenotify.tools.timers.Timer;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -23,9 +23,10 @@ import static android.content.Context.ALARM_SERVICE;
 public class TimerService {
     public Map<Integer, SmartTimer> timers;
     private final MiniCore core;
-    private AlarmManager alarmManager;
-    private Context context;
-    public TimerService(MiniCore core){
+    private final AlarmManager alarmManager;
+    private final Context context;
+
+    public TimerService(MiniCore core) {
         this.core = core;
         this.context = core.context();
         this.alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
@@ -94,17 +95,12 @@ public class TimerService {
         addTimer(timer);
     }
 
-    public static class SmartTimer extends TimerData {
-        private transient TimerService service;
+    public static class SmartTimer implements Timer {
+        private final transient TimerService service;
 
-        public SmartTimer(TimerData data, TimerService service) {
+        public SmartTimer(Timer data, TimerService service) {
             super(data);
             this.service = service;
-        }
-
-        public void replaceTimer(JsonElement replacementTimer) {
-            service.cancelTimer(this);
-            service.addReplacementTimer(replacementTimer);
         }
 
         public void cancel() {
@@ -119,9 +115,12 @@ public class TimerService {
         public boolean shallRing() {
             return active;
         }
+
+        private void addReplacementTimer(SmartTimer replacementTimer) {
+            this.cancel();
+            service.addTimer(replacementTimer);
+        }
     }
 
-    private void addReplacementTimer(JsonElement replacementTimer) {
-        //TODO implement replacement timers
-    }
+
 }

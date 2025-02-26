@@ -1,13 +1,12 @@
-package de.hype.hypenotify.layouts;
+package de.hype.hypenotify.layouts.autodetection;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.widget.*;
-import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.R;
-import de.hype.hypenotify.layouts.autodetection.Layout;
+import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.tools.bazaar.BazaarProduct;
 import de.hype.hypenotify.tools.bazaar.BazaarResponse;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
