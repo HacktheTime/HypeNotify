@@ -2,8 +2,8 @@ package de.hype.hypenotify.core;
 
 import android.content.Context;
 import de.hype.hypenotify.ExecutionService;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 public class ExpandedMiniCore extends MiniCore {
     public ExpandedMiniCore(BackgroundService context) {

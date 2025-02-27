@@ -17,8 +17,8 @@ import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.PrivateConfig;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
@@ -113,6 +113,11 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         }
         return gson.fromJson(json, clazz.getType());
     }
+
+    public String getStringData(String key) {
+        return prefs.getString(key, null);
+    }
+
 
     public boolean areKeysSet() {
         if (userAPIKey.isEmpty() || userId == -1 || deviceName.isEmpty()) {

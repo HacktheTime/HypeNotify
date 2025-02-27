@@ -5,8 +5,8 @@ import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 class CoreImpl implements Core {
     private String TAG = "CoreImpl";

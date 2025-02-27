@@ -5,7 +5,7 @@ import android.util.Log;
 import com.google.gson.JsonObject;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.core.interfaces.MiniCore;
-import de.hype.hypenotify.services.TimerService;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 import java.io.BufferedReader;
 import java.io.IOException;

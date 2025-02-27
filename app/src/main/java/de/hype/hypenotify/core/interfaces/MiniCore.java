@@ -5,8 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.core.WakeLockManager;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 public interface MiniCore {
     Context context();
@@ -34,4 +34,6 @@ public interface MiniCore {
     Gson gson();
 
     <T> T getData(String timers, TypeToken<T> type);
+
+    String getStringData(String key);
 }

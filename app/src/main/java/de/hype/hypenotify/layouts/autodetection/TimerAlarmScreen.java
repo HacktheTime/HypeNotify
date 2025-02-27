@@ -10,7 +10,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.services.TimerService;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;

@@ -11,7 +11,6 @@ import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.core.interfaces.MiniCore;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationCategory;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
@@ -34,7 +33,7 @@ public enum StaticIntents implements de.hype.hypenotify.core.Intent {
                 return;
             }
             TimerService.SmartTimer timer = core.timerService().getTimerById(timerId);
-            if (timer != null && timer.shallRing()) {
+            if (timer != null && timer.shouldRing()) {
                 LauchAppBypass bypass = launchAPP(core, NotificationCategory.CATEGORY_ALARM, DynamicIntents.TIMER_HIT);
                 bypass.setInt("timerId", timerId);
                 bypass.launch();

@@ -11,10 +11,10 @@ import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.autodetection.TimerAlarmScreen;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
-import de.hype.hypenotify.services.TimerService;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
+import de.hype.hypenotify.tools.timers.TimerService;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
