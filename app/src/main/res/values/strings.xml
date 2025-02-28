@@ -22,15 +22,17 @@
     <string name="request_permissions_in_settings_message">You are about to go into the settings app. Please enable all
         the necessary permissions.
     </string>
-    <string name="request_permissions_reasoning">"Which Permissions do we need and why:\n \nNotifications (should be
-        obvious)\n- Including Full Screen Intents (should be on by default though)\n\nUnoptimised background usage.
-        (Needed for Timers and other things such as Bazaar Order Tracking and notifications overall.)\n \nShow over
-        other Apps (Needed for Timers to work so we can open screens for it ANYWHERE. Including the locked Screen!)\n\n
-        "
+    <string name="request_permissions_reasoning">"Which Permissions do we need and why:\n \nNotifications (should be\n
+        obvious)\n- Including Full Screen Intents (should be on by default though)\n\nUnoptimised background usage.\n
+        (Needed for Timers and other things such as Bazaar Order Tracking and notifications overall.)\n \n Access Fine
+        Location\n - Needed to access your Wlan name. Used to detect if you at home for example to auto disable the
+        bazaar tracker while abroad etc.\n \nShow over\n other Apps (Needed for Timers to work so we can open screens
+        for it ANYWHERE. Including the locked Screen!)\n\n\n \n "
     </string>
     <string name="add_new_bazaar_tracker">Add New Tracker</string>
     <string name="current_bazaar_trackers">Current Trackers</string>
     <string name="enter_bazaar_item_to_track_id">Enter Item Name. (If you cant find it try the Item Id)</string>
     <string name="done">Done</string>
     <string name="edit_bazaar_item_tracker">Edit Tracker</string>
+    <string name="delete">Delete</string>
 </resources>

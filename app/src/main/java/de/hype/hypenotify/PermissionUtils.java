@@ -17,18 +17,19 @@ public class PermissionUtils {
             Manifest.permission.WAKE_LOCK,
             Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_NOTIFICATION_POLICY,
+            Manifest.permission.USE_FULL_SCREEN_INTENT,
             Manifest.permission.MODIFY_AUDIO_SETTINGS,
             Manifest.permission.POST_NOTIFICATIONS,
             Manifest.permission.FOREGROUND_SERVICE,
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.CHANGE_NETWORK_STATE,
             Manifest.permission.VIBRATE,
             Manifest.permission.MODIFY_AUDIO_SETTINGS,
-            Manifest.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING,
-            Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-            Manifest.permission.HIDE_OVERLAY_WINDOWS,
             "com.android.alarm.permission.SET_ALARM");
 
     public static boolean checkPermissions(Context activity) {

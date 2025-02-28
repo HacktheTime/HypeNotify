@@ -56,6 +56,14 @@ public class TrackedBazaarItem {
         return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean newState) {
+        enabled = newState;
+    }
+
     public class TrackChanges {
         private final BazaarProduct oldProduct, newProduct;
         private String notificationText;

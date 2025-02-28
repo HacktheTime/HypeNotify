@@ -23,6 +23,7 @@ public class BazaarService {
     private static BazaarResponse lastResponse;
     public List<TrackedBazaarItem> trackedItems = new ArrayList<>();
     private static OrderTrackingService orderTracker;
+    public static final int CHECK_INTERVAL = 15;
 
     public BazaarService(MiniCore core) {
         this.core = core;
@@ -53,6 +54,10 @@ public class BazaarService {
     public BazaarResponse getMaxAgeResponse(Duration maxAge) throws IOException {
         if (lastResponse == null || lastResponse.isOlderThan(maxAge)) fetchBazaar();
         return lastResponse;
+    }
+
+    public BazaarResponse getMaxAgeResponse() throws IOException {
+        return getMaxAgeResponse(Duration.ofSeconds(CHECK_INTERVAL - 1));
     }
 
     private static void fetchBazaar() throws IOException {
@@ -92,7 +97,7 @@ public class BazaarService {
         }
 
         private void registerNextCheck() {
-            int timeBetweenChecks = 15;
+            int timeBetweenChecks = CHECK_INTERVAL;
             nextCheck = core.executionService().schedule(() -> {
                 checkPrice();
                 checkWifiStateCounter++;
@@ -109,7 +114,7 @@ public class BazaarService {
 
         private void checkPrice() {
             try {
-                BazaarResponse response = bazaarService.getMaxAgeResponse(Duration.ofSeconds(19));
+                BazaarResponse response = bazaarService.getMaxAgeResponse();
                 Map<String, BazaarProduct> items = response.getProducts();
                 for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
                     BazaarProduct product = items.get(toTrackItem.itemId);

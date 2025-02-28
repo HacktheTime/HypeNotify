@@ -7,6 +7,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.layouts.autodetection.Layout;
 
 
 @Layout(name = "Timers")

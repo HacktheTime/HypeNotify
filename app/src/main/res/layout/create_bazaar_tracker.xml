@@ -17,6 +17,7 @@
     <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:autofillHints=""
             android:hint="@string/enter_bazaar_item_to_track_id"
             android:id="@+id/item_id_input"
             android:inputType="text"/>
@@ -34,5 +35,5 @@
             android:layout_height="wrap_content"
             android:text="@string/add_new_bazaar_tracker"
             android:id="@+id/create_tracker_button"
-            android:onClick="onCreateTrackerClick"/>
+    />
 </LinearLayout>

@@ -1,10 +1,7 @@
 package de.hype.hypenotify.screen.features.bazaar;
 
 import android.view.LayoutInflater;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.*;
 import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
@@ -16,11 +13,13 @@ import java.util.List;
 
 class CurrentTrackersScreen extends LinearLayout {
     private final Core core;
+    private final @Nullable BazaarOrdersScreen parent;
 
-    public CurrentTrackersScreen(Core core) {
+    public CurrentTrackersScreen(Core core, @Nullable BazaarOrdersScreen parent) {
         super(core.context());
         this.core = core;
         init(core.context());
+        this.parent = parent;
     }
 
     private void init(MainActivity context) {
@@ -35,9 +34,46 @@ class CurrentTrackersScreen extends LinearLayout {
     }
 
     public void updateView() {
+        LinearLayout trackerList = findViewById(R.id.tracker_list);
+        trackerList.removeAllViews();
+
         List<TrackedBazaarItem> trackedItems = core.bazaarService().trackedItems;
+        for (TrackedBazaarItem item : trackedItems) {
+            LinearLayout trackerItemLayout = new LinearLayout(getContext());
+            trackerItemLayout.setOrientation(LinearLayout.HORIZONTAL);
+            trackerItemLayout.setPadding(8, 8, 8, 8);
 
+            CheckBox enabledCheckbox = new CheckBox(getContext());
+            enabledCheckbox.setChecked(item.isEnabled());
+            enabledCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                item.setEnabled(isChecked);
+                // Update the item's enabled state in the core or database
+            });
 
+            TextView itemName = new TextView(getContext());
+            itemName.setText(item.getDisplayName());
+            itemName.setTextSize(16);
+            LinearLayout.LayoutParams itemNameParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
+            itemName.setLayoutParams(itemNameParams);
+            itemName.setPadding(8, 0, 8, 0);
+
+            Button deleteButton = new Button(getContext());
+            deleteButton.setText(R.string.delete);
+            deleteButton.setOnClickListener((v) -> {
+                trackedItems.remove(item);
+                updateView();
+            });
+
+            trackerItemLayout.addView(enabledCheckbox);
+            trackerItemLayout.addView(itemName);
+            trackerItemLayout.addView(deleteButton);
+
+            trackerItemLayout.setOnClickListener((v) -> {
+                core.context().setContentView(new EditTrackerScreen(core, item, this));
+            });
+
+            trackerList.addView(trackerItemLayout);
+        }
     }
 }
 

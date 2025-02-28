@@ -13,12 +13,12 @@ import de.hype.hypenotify.tools.bazaar.BazaarResponse;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import static de.hype.hypenotify.tools.bazaar.BazaarService.CHECK_INTERVAL;
 import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
 
 @Layout(name = "Bazaar Order Tracker")
@@ -49,15 +49,20 @@ public class BazaarOrdersScreen extends LinearLayout {
     private void init() {
         removeAllViews();
         LayoutInflater.from(context).inflate(R.layout.skyblock_enchanted_redstone_lamps_notifier, this, true);
+        trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
+        TextView loading = new TextView(context);
+        loading.setText(R.string.loading);
+        loading.setGravity(Gravity.CENTER);
+        trackedItemsLayout.addView(loading);
         toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
         checkNowButton = findViewById(R.id.check_now_button);
-        trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
         progressBar = findViewById(R.id.next_bazaar_update);
 
         toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
                 nextCheck.cancel(false);
                 progressBarAnimation.pause();
+                progressBar.setProgress(0);
             } else {
                 checkPrice();
                 registerNextCheck();
@@ -82,7 +87,7 @@ public class BazaarOrdersScreen extends LinearLayout {
     }
 
     private void registerNextCheck() {
-        int timeBetweenChecks = 15;
+        int timeBetweenChecks = CHECK_INTERVAL;
         startProgressBarCountdown(timeBetweenChecks);
         nextCheck = core.executionService().schedule(() -> {
             checkPrice();
@@ -111,7 +116,7 @@ public class BazaarOrdersScreen extends LinearLayout {
 
     private void checkPrice() {
         try {
-            BazaarResponse response = bazaarService.getMaxAgeResponse(Duration.ofSeconds(19));
+            BazaarResponse response = bazaarService.getMaxAgeResponse();
             Map<String, BazaarProduct> items = response.getProducts();
             Map<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new HashMap<>();
             for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
@@ -146,16 +151,16 @@ public class BazaarOrdersScreen extends LinearLayout {
                     }
                     TableLayout orderTable = trackedItemTables.get(responseEntry.getKey());
                     if (orderTable == null) {
-                        TableLayout tableLayout = new TableLayout(context);
-                        tableLayout.setStretchAllColumns(true);
-                        LinearLayout.LayoutParams tableLayoutParams = new LinearLayout.LayoutParams(
+                        orderTable = new TableLayout(context);
+                        orderTable.setStretchAllColumns(true);
+                        LayoutParams tableLayoutParams = new LayoutParams(
                                 LayoutParams.WRAP_CONTENT, // Change to MATCH_PARENT
                                 LayoutParams.WRAP_CONTENT
                         );
                         tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
-                        tableLayout.setLayoutParams(tableLayoutParams);
-                        trackedItemTables.put(responseEntry.getKey(), tableLayout);
-                        trackedItemsLayout.addView(tableLayout);
+                        orderTable.setLayoutParams(tableLayoutParams);
+                        trackedItemTables.put(responseEntry.getKey(), orderTable);
+                        trackedItemsLayout.addView(orderTable);
                     }
                     orderTable.removeAllViews();
 
