@@ -8,7 +8,7 @@ import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.timers.TimerService;
 
-class CoreImpl implements Core {
+public class CoreImpl implements Core {
     private String TAG = "CoreImpl";
     public MainActivity context;
     MiniCore miniCore;
@@ -86,5 +86,10 @@ class CoreImpl implements Core {
     @Override
     public <T> T getData(String timers, TypeToken<T> type) {
         return miniCore.getData(timers, type);
+    }
+
+    @Override
+    public String getStringData(String key) {
+        return miniCore.getStringData(key);
     }
 }

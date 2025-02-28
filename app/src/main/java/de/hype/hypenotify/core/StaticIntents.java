@@ -15,8 +15,10 @@ import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationCategory;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
+import de.hype.hypenotify.tools.timers.TimerWrapper;
 
 import java.util.List;
+import java.util.UUID;
 
 import static android.content.Context.BATTERY_SERVICE;
 import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_CREATE_NEW;
@@ -26,16 +28,17 @@ public enum StaticIntents implements de.hype.hypenotify.core.Intent {
     TIMER_HIT {
         @Override
         public void handleIntentInternal(Intent intent, de.hype.hypenotify.core.interfaces.MiniCore core, Context context) {
-            int timerId = intent.getIntExtra("timerId", 0);
-            if (timerId == 0) {
-                NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
+            String uuidString = intent.getStringExtra("timerId");
+            if (uuidString == null) {
+                NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "Timer hit intent received without timerId", NotificationChannels.ERROR);
                 notificationBuilder.send();
                 return;
             }
-            TimerService.SmartTimer timer = core.timerService().getTimerById(timerId);
-            if (timer != null && timer.shouldRing()) {
+            UUID timerId = UUID.fromString(uuidString);
+            TimerWrapper timer = core.timerService().getTimerByClientId(timerId);
+            if (timer != null && timer.shouldRing(core)) {
                 LauchAppBypass bypass = launchAPP(core, NotificationCategory.CATEGORY_ALARM, DynamicIntents.TIMER_HIT);
-                bypass.setInt("timerId", timerId);
+                bypass.setString("timerId", timerId.toString());
                 bypass.launch();
             }
         }

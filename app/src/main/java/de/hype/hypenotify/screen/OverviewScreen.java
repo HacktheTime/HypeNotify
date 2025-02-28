@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts;
+package de.hype.hypenotify.screen;
 
 import android.content.Context;
 import android.text.Editable;

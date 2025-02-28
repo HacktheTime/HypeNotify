@@ -10,6 +10,7 @@ android {
     namespace = "de.hype.hypenotify"
     compileSdk = 35
 
+
     defaultConfig {
         applicationId = "de.hype.hypenotify"
         minSdk = 35

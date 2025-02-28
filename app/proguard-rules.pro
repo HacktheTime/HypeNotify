@@ -20,5 +20,16 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class androidx.lifecycle.** { *; }
--keep interface androidx.lifecycle.** { *; }
+#-keep class androidx.lifecycle.** { *; }
+#-keep interface androidx.lifecycle.** { *; }
+
+# Keep all classes and methods for debugging
+-keep class * {
+    *;
+}
+
+# Keep line numbers and source file names for debugging
+-keepattributes SourceFile,LineNumberTable
+
+# Keep annotations
+-keepattributes *Annotation*

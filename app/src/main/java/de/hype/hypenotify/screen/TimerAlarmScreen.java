@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts.autodetection;
+package de.hype.hypenotify.screen;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.tools.timers.TimerWrapper;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,13 +24,13 @@ public class TimerAlarmScreen extends LinearLayout {
     private int previousVolume;
     private View parent;
 
-    public TimerAlarmScreen(Core core, TimerService.SmartTimer smartTimer) {
+    public TimerAlarmScreen(Core core, TimerWrapper timer) {
         super(core.context());
         this.parent = (core.context()).findViewById(android.R.id.content);
         this.core = core;
         Context context = core.context();
         LayoutInflater.from(context).inflate(R.layout.alarm_screen, this, true);
-        mediaPlayer = MediaPlayer.create(context, smartTimer.getSound());
+        mediaPlayer = MediaPlayer.create(context, timer.getSound());
         mediaPlayer.setLooping(true);
         mediaPlayer.start();
 
@@ -41,13 +42,13 @@ public class TimerAlarmScreen extends LinearLayout {
         Button sleepButton = findViewById(R.id.alarm_screen_alarm_sleep);
         sleepButton.setOnClickListener(view -> {
             stopAlarm();
-            smartTimer.sleep(5, TimeUnit.MINUTES);
+            timer.sleep(5, TimeUnit.MINUTES);
         });
         stopAlarmFuture = core.executionService().schedule(this::stopAlarm, 5, TimeUnit.MINUTES);
         Button stopButton = findViewById(R.id.alarm_screen_alarm_stop);
         stopButton.setOnClickListener(view -> stopAlarm());
         TextView message = findViewById(R.id.alarm_screen_message);
-        message.setText(smartTimer.getMessage());
+        message.setText(timer.getMessage());
     }
 
     private void increaseVolume() {

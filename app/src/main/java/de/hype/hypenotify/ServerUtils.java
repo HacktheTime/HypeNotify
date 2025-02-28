@@ -5,7 +5,8 @@ import android.util.Log;
 import com.google.gson.JsonObject;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.core.interfaces.MiniCore;
-import de.hype.hypenotify.tools.timers.TimerService;
+import de.hype.hypenotify.tools.timers.BaseTimer;
+import de.hype.hypenotify.tools.timers.TimerWrapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,11 +54,10 @@ public class ServerUtils {
         }
     }
 
-    public static void checkTimersValidity(TimerService.SmartTimer smartTimer, Core core) {
+    public static void checkTimersValidity(TimerWrapper timer, Core core) {
         try {
-            URL url = new URL(URL + "checkTimer?id="
-                    + smartTimer.id + "&apiKey=" + core.userAPIKey()
-                    + "&userId=" + core.userId());
+            String finalURL = "%scheckTimer?id=%s&apiKey=%s&userId=%d".formatted(URL, timer.getServerId(), core.userAPIKey(), core.userId());
+            URL url = new URL(finalURL);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
@@ -69,10 +69,9 @@ public class ServerUtils {
                 in.close();
                 boolean valid = json.get("valid").getAsBoolean();
                 if (!valid) {
-                    smartTimer.active = false;
-                    smartTimer.cancel();
+                    timer.deactivate();
                     if (json.has("replacementTimer")) {
-                        smartTimer.replaceTimer(json.get("replacementTimer"));
+                        timer.replaceTimer(json.get("replacementTimer"));
                     }
                 }
             }
@@ -82,8 +81,12 @@ public class ServerUtils {
     }
 
 
-    public static List<TimerService.SmartTimer> getTimers(MiniCore core) {
+    public static List<BaseTimer> getServerTimers(MiniCore core) {
         //TODO implement
         return List.of();
+    }
+
+    public static void uploadTimer(MiniCore core, BaseTimer baseTimer) {
+
     }
 }

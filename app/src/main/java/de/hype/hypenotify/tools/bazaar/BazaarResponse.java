@@ -14,10 +14,10 @@ public class BazaarResponse {
     }
 
     public Instant getLastUpdated() {
-        return Instant.ofEpochSecond(lastUpdated);
+        return Instant.ofEpochMilli(lastUpdated);
     }
 
     public boolean isOlderThan(Duration maxAge){
-        return Instant.now().getEpochSecond() - lastUpdated > maxAge.getSeconds();
+        return Instant.now().toEpochMilli() - lastUpdated > maxAge.getSeconds();
     }
 }

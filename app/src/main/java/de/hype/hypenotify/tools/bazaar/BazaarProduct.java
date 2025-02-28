@@ -31,13 +31,17 @@ public class BazaarProduct {
      * @return The best price for the given offer type, taxed.
      */
     public double getBestPriceTaxed(@NotNull OfferType type) {
+        return getBestPrice(type) * (PrivateConfig.BAZAAR_TAX_RATE + 1);
+    }
+
+    public double getBestPrice(@NotNull OfferType type) {
         double price = 0D;
         if (type == OfferType.INSTANT_BUY) {
             price = quickStatus.buyPrice;
         } else if (type == OfferType.INSTANT_SELL) {
             price = quickStatus.sellPrice;
         }
-        return price * (PrivateConfig.BAZAAR_TAX_RATE + 1);
+        return price;
     }
 
     public String getProductId() {
@@ -68,8 +72,9 @@ public class BazaarProduct {
     }
 
     public String getDisplayName(){
-        if (!productId.contains(":")) return productId.toLowerCase(Locale.US);
-        return SBCollections.getNameFromID(productId);
+        String name = getProductId();
+        if (!name.contains(":")) return name.replace("_", " ").toLowerCase(Locale.US);
+        return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);
     }
 }
 

@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts.autodetection;
+package de.hype.hypenotify.screen;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;

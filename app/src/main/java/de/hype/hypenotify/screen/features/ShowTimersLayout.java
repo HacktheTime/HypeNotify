@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts.autodetection;
+package de.hype.hypenotify.screen.features;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;

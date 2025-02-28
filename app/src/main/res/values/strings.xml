@@ -28,4 +28,9 @@
         other Apps (Needed for Timers to work so we can open screens for it ANYWHERE. Including the locked Screen!)\n\n
         "
     </string>
+    <string name="add_new_bazaar_tracker">Add New Tracker</string>
+    <string name="current_bazaar_trackers">Current Trackers</string>
+    <string name="enter_bazaar_item_to_track_id">Enter Item Name. (If you cant find it try the Item Id)</string>
+    <string name="done">Done</string>
+    <string name="edit_bazaar_item_tracker">Edit Tracker</string>
 </resources>

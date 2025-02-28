@@ -9,15 +9,20 @@ import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.layouts.autodetection.TimerAlarmScreen;
+import de.hype.hypenotify.screen.TimerAlarmScreen;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
-import de.hype.hypenotify.tools.timers.TimerService;
+import de.hype.hypenotify.tools.timers.TimerWrapper;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.BATTERY_SERVICE;
 import static de.hype.hypenotify.core.IntentBuilder.DEFAULT_CREATE_NEW;
@@ -30,16 +35,24 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
             context.setShowWhenLocked(true);
             context.setTurnScreenOn(true);
             NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
-            int timerId = intent.getIntExtra("timerId", 0);
-            if (timerId == 0) {
+            String uuidString = intent.getStringExtra("timerId");
+            if (uuidString == null) {
                 notificationBuilder.send();
                 return;
             }
-            TimerService.SmartTimer timer = core.timerService().getTimerById(timerId);
-            if (timer != null && timer.active) {
-                TimerAlarmScreen timerAlarmScreen = new TimerAlarmScreen(core, timer);
-                context.runOnUiThread(() -> {
-                    context.setContentViewNoOverride(timerAlarmScreen);
+            UUID timerId = UUID.fromString(uuidString);
+            TimerWrapper timer = core.timerService().getTimerByClientId(timerId);
+            if (timer != null) {
+                Duration between = Duration.between(Instant.now(), timer.getTime());
+                ScheduledFuture<?> alarm = core.executionService().schedule(() -> {
+                    TimerAlarmScreen timerAlarmScreen = new TimerAlarmScreen(core, timer);
+                    context.runOnUiThread(() -> {
+                        context.setContentViewNoOverride(timerAlarmScreen);
+                    });
+                }, between.getSeconds(), TimeUnit.SECONDS);
+                core.executionService().execute(() -> {
+                    boolean shouldRing = timer.shouldRing(core);
+                    if (shouldRing) alarm.cancel(false);
                 });
             }
         }

@@ -1,6 +1,8 @@
 package de.hype.hypenotify;
 
 import de.hype.hypenotify.core.interfaces.MiniCore;
+import de.hype.hypenotify.tools.timers.AlwaysRingingTimer;
+import de.hype.hypenotify.tools.timers.TimerService;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,10 +34,11 @@ public class DebugThread extends Thread {
         }
     }
 
-    public void test(){
+    public void test() {
         try {
-            core.timerService().addAlarm(Instant.now().plus(5, ChronoUnit.SECONDS), "test", () -> true);
-        }catch (Throwable e){
+            TimerService service = core.timerService();
+            service.createNewTimer((id) -> new AlwaysRingingTimer(id, Instant.now().plus(5, ChronoUnit.SECONDS), "Test"));
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }

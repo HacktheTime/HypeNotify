@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts;
+package de.hype.hypenotify.screen;
 
 import android.content.Context;
 import android.text.InputType;
@@ -10,10 +10,9 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
+import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.Constants;
 import de.hype.hypenotify.core.interfaces.Core;
-import de.hype.hypenotify.R;
-
 
 import java.util.concurrent.CountDownLatch;
 

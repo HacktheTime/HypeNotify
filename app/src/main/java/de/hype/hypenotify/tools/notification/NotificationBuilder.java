@@ -16,6 +16,7 @@ public class NotificationBuilder {
         this.context = context;
         builder = new NotificationCompat.Builder(context, channel.channelId);
         builder.setContentText(message);
+        builder.setStyle(new NotificationCompat.BigTextStyle().bigText(message));
         builder.setContentTitle(title);
         builder.setPriority(importance.getInt());
         builder.setSmallIcon(R.mipmap.icon);

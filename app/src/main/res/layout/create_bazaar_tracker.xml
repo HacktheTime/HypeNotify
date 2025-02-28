@@ -1,0 +1,38 @@
+<!-- res/layout/activity_create_tracker.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:padding="16dp">
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_new_bazaar_tracker"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:paddingBottom="8dp"/>
+
+    <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/enter_bazaar_item_to_track_id"
+            android:id="@+id/item_id_input"
+            android:inputType="text"/>
+
+    <ListView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/item_suggestions"
+            android:visibility="gone"/>
+
+    <!-- Add other settings for the tracker here -->
+
+    <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add_new_bazaar_tracker"
+            android:id="@+id/create_tracker_button"
+            android:onClick="onCreateTrackerClick"/>
+</LinearLayout>

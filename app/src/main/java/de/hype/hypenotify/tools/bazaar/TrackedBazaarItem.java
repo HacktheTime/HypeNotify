@@ -1,9 +1,11 @@
 package de.hype.hypenotify.tools.bazaar;
 
+import de.hype.hypenotify.skyblockconstants.SBCollections;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class TrackedBazaarItem {
     public final String itemId;
@@ -14,7 +16,7 @@ public class TrackedBazaarItem {
      */
     private boolean notifyGoodChanges = true;
     private boolean informAboutOrderAttachments = false;
-
+    private boolean enabled = true;
     public static final NumberFormat amountFormat;
     public static final NumberFormat priceFormat;
 
@@ -48,6 +50,12 @@ public class TrackedBazaarItem {
         return new TrackChanges(lastTime, newProduct);
     }
 
+    public String getDisplayName() {
+        String name = itemId;
+        if (!name.contains(":")) return name.replace("_", " ").toLowerCase(Locale.US);
+        return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);
+    }
+
     public class TrackChanges {
         private final BazaarProduct oldProduct, newProduct;
         private String notificationText;
@@ -60,7 +68,7 @@ public class TrackedBazaarItem {
 
         private void proccessChanges() {
             StringBuilder notificationTextBuilder = new StringBuilder();
-            double priceChange = newProduct.getBestPriceTaxed(trackType) - oldProduct.getBestPriceTaxed(trackType);
+            double priceChange = newProduct.getBestPrice(trackType) - oldProduct.getBestPrice(trackType);
             if (trackType == BazaarProduct.OfferType.INSTANT_BUY) {
                 if (priceChange > 0) {
                     if (notifyGoodChanges) {

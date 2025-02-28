@@ -1,4 +1,4 @@
-package de.hype.hypenotify.layouts.autodetection;
+package de.hype.hypenotify.screen.features.bazaar;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -7,15 +7,13 @@ import android.view.LayoutInflater;
 import android.widget.*;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.layouts.autodetection.Layout;
 import de.hype.hypenotify.tools.bazaar.BazaarProduct;
 import de.hype.hypenotify.tools.bazaar.BazaarResponse;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
-import de.hype.hypenotify.tools.notification.NotificationBuilder;
-import de.hype.hypenotify.tools.notification.NotificationChannels;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
 
 @Layout(name = "Bazaar Order Tracker")
 
-public class BazaarOrderTrackerService extends LinearLayout {
+public class BazaarOrdersScreen extends LinearLayout {
     private final Core core;
     private final Context context;
     private Integer checkWifiStateCounter = 0;
@@ -35,37 +33,21 @@ public class BazaarOrderTrackerService extends LinearLayout {
     private ProgressBar progressBar;
     private ObjectAnimator progressBarAnimation;
     private BazaarService bazaarService;
-    /**
-     * DO NOT MODIFY THIS LIST DIRECTLY. Use the {@link #addTrackedItem(TrackedBazaarItem)} and {@link #removeTrackedItem(TrackedBazaarItem)} methods instead!
-     */
-    private List<TrackedBazaarItem> toTrackItems = new ArrayList<>();
-    private Map<String, TextView> trackedItemLabels = new HashMap<>();
-    private Map<String, TableLayout> trackedItemTables = new HashMap<>();
+    private Map<TrackedBazaarItem, TextView> trackedItemLabels = new HashMap<>();
+    private Map<TrackedBazaarItem, TableLayout> trackedItemTables = new HashMap<>();
     private LinearLayout trackedItemsLayout;
 
-    public BazaarOrderTrackerService(Core core) {
+    public BazaarOrdersScreen(Core core) {
         super(core.context());
         this.context = core.context();
         this.core = core;
         bazaarService = core.bazaarService();
         init();
-        initItems();
-    }
-
-    /**
-     * Define the items you want to track by default here.
-     */
-    private void initItems() {
-        List<TrackedBazaarItem> addToTrack = List.of(
-                new TrackedBazaarItem("ENCHANTED_REDSTONE_LAMP", BazaarProduct.OfferType.INSTANT_BUY)
-        );
-        for (TrackedBazaarItem item : addToTrack) {
-            addTrackedItem(item);
-        }
     }
 
 
     private void init() {
+        removeAllViews();
         LayoutInflater.from(context).inflate(R.layout.skyblock_enchanted_redstone_lamps_notifier, this, true);
         toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
         checkNowButton = findViewById(R.id.check_now_button);
@@ -75,7 +57,7 @@ public class BazaarOrderTrackerService extends LinearLayout {
         toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
                 nextCheck.cancel(false);
-                progressBarAnimation.cancel();
+                progressBarAnimation.pause();
             } else {
                 checkPrice();
                 registerNextCheck();
@@ -99,44 +81,11 @@ public class BazaarOrderTrackerService extends LinearLayout {
         });
     }
 
-    public void addTrackedItem(TrackedBazaarItem item) {
-        TableLayout tableLayout = new TableLayout(context);
-        tableLayout.setStretchAllColumns(true);
-        LinearLayout.LayoutParams tableLayoutParams = new LinearLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT, // Change to MATCH_PARENT
-                LayoutParams.WRAP_CONTENT
-        );
-        tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
-        tableLayout.setLayoutParams(tableLayoutParams);
-        TextView itemLabel = new TextView(context);
-        trackedItemTables.put(item.itemId, tableLayout);
-        trackedItemLabels.put(item.itemId, itemLabel);
-        trackedItemsLayout.addView(itemLabel);
-        trackedItemsLayout.addView(tableLayout);
-        toTrackItems.add(item);
-    }
-
-    public void removeTrackedItem(TrackedBazaarItem item) {
-        TableLayout tableLayout = trackedItemTables.get(item.itemId);
-        TextView itemLabel = trackedItemLabels.get(item.itemId);
-        trackedItemsLayout.removeView(tableLayout);
-        trackedItemsLayout.removeView(itemLabel);
-        toTrackItems.remove(item);
-    }
-
     private void registerNextCheck() {
         int timeBetweenChecks = 15;
         startProgressBarCountdown(timeBetweenChecks);
         nextCheck = core.executionService().schedule(() -> {
             checkPrice();
-            checkWifiStateCounter++;
-            if (checkWifiStateCounter >= 40) {
-                if (!core.isInHomeNetwork()) {
-                    NotificationBuilder notificationBuilder = new NotificationBuilder(core, "Bazaar Price Checker", "You are not in the home network. Tracking stopped.", NotificationChannels.BAZAAR_TRACKER);
-                    notificationBuilder.send();
-                    return;
-                }
-            }
             if (toggleTrackingButton.isChecked()) registerNextCheck();
         }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
     }
@@ -162,35 +111,52 @@ public class BazaarOrderTrackerService extends LinearLayout {
 
     private void checkPrice() {
         try {
-            BazaarResponse response = bazaarService.getMaxAgeResponse(Duration.ofSeconds(15));
+            BazaarResponse response = bazaarService.getMaxAgeResponse(Duration.ofSeconds(19));
             Map<String, BazaarProduct> items = response.getProducts();
-            Map<String, List<BazaarProduct.Offer>> displayTables = new HashMap<>();
-            for (TrackedBazaarItem toTrackItem : toTrackItems) {
+            Map<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new HashMap<>();
+            for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
                 BazaarProduct product = items.get(toTrackItem.itemId);
                 if (product == null) {
                     Toast.makeText(context, "Item not found: %s. Skipping it".formatted(toTrackItem.itemId), Toast.LENGTH_SHORT).show();
                     continue;
                 }
                 TrackedBazaarItem.TrackChanges wrappedChanges = toTrackItem.checkForChanges(product);
-                List<BazaarProduct.Offer> tableOrders = wrappedChanges.getOfferTableValues();
-                if (tableOrders != null) displayTables.put(product.getDisplayName(), tableOrders);
-                String notificationText = wrappedChanges.getNotificationText();
-                if (notificationText != null) {
-                    NotificationBuilder notificationBuilder = new NotificationBuilder(core, "Bazaar Price Checker", notificationText, NotificationChannels.BAZAAR_TRACKER);
-                    notificationBuilder.send();
-                }
+                List<BazaarProduct.Offer> tableOrders;
+                if (wrappedChanges == null) {
+                    tableOrders = product.getOfferType(toTrackItem.trackType);
+                } else
+                    tableOrders = wrappedChanges.getOfferTableValues();
+                if (tableOrders != null) displayTables.put(toTrackItem, tableOrders);
             }
             post(() -> {
-                for (Map.Entry<String, List<BazaarProduct.Offer>> stringListEntry : displayTables.entrySet()) {
-                    String displayName = stringListEntry.getKey();
-                    List<BazaarProduct.Offer> toDisplayOrders = stringListEntry.getValue();
-                    TextView priceLabel = trackedItemLabels.get(displayName);
-                    priceLabel.setText("Item: %s\n".formatted(displayName));
+                for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.entrySet()) {
+                    String displayName = responseEntry.getKey().getDisplayName();
+                    List<BazaarProduct.Offer> toDisplayOrders = responseEntry.getValue();
+
+                    TextView itemLabel = trackedItemLabels.get(responseEntry.getKey());
+                    if (itemLabel == null) {
+                        itemLabel = new TextView(context);
+                        trackedItemLabels.put(responseEntry.getKey(), itemLabel);
+                        trackedItemsLayout.addView(itemLabel);
+                    }
+                    itemLabel.setText("Item: %s\n".formatted(displayName));
                     if (toDisplayOrders.isEmpty()) {
-                        priceLabel.append("No orders found");
+                        itemLabel.append("No orders found");
                         continue;
                     }
-                    TableLayout orderTable = trackedItemTables.get(displayName);
+                    TableLayout orderTable = trackedItemTables.get(responseEntry.getKey());
+                    if (orderTable == null) {
+                        TableLayout tableLayout = new TableLayout(context);
+                        tableLayout.setStretchAllColumns(true);
+                        LinearLayout.LayoutParams tableLayoutParams = new LinearLayout.LayoutParams(
+                                LayoutParams.WRAP_CONTENT, // Change to MATCH_PARENT
+                                LayoutParams.WRAP_CONTENT
+                        );
+                        tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
+                        tableLayout.setLayoutParams(tableLayoutParams);
+                        trackedItemTables.put(responseEntry.getKey(), tableLayout);
+                        trackedItemsLayout.addView(tableLayout);
+                    }
                     orderTable.removeAllViews();
 
                     TableRow headerRow = new TableRow(context);
