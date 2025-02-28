@@ -30,10 +30,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.serviceConnection = getServiceConnection();
-        DynamicIntents.startBackgroundService(this, serviceConnection);
+        DynamicIntents.startBackgroundService(this);
         Thread newMainThread = new Thread(() -> {
             try {
-                backgroundService = this.serviceConnection.getService(BackgroundService.class).get();
+                backgroundService = BackgroundService.getInstanceBlocking();
                 core = backgroundService.getCore(this);
             } catch (Exception e) {
                 throw new RuntimeException(e);

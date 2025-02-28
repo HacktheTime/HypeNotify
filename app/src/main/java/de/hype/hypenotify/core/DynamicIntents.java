@@ -10,12 +10,10 @@ import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.screen.TimerAlarmScreen;
-import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
 import de.hype.hypenotify.tools.timers.TimerWrapper;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -65,7 +63,7 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
     BATTERY_REMINDER_CHECK("battery_reminder_check") {
         @Override
         public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
-            if (core.isInHomeNetwork() && isBatteryLow(context)) {
+            if (core.isInFreeNetwork() && isBatteryLow(context)) {
                 notifyUser(context);
             }
         }
@@ -108,14 +106,10 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
 
     /**
      * @param context    the current context
-     * @param connection OPTIONAL: the service connection to use
      */
-    public static void startBackgroundService(Context context, @Nullable HypeNotifyServiceConnection connection) {
+    public static void startBackgroundService(Context context) {
         Intent serviceIntent = new Intent(context, BackgroundService.class);
         context.startService(serviceIntent);
-        if (connection != null) {
-            context.bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE);
-        }
     }
 
     @Override

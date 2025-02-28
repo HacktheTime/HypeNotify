@@ -25,7 +25,7 @@ public interface MiniCore {
 
     BazaarService bazaarService();
 
-    boolean isInHomeNetwork();
+    boolean isInFreeNetwork();
 
     ExecutionService executionService();
 

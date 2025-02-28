@@ -48,7 +48,7 @@ public class BazaarOrdersScreen extends LinearLayout {
 
     private void init() {
         removeAllViews();
-        LayoutInflater.from(context).inflate(R.layout.skyblock_enchanted_redstone_lamps_notifier, this, true);
+        LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true);
         trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
         TextView loading = new TextView(context);
         loading.setText(R.string.loading);
@@ -83,6 +83,7 @@ public class BazaarOrdersScreen extends LinearLayout {
         core.executionService().execute(() -> {
             checkPrice();
             registerNextCheck();
+            post(() -> trackedItemsLayout.removeView(loading));
         });
     }
 
@@ -125,13 +126,7 @@ public class BazaarOrdersScreen extends LinearLayout {
                     Toast.makeText(context, "Item not found: %s. Skipping it".formatted(toTrackItem.itemId), Toast.LENGTH_SHORT).show();
                     continue;
                 }
-                TrackedBazaarItem.TrackChanges wrappedChanges = toTrackItem.checkForChanges(product);
-                List<BazaarProduct.Offer> tableOrders;
-                if (wrappedChanges == null) {
-                    tableOrders = product.getOfferType(toTrackItem.trackType);
-                } else
-                    tableOrders = wrappedChanges.getOfferTableValues();
-                if (tableOrders != null) displayTables.put(toTrackItem, tableOrders);
+                displayTables.put(toTrackItem, product.getOfferType(toTrackItem.trackType));
             }
             post(() -> {
                 for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.entrySet()) {
@@ -144,7 +139,7 @@ public class BazaarOrdersScreen extends LinearLayout {
                         trackedItemLabels.put(responseEntry.getKey(), itemLabel);
                         trackedItemsLayout.addView(itemLabel);
                     }
-                    itemLabel.setText("Item: %s\n".formatted(displayName));
+                    itemLabel.setText("Item: %s (%s)\n".formatted(displayName, responseEntry.getKey().trackType));
                     if (toDisplayOrders.isEmpty()) {
                         itemLabel.append("No orders found");
                         continue;

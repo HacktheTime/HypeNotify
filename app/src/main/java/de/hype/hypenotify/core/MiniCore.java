@@ -16,7 +16,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
-import de.hype.hypenotify.PrivateConfig;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.timers.TimerService;
 
@@ -55,7 +54,8 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
     }
 
     public WifiInfo getCurrentWifiNetwork() {
-        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager = context.getSystemService(ConnectivityManager.class);
+        ;
         Network currentNetwork = manager.getActiveNetwork();
         if (currentNetwork == null) return null;
         NetworkCapabilities networkCapabilities = manager.getNetworkCapabilities(currentNetwork);
@@ -65,8 +65,13 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         return null;
     }
 
-    public boolean isInHomeNetwork() {
-        return PrivateConfig.isHomeNetwork(getCurrentWifiNetwork());
+    public boolean isInFreeNetwork() {
+        WifiInfo wifiInfo = getCurrentWifiNetwork();
+        if (wifiInfo == null) return false;
+        if (wifiInfo.isRestricted()) {
+            return false;
+        }
+        return true;
     }
 
     public void scheduleDailyBatteryCheck() {

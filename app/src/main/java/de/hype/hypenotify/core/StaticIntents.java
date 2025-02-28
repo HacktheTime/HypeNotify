@@ -51,7 +51,7 @@ public enum StaticIntents implements de.hype.hypenotify.core.Intent {
     BATTERY_REMINDER_CHECK {
         @Override
         public void handleIntentInternal(Intent intent, MiniCore core, Context context) {
-            if (core.isInHomeNetwork() && isBatteryLow(context)) {
+            if (core.isInFreeNetwork() && isBatteryLow(context)) {
                 notifyUser(context);
             }
         }

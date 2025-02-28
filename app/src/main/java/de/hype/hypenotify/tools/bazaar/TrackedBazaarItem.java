@@ -47,7 +47,7 @@ public class TrackedBazaarItem {
             lastTime = newProduct;
             return null;
         }
-        return new TrackChanges(lastTime, newProduct);
+        return new TrackChanges(getPreviousStateAndSwap(newProduct), newProduct);
     }
 
     public String getDisplayName() {
@@ -77,6 +77,7 @@ public class TrackedBazaarItem {
         private void proccessChanges() {
             StringBuilder notificationTextBuilder = new StringBuilder();
             double priceChange = newProduct.getBestPrice(trackType) - oldProduct.getBestPrice(trackType);
+            if (Math.abs(priceChange) < 0.04) priceChange = 0;
             if (trackType == BazaarProduct.OfferType.INSTANT_BUY) {
                 if (priceChange > 0) {
                     if (notifyGoodChanges) {

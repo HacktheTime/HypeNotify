@@ -60,8 +60,8 @@ public class CoreImpl implements Core {
     }
 
     @Override
-    public boolean isInHomeNetwork() {
-        return miniCore.isInHomeNetwork();
+    public boolean isInFreeNetwork() {
+        return miniCore.isInFreeNetwork();
     }
 
     @Override

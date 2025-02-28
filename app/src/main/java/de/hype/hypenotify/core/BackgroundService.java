@@ -12,6 +12,7 @@ import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.tools.notification.Notification;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
+import org.jetbrains.annotations.Blocking;
 
 import java.util.function.Consumer;
 
@@ -20,6 +21,21 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
     public static BackgroundService instance;
     private static boolean isRunning = false;
     private MiniCore core;
+
+    /**
+     * Make sure you start the Service before calling this method!
+     */
+    @Blocking
+    public static BackgroundService getInstanceBlocking() {
+        while (instance == null) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return instance;
+    }
 
     @Override
     public void onCreate() {
@@ -92,13 +108,7 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
      */
     public static void executeWithBackgroundService(Consumer<BackgroundService> consumer) {
         Thread thread = new Thread(() -> {
-            while (instance == null) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            BackgroundService instance = getInstanceBlocking();
             consumer.accept(instance);
         });
         thread.start();

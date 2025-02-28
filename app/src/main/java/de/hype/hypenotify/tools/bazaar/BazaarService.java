@@ -102,7 +102,7 @@ public class BazaarService {
                 checkPrice();
                 checkWifiStateCounter++;
                 if (checkWifiStateCounter >= 40) {
-                    if (!core.isInHomeNetwork()) {
+                    if (!core.isInFreeNetwork()) {
                         NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", "You are not in the home network. Tracking stopped.", NotificationChannels.BAZAAR_TRACKER);
                         notificationBuilder.send();
                         return;
