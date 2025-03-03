@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import de.hype.hypenotify.PrivateConfig;
 import de.hype.hypenotify.skyblockconstants.SBCollections;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,18 +31,21 @@ public class BazaarProduct {
      * @param type The type of offer you want to get the best price for.
      * @return The best price for the given offer type, taxed.
      */
-    public double getBestPriceTaxed(@NotNull OfferType type) {
-        return getBestPrice(type) * (PrivateConfig.BAZAAR_TAX_RATE + 1);
+    public Double getBestPriceTaxed(@NotNull OfferType type) {
+        Double price = getBestPrice(type);
+        if (price == null) return null;
+        return price * (PrivateConfig.BAZAAR_TAX_RATE + 1);
     }
 
-    public double getBestPrice(@NotNull OfferType type) {
-        double price = 0D;
-        if (type == OfferType.INSTANT_BUY) {
-            price = quickStatus.buyPrice;
-        } else if (type == OfferType.INSTANT_SELL) {
-            price = quickStatus.sellPrice;
-        }
-        return price;
+    /**
+     * @param type The type of offer you want to get the best price for.
+     * @return The best price for the given offer type. Null if no order.
+     */
+    @Nullable
+    public Double getBestPrice(@NotNull OfferType type) {
+        List<Offer> offers = getOfferType(type);
+        if (offers == null || offers.isEmpty()) return null;
+        return offers.getFirst().pricePerUnit;
     }
 
     public String getProductId() {
@@ -52,10 +56,15 @@ public class BazaarProduct {
         return quickStatus;
     }
 
+    /**
+     * Sell Price and Buy Price are Deprecated because they use a double value which is causing the stuff to be inaccurate. Use the {@link #getBestPrice(OfferType)} method instead.
+     */
     public record QuickStatus(
-            double sellPrice,
+            @Deprecated
+            Double sellPrice,
             Long sellOrders,
-            double buyPrice,
+            @Deprecated
+            Double buyPrice,
             Long buyOrders,
             Long buyMovingWeek,
             Long sellMovingWeek,
@@ -63,7 +72,7 @@ public class BazaarProduct {
             Long sellVolume) {
     }
 
-    public record Offer(int amount, double pricePerUnit, int orders) {
+    public record Offer(int amount, Double pricePerUnit, int orders) {
     }
 
     public enum OfferType {
@@ -71,7 +80,7 @@ public class BazaarProduct {
         INSTANT_BUY
     }
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         String name = getProductId();
         if (!name.contains(":")) return name.replace("_", " ").toLowerCase(Locale.US);
         return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);

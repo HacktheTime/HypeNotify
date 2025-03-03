@@ -36,18 +36,14 @@ public class TrackedBazaarItem {
         return 3;
     }
 
-    public BazaarProduct getPreviousStateAndSwap(BazaarProduct product) {
-        BazaarProduct lastTime = this.lastTime;
-        this.lastTime = product;
-        return lastTime;
-    }
-
     public TrackChanges checkForChanges(BazaarProduct newProduct) {
         if (lastTime == null) {
             lastTime = newProduct;
             return null;
         }
-        return new TrackChanges(getPreviousStateAndSwap(newProduct), newProduct);
+        BazaarProduct oldProduct = lastTime;
+        lastTime = newProduct;
+        return new TrackChanges(oldProduct, newProduct);
     }
 
     public String getDisplayName() {

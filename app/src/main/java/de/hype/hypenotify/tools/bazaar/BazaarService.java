@@ -1,6 +1,7 @@
 package de.hype.hypenotify.tools.bazaar;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.hype.hypenotify.core.interfaces.MiniCore;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 public class BazaarService {
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder().registerTypeAdapter(Double.class, new PriceDoubleAdapter()).create();
     private static final String API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
     private final MiniCore core;
     private static BazaarResponse lastResponse;
