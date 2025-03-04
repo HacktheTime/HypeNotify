@@ -14,6 +14,7 @@ import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -119,7 +120,7 @@ public class BazaarOrdersScreen extends LinearLayout {
         try {
             BazaarResponse response = bazaarService.getMaxAgeResponse();
             Map<String, BazaarProduct> items = response.getProducts();
-            Map<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new HashMap<>();
+            LinkedHashMap<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new LinkedHashMap<>();
             for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
                 BazaarProduct product = items.get(toTrackItem.itemId);
                 if (product == null) {
@@ -129,7 +130,8 @@ public class BazaarOrdersScreen extends LinearLayout {
                 displayTables.put(toTrackItem, product.getOfferType(toTrackItem.trackType));
             }
             post(() -> {
-                for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.entrySet()) {
+                trackedItemsLayout.removeAllViews();
+                for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.sequencedEntrySet()) {
                     String displayName = responseEntry.getKey().getDisplayName();
                     List<BazaarProduct.Offer> toDisplayOrders = responseEntry.getValue();
 
@@ -137,8 +139,9 @@ public class BazaarOrdersScreen extends LinearLayout {
                     if (itemLabel == null) {
                         itemLabel = new TextView(context);
                         trackedItemLabels.put(responseEntry.getKey(), itemLabel);
-                        trackedItemsLayout.addView(itemLabel);
+                        itemLabel.setGravity(Gravity.CENTER);
                     }
+                    trackedItemsLayout.addView(itemLabel);
                     itemLabel.setText("Item: %s (%s)\n".formatted(displayName, responseEntry.getKey().trackType));
                     if (toDisplayOrders.isEmpty()) {
                         itemLabel.append("No orders found");
@@ -155,8 +158,8 @@ public class BazaarOrdersScreen extends LinearLayout {
                         tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
                         orderTable.setLayoutParams(tableLayoutParams);
                         trackedItemTables.put(responseEntry.getKey(), orderTable);
-                        trackedItemsLayout.addView(orderTable);
                     }
+                    trackedItemsLayout.addView(orderTable);
                     orderTable.removeAllViews();
 
                     TableRow headerRow = new TableRow(context);
