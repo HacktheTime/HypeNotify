@@ -16,6 +16,8 @@ public class TrackedBazaarItem {
      */
     private boolean notifyGoodChanges = true;
     private boolean informAboutOrderAttachments = false;
+    private boolean trackPriceChanges = true;
+    private boolean showInOrderScreen = true;
     private boolean enabled = true;
     public static final NumberFormat amountFormat;
     public static final NumberFormat priceFormat;
@@ -25,6 +27,14 @@ public class TrackedBazaarItem {
         priceFormat = NumberFormat.getInstance(java.util.Locale.US);
         priceFormat.setMinimumFractionDigits(1);
         priceFormat.setMaximumFractionDigits(1);
+    }
+
+    public boolean showInOrderScreen() {
+        return enabled && showInOrderScreen;
+    }
+
+    public boolean trackPriceChanges() {
+        return enabled && trackPriceChanges;
     }
 
     public TrackedBazaarItem(String itemId, BazaarProduct.OfferType trackType) {
@@ -48,8 +58,8 @@ public class TrackedBazaarItem {
 
     public String getDisplayName() {
         String name = itemId;
-        if (!name.contains(":")) return name.replace("_", " ").toLowerCase(Locale.US);
-        return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);
+        if (!name.contains(":")) return name.replace("_", " ").toUpperCase(Locale.US);
+        return SBCollections.getNameFromID(name).replace("_", " ").toUpperCase(Locale.US);
     }
 
     public boolean isEnabled() {

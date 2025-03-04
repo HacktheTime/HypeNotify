@@ -1,5 +1,6 @@
 package de.hype.hypenotify.tools.bazaar;
 
+import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.hype.hypenotify.core.interfaces.MiniCore;
@@ -7,10 +8,13 @@ import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationVisibility;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,15 +66,25 @@ public class BazaarService {
     }
 
     private static void fetchBazaar() throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
-        connection.setRequestMethod("GET");
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-        connection.getResponseCode();
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            connection.getResponseCode();
 
-        InputStreamReader reader =
-                new InputStreamReader(connection.getInputStream());
-        BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
+            InputStreamReader reader =
+                    new InputStreamReader(connection.getInputStream());
+            BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
+        } catch (SocketTimeoutException e) {
+            Log.i("BazaarService", "Hypixel BZ Connection Timeout");
+        } catch (UnknownHostException e) {
+            Log.i("BazaarService", "Hypixel BZ Connection Unknown Host");
+        } catch (EOFException e) {
+            Log.i("BazaarService", "Hypixel BZ Connection EOF");
+        } catch (IOException e) {
+            Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.getMessage());
+        }
     }
 
 
@@ -118,6 +132,7 @@ public class BazaarService {
                 BazaarResponse response = bazaarService.getMaxAgeResponse();
                 Map<String, BazaarProduct> items = response.getProducts();
                 for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
+                    if (!toTrackItem.trackPriceChanges()) continue;
                     BazaarProduct product = items.get(toTrackItem.itemId);
                     if (product == null) {
                         continue;

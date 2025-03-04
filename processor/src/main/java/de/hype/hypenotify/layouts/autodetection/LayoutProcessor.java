@@ -1,6 +1,7 @@
 package de.hype.hypenotify.layouts.autodetection;
 
 import com.google.auto.service.AutoService;
+
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -25,13 +26,19 @@ public class LayoutProcessor extends AbstractProcessor {
         }
 
         StringBuilder builder = new StringBuilder();
-        builder.append("package de.hype.hypenotify.layouts.autodetection;\n\n");
-        builder.append("import java.util.HashMap;\n");
-        builder.append("import java.util.Map;\n");
-        builder.append("import de.hype.hypenotify.layouts.autodetection.Layout;\n\n");
-        builder.append("public class LayoutRegistry {\n");
-        builder.append("    private static final Map<String, Class<?>> layouts = new HashMap<>();\n\n");
-        builder.append("    static {\n");
+        builder.append("""
+                package de.hype.hypenotify.layouts.autodetection;
+                
+                import java.util.HashMap;
+                import java.util.Map;
+                import de.hype.hypenotify.layouts.autodetection.Layout;
+                import de.hype.hypenotify.screen.Screen;
+                
+                public class LayoutRegistry {
+                    private static final Map<String, Class<? extends Screen>> layouts = new HashMap<>();
+                
+                    static {
+                """);
 
         for (Element element : roundEnv.getElementsAnnotatedWith(Layout.class)) {
             String className = ((TypeElement) element).getQualifiedName().toString();
@@ -43,14 +50,18 @@ public class LayoutProcessor extends AbstractProcessor {
                     .append(".class);\n");
         }
 
-        builder.append("    }\n\n");
-        builder.append("    public static Class<?> getLayout(String name) {\n");
-        builder.append("        return layouts.get(name);\n");
-        builder.append("    }\n\n");
-        builder.append("    public static Map<String, Class<?>> getAllLayouts() {\n");
-        builder.append("        return layouts;\n");
-        builder.append("    }\n");
-        builder.append("}\n");
+        builder.append("""
+                    }
+                
+                    public static Class<? extends Screen> getLayout(String name) {
+                        return layouts.get(name);
+                    }
+                
+                    public static Map<String, Class<? extends Screen>> getAllLayouts() {
+                        return layouts;
+                    }
+                }
+                """);
 
         try {
             JavaFileObject sourceFile = processingEnv.getFiler().createSourceFile("de.hype.hypenotify.layouts.autodetection.LayoutRegistry");

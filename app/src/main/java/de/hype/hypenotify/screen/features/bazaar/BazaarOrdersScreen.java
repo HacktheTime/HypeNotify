@@ -1,13 +1,15 @@
 package de.hype.hypenotify.screen.features.bazaar;
 
 import android.animation.ObjectAnimator;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.*;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.autodetection.Layout;
+import de.hype.hypenotify.screen.Screen;
 import de.hype.hypenotify.tools.bazaar.BazaarProduct;
 import de.hype.hypenotify.tools.bazaar.BazaarResponse;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
@@ -22,47 +24,53 @@ import java.util.concurrent.ScheduledFuture;
 import static de.hype.hypenotify.tools.bazaar.BazaarService.CHECK_INTERVAL;
 import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
 
+@SuppressLint("ViewConstructor")
 @Layout(name = "Bazaar Order Tracker")
 
-public class BazaarOrdersScreen extends LinearLayout {
-    private final Core core;
-    private final Context context;
-    private Integer checkWifiStateCounter = 0;
+public class BazaarOrdersScreen extends Screen {
     private Switch toggleTrackingButton;
     private Button checkNowButton;
+    private Button editTrackersButton;
     private ScheduledFuture<?> nextCheck;
     private ProgressBar progressBar;
     private ObjectAnimator progressBarAnimation;
     private BazaarService bazaarService;
     private Map<TrackedBazaarItem, TextView> trackedItemLabels = new HashMap<>();
     private Map<TrackedBazaarItem, TableLayout> trackedItemTables = new HashMap<>();
-    private LinearLayout trackedItemsLayout;
 
-    public BazaarOrdersScreen(Core core) {
-        super(core.context());
-        this.context = core.context();
-        this.core = core;
+    public BazaarOrdersScreen(Core core, View parent) {
+        super(core, parent);
+        setOrientation(VERTICAL);
+
+        // Keep the back button (already added by super class)
+
+        // Inflate the bazaar layout into a container view, not directly into this
+        View contentView = LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, null, false);
+        addView(contentView);
+
+        // Get references
         bazaarService = core.bazaarService();
-        init();
-    }
+        toggleTrackingButton = contentView.findViewById(R.id.toggle_tracking_button);
+        checkNowButton = contentView.findViewById(R.id.check_now_button);
+        progressBar = contentView.findViewById(R.id.next_bazaar_update);
+        editTrackersButton = contentView.findViewById(R.id.bazaar_edit_trackers);
+        dynamicScreen = contentView.findViewById(R.id.bazaar_item_layout);
 
-
-    private void init() {
-        removeAllViews();
-        LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true);
-        trackedItemsLayout = findViewById(R.id.bazaar_item_layout);
+        // Add loading indicator
         TextView loading = new TextView(context);
         loading.setText(R.string.loading);
         loading.setGravity(Gravity.CENTER);
-        trackedItemsLayout.addView(loading);
-        toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
-        checkNowButton = findViewById(R.id.check_now_button);
-        progressBar = findViewById(R.id.next_bazaar_update);
+        dynamicScreen.addView(loading);
 
+        // Set up listeners
         toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {
-                nextCheck.cancel(false);
-                progressBarAnimation.pause();
+                if (nextCheck != null) {
+                    nextCheck.cancel(false);
+                }
+                if (progressBarAnimation != null) {
+                    progressBarAnimation.pause();
+                }
                 progressBar.setProgress(0);
             } else {
                 checkPrice();
@@ -73,20 +81,37 @@ public class BazaarOrdersScreen extends LinearLayout {
         checkNowButton.setOnClickListener(v -> {
             checkNowButton.setText(R.string.checking);
             checkNowButton.requestLayout();
-            checkNowButton.invalidate();
+            nextCheck.cancel(false);
             checkPrice();
+            registerNextCheck();
             checkNowButton.setText(R.string.check_now);
             checkNowButton.requestLayout();
-            checkNowButton.invalidate();
+        });
+
+        editTrackersButton.setOnClickListener(v -> {
+            context.setContentView(new CurrentTrackersScreen(core, this));
         });
 
         progressBar.setTooltipText("Time until next Refresh");
+
+        // Start loading
         core.executionService().execute(() -> {
             checkPrice();
             registerNextCheck();
-            post(() -> trackedItemsLayout.removeView(loading));
+            post(() -> dynamicScreen.removeView(loading));
         });
     }
+
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
+        checkPrice();
+    }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return findViewById(R.id.bazaar_item_layout);
+    }
+
 
     private void registerNextCheck() {
         int timeBetweenChecks = CHECK_INTERVAL;
@@ -122,6 +147,7 @@ public class BazaarOrdersScreen extends LinearLayout {
             Map<String, BazaarProduct> items = response.getProducts();
             LinkedHashMap<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new LinkedHashMap<>();
             for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
+                if (!toTrackItem.showInOrderScreen()) continue;
                 BazaarProduct product = items.get(toTrackItem.itemId);
                 if (product == null) {
                     Toast.makeText(context, "Item not found: %s. Skipping it".formatted(toTrackItem.itemId), Toast.LENGTH_SHORT).show();
@@ -130,7 +156,7 @@ public class BazaarOrdersScreen extends LinearLayout {
                 displayTables.put(toTrackItem, product.getOfferType(toTrackItem.trackType));
             }
             post(() -> {
-                trackedItemsLayout.removeAllViews();
+                dynamicScreen.removeAllViews();
                 for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.sequencedEntrySet()) {
                     String displayName = responseEntry.getKey().getDisplayName();
                     List<BazaarProduct.Offer> toDisplayOrders = responseEntry.getValue();
@@ -141,7 +167,7 @@ public class BazaarOrdersScreen extends LinearLayout {
                         trackedItemLabels.put(responseEntry.getKey(), itemLabel);
                         itemLabel.setGravity(Gravity.CENTER);
                     }
-                    trackedItemsLayout.addView(itemLabel);
+                    dynamicScreen.addView(itemLabel);
                     itemLabel.setText("Item: %s (%s)\n".formatted(displayName, responseEntry.getKey().trackType));
                     if (toDisplayOrders.isEmpty()) {
                         itemLabel.append("No orders found");
@@ -159,7 +185,7 @@ public class BazaarOrdersScreen extends LinearLayout {
                         orderTable.setLayoutParams(tableLayoutParams);
                         trackedItemTables.put(responseEntry.getKey(), orderTable);
                     }
-                    trackedItemsLayout.addView(orderTable);
+                    dynamicScreen.addView(orderTable);
                     orderTable.removeAllViews();
 
                     TableRow headerRow = new TableRow(context);
@@ -190,5 +216,11 @@ public class BazaarOrdersScreen extends LinearLayout {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (nextCheck != null) nextCheck.cancel(true);
     }
 }

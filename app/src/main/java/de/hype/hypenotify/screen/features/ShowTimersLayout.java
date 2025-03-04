@@ -1,6 +1,6 @@
 package de.hype.hypenotify.screen.features;
 
-import android.content.Context;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -8,19 +8,17 @@ import android.widget.ListView;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.layouts.autodetection.Layout;
+import de.hype.hypenotify.screen.Screen;
 
 
 @Layout(name = "Timers")
-public class ShowTimersLayout extends LinearLayout {
+public class ShowTimersLayout extends Screen {
     private ListView timerListView;
     private Button checkValidityButton;
     private ArrayAdapter<String> timerAdapter;
-    private final Core core;
-    private final Context context;
-    public ShowTimersLayout(Core core) {
-        super(core.context());
-        this.core = core;
-        this.context = core.context();
+
+    public ShowTimersLayout(Core core, View parent) {
+        super(core, parent);
         timerListView = new ListView(context);
         checkValidityButton = new Button(context);
         checkValidityButton.setText(R.string.check_timers_validity);
@@ -47,6 +45,16 @@ public class ShowTimersLayout extends LinearLayout {
 //        });
 
         checkValidityButton.setOnClickListener(view -> checkTimersValidity());
+    }
+
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
+
+    }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return null;
     }
 
     private void checkTimersValidity() {

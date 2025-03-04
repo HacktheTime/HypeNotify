@@ -1,26 +1,24 @@
 package de.hype.hypenotify.screen.features.bazaar;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.widget.*;
 import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
+import de.hype.hypenotify.screen.Screen;
 import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class CurrentTrackersScreen extends LinearLayout {
-    private final Core core;
-    private final @Nullable BazaarOrdersScreen parent;
-
-    public CurrentTrackersScreen(Core core, @Nullable BazaarOrdersScreen parent) {
-        super(core.context());
-        this.core = core;
+@SuppressLint("ViewConstructor")
+class CurrentTrackersScreen extends Screen {
+    public CurrentTrackersScreen(Core core, Screen parent) {
+        super(core, parent);
         init(core.context());
-        this.parent = parent;
     }
+
 
     private void init(MainActivity context) {
         LayoutInflater.from(context).inflate(R.layout.current_bazaar_trackers_screen, this, true);
@@ -29,14 +27,12 @@ class CurrentTrackersScreen extends LinearLayout {
         addNewTrackerButton.setOnClickListener((v) -> {
             context.setContentView(new CreateTrackerScreen(core, this));
         });
-        updateView();
+        updateScreen();
         // Set up any additional logic or listeners here
     }
 
-    public void updateView() {
-        LinearLayout trackerList = findViewById(R.id.tracker_list);
-        trackerList.removeAllViews();
-
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
         List<TrackedBazaarItem> trackedItems = core.bazaarService().trackedItems;
         for (TrackedBazaarItem item : trackedItems) {
             LinearLayout trackerItemLayout = new LinearLayout(getContext());
@@ -53,7 +49,7 @@ class CurrentTrackersScreen extends LinearLayout {
             TextView itemName = new TextView(getContext());
             itemName.setText(item.getDisplayName());
             itemName.setTextSize(16);
-            LinearLayout.LayoutParams itemNameParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
+            LinearLayout.LayoutParams itemNameParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
             itemName.setLayoutParams(itemNameParams);
             itemName.setPadding(8, 0, 8, 0);
 
@@ -61,7 +57,7 @@ class CurrentTrackersScreen extends LinearLayout {
             deleteButton.setText(R.string.delete);
             deleteButton.setOnClickListener((v) -> {
                 trackedItems.remove(item);
-                updateView();
+                resetDynamicScreen();
             });
 
             trackerItemLayout.addView(enabledCheckbox);
@@ -69,28 +65,27 @@ class CurrentTrackersScreen extends LinearLayout {
             trackerItemLayout.addView(deleteButton);
 
             trackerItemLayout.setOnClickListener((v) -> {
-                core.context().setContentView(new EditTrackerScreen(core, item, this));
+                core.context().setContentView(new EditTrackerScreen(core, this, item));
             });
-
-            trackerList.addView(trackerItemLayout);
         }
+    }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return findViewById(R.id.tracker_list);
     }
 }
 
-class CreateTrackerScreen extends LinearLayout {
-    private final Core core;
-    private final @Nullable CurrentTrackersScreen parent;
-
-    public CreateTrackerScreen(Core core, @Nullable CurrentTrackersScreen parent) {
-        super(core.context());
-        this.core = core;
-        init(core.context());
-        this.parent = parent;
+@SuppressLint("ViewConstructor")
+class CreateTrackerScreen extends Screen {
+    public CreateTrackerScreen(Core core, Screen parent) {
+        super(core, parent);
+        updateScreen();
     }
 
-    private void init(MainActivity context) {
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
         LayoutInflater.from(context).inflate(R.layout.create_bazaar_tracker, this, true);
-
         EditText itemIdInput = findViewById(R.id.item_id_input);
         ListView itemSuggestions = findViewById(R.id.item_suggestions);
         Button createTrackerButton = findViewById(R.id.create_tracker_button);
@@ -101,23 +96,25 @@ class CreateTrackerScreen extends LinearLayout {
             }
         });
     }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return null;
+    }
 }
 
-class EditTrackerScreen extends LinearLayout {
+@SuppressLint("ViewConstructor")
+class EditTrackerScreen extends Screen {
 
-    private final Core core;
     private final @NotNull TrackedBazaarItem trackedBazaarItem;
-    private final @Nullable CurrentTrackersScreen parent;
 
-    public EditTrackerScreen(Core core, @NotNull TrackedBazaarItem trackedBazaarItem, @Nullable CurrentTrackersScreen parent) {
-        super(core.context());
-        this.core = core;
-        init(core.context());
-        this.parent = parent;
+    public EditTrackerScreen(Core core, Screen parent, @NotNull TrackedBazaarItem trackedBazaarItem) {
+        super(core, parent);
         this.trackedBazaarItem = trackedBazaarItem;
     }
 
-    private void init(MainActivity context) {
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
         LayoutInflater.from(context).inflate(R.layout.edit_bazaar_tracker, this, true);
 
         Button saveChangesButton = findViewById(R.id.done_button);
@@ -127,7 +124,11 @@ class EditTrackerScreen extends LinearLayout {
                 context.setContentView(parent);
             }
         });
-        // Set up any additional logic or listeners here
+    }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return null;
     }
 }
 

@@ -5,7 +5,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -50,8 +49,8 @@ public class OverviewScreen extends LinearLayout {
     private void updateLayoutList(String filter) {
         // Clear only dynamic items, preserving the search box.
         layoutList.removeAllViews();
-        Map<String, Class<?>> layouts = LayoutRegistry.getAllLayouts();
-        for (Map.Entry<String, Class<?>> entry : layouts.entrySet()) {
+        Map<String, Class<? extends Screen>> layouts = LayoutRegistry.getAllLayouts();
+        for (Map.Entry<String, Class<? extends Screen>> entry : layouts.entrySet()) {
             if (filter.isEmpty() || entry.getKey().toLowerCase().contains(filter.toLowerCase())) {
                 TextView layoutItem = new TextView(getContext());
                 layoutItem.setText(entry.getKey());
@@ -62,27 +61,18 @@ public class OverviewScreen extends LinearLayout {
         }
     }
 
-    private void switchLayout(Class<?> layoutClass) {
+    private void switchLayout(Class<? extends Screen> layoutClass) {
         try {
-            Object layoutInstance = layoutClass.getConstructor(Core.class).newInstance(core);
-            if (layoutInstance instanceof View) {
-                View newView = (View) layoutInstance;
-                // Create a container for the back button and the dynamic content.
-                LinearLayout container = new LinearLayout(context);
-                container.setOrientation(LinearLayout.VERTICAL);
+            View layoutInstance = layoutClass.getConstructor(Core.class, View.class).newInstance(core, this);
+            // Create a container for the back button and the dynamic content.
+            LinearLayout container = new LinearLayout(context);
+            container.setOrientation(LinearLayout.VERTICAL);
 
-                // Create and add the back button.
-                Button backButton = new Button(getContext());
-                backButton.setText(R.string.back);
-                backButton.setOnClickListener(v -> ((AppCompatActivity) getContext()).setContentView(OverviewScreen.this));
-                container.addView(backButton);
+            // Add the dynamic content to the container.
+            container.addView(layoutInstance);
 
-                // Add the dynamic content to the container.
-                container.addView(newView);
-
-                // Set the container as the content view.
-                ((AppCompatActivity) getContext()).setContentView(container);
-            }
+            // Set the container as the content view.
+            ((AppCompatActivity) getContext()).setContentView(container);
         } catch (Exception e) {
             e.printStackTrace();
         }

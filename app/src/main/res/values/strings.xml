@@ -35,4 +35,5 @@
     <string name="done">Done</string>
     <string name="edit_bazaar_item_tracker">Edit Tracker</string>
     <string name="delete">Delete</string>
+    <string name="edit_trackers">Edit Trackers</string>
 </resources>
