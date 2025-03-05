@@ -2,6 +2,7 @@ package de.hype.hypenotify.core;
 
 import android.content.Context;
 import android.os.PowerManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +21,11 @@ public class WakeLockManager {
 
     public void acquire(WakeLockRequests request) {
         if (wakeLocks.get(request) != null) return;
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "HypeNotify::TimerWakeLock");
+        PowerManager.WakeLock wakeLock = request.getWakeLock(powerManager);
         wakeLocks.put(request, wakeLock);
-        wakeLock.acquire();
+        Integer timeLimit = request.getTimeLockLimit();
+        if (timeLimit == null) wakeLock.acquire();
+        else wakeLock.acquire(timeLimit * 1000L);
     }
 
 
@@ -53,7 +56,6 @@ public class WakeLockManager {
 
     public enum WakeLockRequests {
         TIMER_WAKE_LOCK("TimerWakeLock"),
-
         ;
         private String tagName;
 
@@ -63,6 +65,19 @@ public class WakeLockManager {
 
         public String getAsTag() {
             return "HypeNotify::" + tagName;
+        }
+
+        public PowerManager.WakeLock getWakeLock(PowerManager powerManager) {
+            return powerManager.newWakeLock(getWakeLockType(), getAsTag());
+        }
+
+        @Nullable
+        public Integer getTimeLockLimit() {
+            return null;
+        }
+
+        public int getWakeLockType() {
+            return PowerManager.PARTIAL_WAKE_LOCK;
         }
     }
 }

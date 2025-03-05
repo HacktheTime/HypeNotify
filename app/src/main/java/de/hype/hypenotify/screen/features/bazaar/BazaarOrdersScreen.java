@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.*;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
@@ -46,6 +47,7 @@ public class BazaarOrdersScreen extends Screen {
         loading.setGravity(Gravity.CENTER);
         bazaarService = core.bazaarService();
         updateScreen();
+        core.context().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Add loading indicator
         registerNextCheck();
     }
@@ -224,6 +226,7 @@ public class BazaarOrdersScreen extends Screen {
 
     @Override
     public void close() {
+        core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.close();
         if (nextCheck != null) nextCheck.cancel(true);
     }
