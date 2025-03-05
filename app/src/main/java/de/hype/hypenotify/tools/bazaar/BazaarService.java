@@ -65,7 +65,7 @@ public class BazaarService {
         return getMaxAgeResponse(Duration.ofSeconds(CHECK_INTERVAL - 1));
     }
 
-    private static void fetchBazaar() throws IOException {
+    private static void fetchBazaar() {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
             connection.setRequestMethod("GET");
@@ -130,6 +130,7 @@ public class BazaarService {
         private void checkPrice() {
             try {
                 BazaarResponse response = bazaarService.getMaxAgeResponse();
+                if (response == null) return;
                 Map<String, BazaarProduct> items = response.getProducts();
                 for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
                     if (!toTrackItem.trackPriceChanges()) continue;

@@ -9,7 +9,7 @@ import java.util.Locale;
 
 public class TrackedBazaarItem {
     public final String itemId;
-    public final BazaarProduct.OfferType trackType;
+    public BazaarProduct.OfferType trackType;
     private BazaarProduct lastTime;
     /**
      * inform about changes that are beneficial to you. for example if a order gets filled or canceled.
@@ -68,6 +68,14 @@ public class TrackedBazaarItem {
 
     public void setEnabled(boolean newState) {
         enabled = newState;
+    }
+
+    public boolean isNotifyGoodChanges() {
+        return notifyGoodChanges;
+    }
+
+    public boolean isInformAboutOrderAttachments() {
+        return informAboutOrderAttachments;
     }
 
     public class TrackChanges {
@@ -144,5 +152,21 @@ public class TrackedBazaarItem {
         public String getNotificationText() {
             return notificationText;
         }
+    }
+
+    public void setNotifyGoodChanges(boolean notifyGoodChanges) {
+        this.notifyGoodChanges = notifyGoodChanges;
+    }
+
+    public void setInformAboutOrderAttachments(boolean informAboutOrderAttachments) {
+        this.informAboutOrderAttachments = informAboutOrderAttachments;
+    }
+
+    public void setTrackPriceChanges(boolean trackPriceChanges) {
+        this.trackPriceChanges = trackPriceChanges;
+    }
+
+    public void setShowInOrderScreen(boolean showInOrderScreen) {
+        this.showInOrderScreen = showInOrderScreen;
     }
 }

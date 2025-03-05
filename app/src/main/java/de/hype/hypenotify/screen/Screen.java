@@ -1,11 +1,9 @@
 package de.hype.hypenotify.screen;
 
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import androidx.activity.OnBackPressedCallback;
 import de.hype.hypenotify.MainActivity;
-import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.Core;
 
 public abstract class Screen extends LinearLayout {
@@ -13,28 +11,12 @@ public abstract class Screen extends LinearLayout {
     protected final Core core;
     private OnBackPressedCallback backPressedCallback;
     protected MainActivity context;
-    protected Button backButton;
     protected LinearLayout dynamicScreen;
-
     public Screen(Core core, View parent) {
         super(core.context());
         context = core.context();
         this.core = core;
         this.parent = parent;
-
-        // Create back button with full width
-        backButton = new Button(core.context());
-        backButton.setText(R.string.back);
-        backButton.setOnClickListener(v -> close());
-
-        // Make back button layout take full width
-        LinearLayout backLayout = new LinearLayout(core.context());
-        backLayout.setOrientation(LinearLayout.VERTICAL);
-        backLayout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        backLayout.addView(backButton, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-
-        // Add back button layout at the top
-        addView(backLayout);
 
         backPressedCallback = new OnBackPressedCallback(true) {
             @Override
@@ -49,7 +31,12 @@ public abstract class Screen extends LinearLayout {
         if (backPressedCallback != null) {
             backPressedCallback.remove();
         }
-        core.context().setContentView(parent);
+        if (parent != null) {
+            core.context().setContentView(parent);
+            if (parent instanceof Screen screen) screen.updateScreen();
+        } else {
+            core.context().finish();
+        }
     }
 
     public final void resetDynamicScreen() {
@@ -62,12 +49,24 @@ public abstract class Screen extends LinearLayout {
     }
 
     public final void updateScreen() {
+        removeAllViews();
         if (dynamicScreen != null) {
             dynamicScreen.removeAllViews();
             removeView(dynamicScreen);
         }
-        updateScreen(getDynamicScreen());
+        try {
+            inflateLayouts();
+            updateScreen(getDynamicScreen());
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
+
+    /**
+     * Inflate all layouts you need here. Called before the Dynamic Screen is obtained to give you back at update Screen.
+     */
+    protected abstract void inflateLayouts();
+
 
     /**
      * The View is the Dynamic Screen you returned in {@link #getDynamicScreen()}

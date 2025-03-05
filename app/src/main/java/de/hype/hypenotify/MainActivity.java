@@ -15,6 +15,7 @@ import de.hype.hypenotify.core.DynamicIntents;
 import de.hype.hypenotify.core.interfaces.Core;
 import de.hype.hypenotify.screen.EnterDetailsLayout;
 import de.hype.hypenotify.screen.OverviewScreen;
+import de.hype.hypenotify.screen.Screen;
 import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.tools.timers.TimerService;
@@ -25,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private HypeNotifyServiceConnection serviceConnection;
     private BackgroundService backgroundService;
     private OverviewScreen overviewScreen;
+    private View currentScreen;
+    private View parent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +41,16 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            Toolbar toolbar = findViewById(R.id.toolbar);
             runOnUiThread(() -> {
                 super.setContentView(R.layout.activity_main);
+                Toolbar toolbar = findViewById(R.id.toolbar);
                 setSupportActionBar(toolbar);
-                setContentView(R.layout.activity_main);
+                toolbar.setNavigationOnClickListener(view -> {
+                    if (currentScreen != null) {
+                        if (currentScreen instanceof Screen screen) screen.close();
+                        else setContentView(parent);
+                    }
+                });
             });
             try {
                 Intent intent = getIntent();
@@ -113,22 +121,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void setContentView(int layoutResID) {
-        NestedScrollView scrollView = findViewById(R.id.scroll_view);
-        if (scrollView != null) {
-            scrollView.removeAllViews();
-            getLayoutInflater().inflate(layoutResID, scrollView);
-        } else {
-            super.setContentView(layoutResID);
-        }
-    }
-
-    @Override
     public void setContentView(View view) {
+        if (view == null) finish();
+        parent = currentScreen;
+        currentScreen = view;
         NestedScrollView scrollView = findViewById(R.id.scroll_view);
         if (scrollView != null) {
             scrollView.removeAllViews();
-            scrollView.addView(view);
+            if (view.getParent() == null) scrollView.addView(view);
         } else {
             super.setContentView(view);
         }

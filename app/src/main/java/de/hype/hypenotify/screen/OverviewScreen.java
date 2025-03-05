@@ -1,6 +1,5 @@
 package de.hype.hypenotify.screen;
 
-import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -15,40 +14,21 @@ import de.hype.hypenotify.layouts.autodetection.LayoutRegistry;
 
 import java.util.Map;
 
-public class OverviewScreen extends LinearLayout {
+public class OverviewScreen extends Screen {
     private EditText searchBox;
-    private final LinearLayout layoutList;
-    private final Core core;
-    private final Context context;
-
+    private LinearLayout layoutList;
     public OverviewScreen(Core core) {
-        super(core.context());
-        this.core = core;
-        this.context = core.context();
-        LayoutInflater.from(core.context()).inflate(R.layout.sidebar, this, true);
+        super(core, null);
+        updateScreen();
+    }
 
-        searchBox = findViewById(R.id.search_box);
-        layoutList = findViewById(R.id.layout_list);
-
-        searchBox.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateLayoutList(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) { }
-        });
-
-        updateLayoutList("");
+    @Override
+    public void close() {
+        super.close();
     }
 
     private void updateLayoutList(String filter) {
         // Clear only dynamic items, preserving the search box.
-        layoutList.removeAllViews();
         Map<String, Class<? extends Screen>> layouts = LayoutRegistry.getAllLayouts();
         for (Map.Entry<String, Class<? extends Screen>> entry : layouts.entrySet()) {
             if (filter.isEmpty() || entry.getKey().toLowerCase().contains(filter.toLowerCase())) {
@@ -76,5 +56,37 @@ public class OverviewScreen extends LinearLayout {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void inflateLayouts() {
+        LayoutInflater.from(core.context()).inflate(R.layout.sidebar, this, true);
+    }
+
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
+        searchBox = findViewById(R.id.search_box);
+        layoutList = findViewById(R.id.layout_list);
+
+        searchBox.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateLayoutList(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+        updateLayoutList("");
+    }
+
+    @Override
+    protected LinearLayout getDynamicScreen() {
+        return null;
     }
 }

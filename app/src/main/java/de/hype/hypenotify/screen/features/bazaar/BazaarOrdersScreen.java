@@ -37,30 +37,35 @@ public class BazaarOrdersScreen extends Screen {
     private BazaarService bazaarService;
     private Map<TrackedBazaarItem, TextView> trackedItemLabels = new HashMap<>();
     private Map<TrackedBazaarItem, TableLayout> trackedItemTables = new HashMap<>();
+    private TextView loading;
 
     public BazaarOrdersScreen(Core core, View parent) {
         super(core, parent);
-        setOrientation(VERTICAL);
-
-        // Keep the back button (already added by super class)
-
-        // Inflate the bazaar layout into a container view, not directly into this
-        View contentView = LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, null, false);
-        addView(contentView);
-
-        // Get references
-        bazaarService = core.bazaarService();
-        toggleTrackingButton = contentView.findViewById(R.id.toggle_tracking_button);
-        checkNowButton = contentView.findViewById(R.id.check_now_button);
-        progressBar = contentView.findViewById(R.id.next_bazaar_update);
-        editTrackersButton = contentView.findViewById(R.id.bazaar_edit_trackers);
-        dynamicScreen = contentView.findViewById(R.id.bazaar_item_layout);
-
-        // Add loading indicator
-        TextView loading = new TextView(context);
+        loading = new TextView(context);
         loading.setText(R.string.loading);
         loading.setGravity(Gravity.CENTER);
-        dynamicScreen.addView(loading);
+        bazaarService = core.bazaarService();
+        updateScreen();
+        // Add loading indicator
+        registerNextCheck();
+        post(() -> dynamicScreen.removeView(loading));
+    }
+
+    @Override
+    protected void inflateLayouts() {
+        setOrientation(VERTICAL);
+        LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true);
+        ((LinearLayout) findViewById(R.id.bazaar_item_layout)).addView(loading);
+    }
+
+    @Override
+    protected void updateScreen(LinearLayout dynamicScreen) {
+        toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
+        checkNowButton = findViewById(R.id.check_now_button);
+        progressBar = findViewById(R.id.next_bazaar_update);
+        editTrackersButton = findViewById(R.id.bazaar_edit_trackers);
+        dynamicScreen = findViewById(R.id.bazaar_item_layout);
+
 
         // Set up listeners
         toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -82,10 +87,14 @@ public class BazaarOrdersScreen extends Screen {
             checkNowButton.setText(R.string.checking);
             checkNowButton.requestLayout();
             nextCheck.cancel(false);
-            checkPrice();
-            registerNextCheck();
-            checkNowButton.setText(R.string.check_now);
-            checkNowButton.requestLayout();
+            core.executionService().execute(() -> {
+                checkPrice();
+                registerNextCheck();
+                post(() -> {
+                    checkNowButton.setText(R.string.check_now);
+                    checkNowButton.requestLayout();
+                });
+            });
         });
 
         editTrackersButton.setOnClickListener(v -> {
@@ -93,23 +102,15 @@ public class BazaarOrdersScreen extends Screen {
         });
 
         progressBar.setTooltipText("Time until next Refresh");
-
-        // Start loading
-        core.executionService().execute(() -> {
-            checkPrice();
-            registerNextCheck();
-            post(() -> dynamicScreen.removeView(loading));
-        });
-    }
-
-    @Override
-    protected void updateScreen(LinearLayout dynamicScreen) {
-        checkPrice();
     }
 
     @Override
     protected LinearLayout getDynamicScreen() {
-        return findViewById(R.id.bazaar_item_layout);
+        dynamicScreen = findViewById(R.id.bazaar_item_layout);
+        core.executionService().execute(() -> {
+            checkPrice();
+        });
+        return dynamicScreen;
     }
 
 
@@ -144,6 +145,7 @@ public class BazaarOrdersScreen extends Screen {
     private void checkPrice() {
         try {
             BazaarResponse response = bazaarService.getMaxAgeResponse();
+            if (response == null) return;
             Map<String, BazaarProduct> items = response.getProducts();
             LinkedHashMap<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new LinkedHashMap<>();
             for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {

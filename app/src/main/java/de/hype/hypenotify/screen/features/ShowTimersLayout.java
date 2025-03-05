@@ -48,6 +48,11 @@ public class ShowTimersLayout extends Screen {
     }
 
     @Override
+    protected void inflateLayouts() {
+
+    }
+
+    @Override
     protected void updateScreen(LinearLayout dynamicScreen) {
 
     }
