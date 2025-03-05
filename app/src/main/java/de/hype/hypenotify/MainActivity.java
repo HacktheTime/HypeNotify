@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.widget.NestedScrollView;
 import de.hype.hypenotify.core.BackgroundService;
 import de.hype.hypenotify.core.DynamicIntents;
 import de.hype.hypenotify.core.interfaces.Core;
@@ -125,10 +125,11 @@ public class MainActivity extends AppCompatActivity {
         if (view == null) finish();
         parent = currentScreen;
         currentScreen = view;
-        NestedScrollView scrollView = findViewById(R.id.scroll_view);
+        LinearLayout scrollView = findViewById(R.id.scroll_view);
         if (scrollView != null) {
             scrollView.removeAllViews();
             if (view.getParent() == null) scrollView.addView(view);
+            if (view instanceof Screen screen) screen.updateScreen();
         } else {
             super.setContentView(view);
         }

@@ -117,7 +117,7 @@ public class TrackedBazaarItem {
                     BazaarProduct.Offer oldBest = oldOffers.get(0);
                     BazaarProduct.Offer newBest = newOffers.get(0);
                     if (oldBest.amount() < newBest.amount() || oldBest.orders() < newBest.orders()) {
-                        notificationTextBuilder.append("Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(amountFormat.format(oldBest), amountFormat.format(newBest), amountFormat.format(newBest.amount() - oldBest.amount())));
+                        notificationTextBuilder.append("Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(amountFormat.format(oldBest.pricePerUnit()), amountFormat.format(newBest.pricePerUnit()), amountFormat.format(newBest.amount() - oldBest.amount())));
                     }
                 }
             }

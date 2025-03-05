@@ -21,11 +21,11 @@
             android:inputType="text"
             android:layout_marginBottom="8dp"/>
 
-    <ListView
+    <de.hype.hypenotify.screen.components.NonInterceptingListView
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/item_suggestions"
-            android:background="#EEEEEE"/>
+    />
 
     <TextView
             android:layout_width="wrap_content"

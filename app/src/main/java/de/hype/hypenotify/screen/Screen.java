@@ -12,6 +12,7 @@ public abstract class Screen extends LinearLayout {
     private OnBackPressedCallback backPressedCallback;
     protected MainActivity context;
     protected LinearLayout dynamicScreen;
+
     public Screen(Core core, View parent) {
         super(core.context());
         context = core.context();
@@ -33,7 +34,6 @@ public abstract class Screen extends LinearLayout {
         }
         if (parent != null) {
             core.context().setContentView(parent);
-            if (parent instanceof Screen screen) screen.updateScreen();
         } else {
             core.context().finish();
         }
@@ -52,11 +52,18 @@ public abstract class Screen extends LinearLayout {
         removeAllViews();
         if (dynamicScreen != null) {
             dynamicScreen.removeAllViews();
-            removeView(dynamicScreen);
         }
         try {
             inflateLayouts();
-            updateScreen(getDynamicScreen());
+            LinearLayout newDynamicScreen = getDynamicScreen();
+            updateScreen(newDynamicScreen);
+            if (newDynamicScreen != null) {
+                if (newDynamicScreen.getParent() == null) {
+                    if (dynamicScreen != null) removeView(dynamicScreen);
+                    addView(newDynamicScreen);
+                }
+                dynamicScreen = newDynamicScreen;
+            }
         } catch (Throwable e) {
             e.printStackTrace();
         }

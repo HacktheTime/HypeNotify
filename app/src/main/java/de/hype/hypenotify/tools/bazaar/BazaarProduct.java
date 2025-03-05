@@ -82,8 +82,11 @@ public class BazaarProduct {
 
     public String getDisplayName() {
         String name = getProductId();
-        if (!name.contains(":")) return name.replace("_", " ").toLowerCase(Locale.US);
-        return SBCollections.getNameFromID(name).replace("_", " ").toLowerCase(Locale.US);
+        if (name.contains(":")) {
+            String sbCollection = SBCollections.getNameFromID(name);
+            if (sbCollection != null) name = sbCollection;
+        }
+        return name.replace("_", " ").toLowerCase(Locale.US);
     }
 }
 

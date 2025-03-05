@@ -48,14 +48,15 @@ public class BazaarOrdersScreen extends Screen {
         updateScreen();
         // Add loading indicator
         registerNextCheck();
-        post(() -> dynamicScreen.removeView(loading));
     }
 
     @Override
     protected void inflateLayouts() {
         setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true);
-        ((LinearLayout) findViewById(R.id.bazaar_item_layout)).addView(loading);
+        LinearLayout layout = (findViewById(R.id.bazaar_item_layout));
+        layout.removeAllViews();
+        layout.addView(loading);
     }
 
     @Override
@@ -109,6 +110,7 @@ public class BazaarOrdersScreen extends Screen {
         dynamicScreen = findViewById(R.id.bazaar_item_layout);
         core.executionService().execute(() -> {
             checkPrice();
+            post(() -> dynamicScreen.removeView(loading));
         });
         return dynamicScreen;
     }

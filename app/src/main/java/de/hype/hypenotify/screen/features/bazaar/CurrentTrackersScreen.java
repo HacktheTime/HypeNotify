@@ -17,6 +17,8 @@ import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @SuppressLint("ViewConstructor")
 class CurrentTrackersScreen extends Screen {
@@ -116,27 +118,33 @@ class CreateTrackerScreen extends Screen {
 
             // Filter suggestions as user types
             itemIdInput.addTextChangedListener(new TextWatcher() {
+                ScheduledFuture<?> update = null;
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    String filter = s.toString().toLowerCase();
-                    List<BazaarSuggestionItem> filtered = new ArrayList<>();
+                    if (update != null) update.cancel(false);
+                    update = core.executionService().schedule(() -> {
+                        post(() -> {
+                            String filter = s.toString().toLowerCase();
+                            List<BazaarSuggestionItem> filtered = new ArrayList<>();
 
-                    for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
-                        String itemId = entry.getKey().toLowerCase();
-                        String displayName = entry.getValue().getDisplayName().toLowerCase();
+                            for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
+                                String itemId = entry.getKey().toLowerCase();
+                                String displayName = entry.getValue().getDisplayName().toLowerCase();
 
-                        if (itemId.contains(filter) || displayName.contains(filter)) {
-                            filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
-                        }
-                    }
+                                if (itemId.contains(filter) || displayName.contains(filter)) {
+                                    filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
+                                }
+                            }
 
-                    BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
-                    itemSuggestions.setAdapter(filteredAdapter);
-                    itemSuggestions.setVisibility(VISIBLE);
+                            BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
+                            itemSuggestions.setAdapter(filteredAdapter);
+                            itemSuggestions.setVisibility(VISIBLE);
+                        });
+                    }, 2, TimeUnit.SECONDS);
                 }
 
                 @Override
@@ -185,7 +193,7 @@ class CreateTrackerScreen extends Screen {
 
     @Override
     protected void updateScreen(LinearLayout dynamicScreen) {
-// Initialize views
+        // Initialize views
         itemIdInput = findViewById(R.id.item_id_input);
         itemSuggestions = findViewById(R.id.item_suggestions);
         notifyGoodChangesCheckbox = findViewById(R.id.notify_good_changes);
