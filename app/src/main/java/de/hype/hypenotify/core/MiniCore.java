@@ -14,6 +14,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import de.hype.hypenotify.Config;
 import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
@@ -38,6 +39,7 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
 
     protected BazaarService bazaarService = new BazaarService(this);
     protected TimerService timerService;
+    protected Config config;
     private DebugThread debugThread = new DebugThread(this);
 
     protected MiniCore(BackgroundService context) {
@@ -45,6 +47,7 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         prefs = context.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         userAPIKey = prefs.getString(KEY_API, "");
         userId = prefs.getInt(KEY_USER_ID, -1);
+        config = new Config(this);
         deviceName = prefs.getString(KEY_DEVICE, "");
         wakeLock = new WakeLockManager(this);
         timerService = new TimerService(this);
@@ -123,6 +126,10 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         return prefs.getString(key, null);
     }
 
+    @Override
+    public Config config() {
+        return config;
+    }
 
     public boolean areKeysSet() {
         if (userAPIKey.isEmpty() || userId == -1 || deviceName.isEmpty()) {

@@ -16,6 +16,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +29,25 @@ public class BazaarService {
     private static BazaarResponse lastResponse;
     public List<TrackedBazaarItem> trackedItems = new ArrayList<>();
     private static OrderTrackingService orderTracker;
-    public static final int CHECK_INTERVAL = 15;
+    private static Instant lastUpdate;
 
     public BazaarService(MiniCore core) {
         this.core = core;
         initTrackedItems();
         orderTracker = new OrderTrackingService(core, this);
+    }
+
+    public static Instant getLastUpdate() {
+        return lastUpdate;
+    }
+
+    public Integer getCheckInterval() {
+        boolean isInFreeNetwork = core.isInFreeNetwork();
+        if (isInFreeNetwork) {
+            return 15;
+        } else {
+            return core.config().bazaarCheckerNoWlanDelaySeconds;
+        }
     }
 
     private void initTrackedItems() {
@@ -57,12 +71,16 @@ public class BazaarService {
      * Returns the last fetched Bazaar response if it is not older than the given maxAge.
      */
     public BazaarResponse getMaxAgeResponse(Duration maxAge) throws IOException {
-        if (lastResponse == null || lastResponse.isOlderThan(maxAge)) fetchBazaar();
+        if (lastResponse == null || lastUpdate.plusSeconds(maxAge.getSeconds()).isBefore(Instant.now())) fetchBazaar();
         return lastResponse;
     }
 
     public BazaarResponse getMaxAgeResponse() throws IOException {
-        return getMaxAgeResponse(Duration.ofSeconds(CHECK_INTERVAL - 1));
+        Integer delay = getCheckInterval();
+        if (delay == null) {
+            return null;
+        }
+        return getMaxAgeResponse(Duration.ofSeconds(delay - 1));
     }
 
     private static void fetchBazaar() {
@@ -76,6 +94,7 @@ public class BazaarService {
             InputStreamReader reader =
                     new InputStreamReader(connection.getInputStream());
             BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
+            lastUpdate = Instant.now();
         } catch (SocketTimeoutException e) {
             Log.i("BazaarService", "Hypixel BZ Connection Timeout");
         } catch (UnknownHostException e) {
@@ -112,17 +131,21 @@ public class BazaarService {
         }
 
         private void registerNextCheck() {
-            int timeBetweenChecks = CHECK_INTERVAL;
-            nextCheck = core.executionService().schedule(() -> {
-                checkPrice();
+            Integer timeBetweenChecks = bazaarService.getCheckInterval();
+            if (timeBetweenChecks == null) {
                 checkWifiStateCounter++;
-                if (checkWifiStateCounter >= 40) {
+                if (checkWifiStateCounter >= 20) {
                     if (!core.isInFreeNetwork()) {
-                        NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", "You are not in the home network. Tracking stopped.", NotificationChannels.BAZAAR_TRACKER);
+                        NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", "You are no longer in a Wifi. Tracking stopped!", NotificationChannels.BAZAAR_TRACKER);
                         notificationBuilder.send();
                         return;
                     }
                 }
+                return;
+            }
+            checkWifiStateCounter = 0;
+            nextCheck = core.executionService().schedule(() -> {
+                checkPrice();
                 registerNextCheck();
             }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
         }

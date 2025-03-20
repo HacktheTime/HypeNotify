@@ -16,13 +16,16 @@ import de.hype.hypenotify.tools.bazaar.BazaarResponse;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
 import de.hype.hypenotify.tools.bazaar.TrackedBazaarItem;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import static de.hype.hypenotify.tools.bazaar.BazaarService.CHECK_INTERVAL;
 import static de.hype.hypenotify.tools.bazaar.TrackedBazaarItem.amountFormat;
 
 @SuppressLint("ViewConstructor")
@@ -33,12 +36,14 @@ public class BazaarOrdersScreen extends Screen {
     private Button checkNowButton;
     private Button editTrackersButton;
     private ScheduledFuture<?> nextCheck;
+    private ScheduledFuture<?> updateLastUpdated;
     private ProgressBar progressBar;
     private ObjectAnimator progressBarAnimation;
     private BazaarService bazaarService;
     private Map<TrackedBazaarItem, TextView> trackedItemLabels = new HashMap<>();
     private Map<TrackedBazaarItem, TableLayout> trackedItemTables = new HashMap<>();
     private TextView loading;
+    private TextView lastUpdated;
 
     public BazaarOrdersScreen(Core core, View parent) {
         super(core, parent);
@@ -67,6 +72,7 @@ public class BazaarOrdersScreen extends Screen {
         checkNowButton = findViewById(R.id.check_now_button);
         progressBar = findViewById(R.id.next_bazaar_update);
         editTrackersButton = findViewById(R.id.bazaar_edit_trackers);
+        lastUpdated = findViewById(R.id.bzaar_order_screen_last_updated);
         dynamicScreen = findViewById(R.id.bazaar_item_layout);
 
 
@@ -75,6 +81,9 @@ public class BazaarOrdersScreen extends Screen {
             if (!isChecked) {
                 if (nextCheck != null) {
                     nextCheck.cancel(false);
+                }
+                if (lastUpdated != null) {
+                    updateLastUpdated.cancel(false);
                 }
                 if (progressBarAnimation != null) {
                     progressBarAnimation.pause();
@@ -91,7 +100,11 @@ public class BazaarOrdersScreen extends Screen {
             checkNowButton.requestLayout();
             nextCheck.cancel(false);
             core.executionService().execute(() -> {
-                checkPrice();
+                try {
+                    checkPrice(bazaarService.getMaxAgeResponse(Duration.ZERO));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 registerNextCheck();
                 post(() -> {
                     checkNowButton.setText(R.string.check_now);
@@ -119,12 +132,20 @@ public class BazaarOrdersScreen extends Screen {
 
 
     private void registerNextCheck() {
-        int timeBetweenChecks = CHECK_INTERVAL;
+        int timeBetweenChecks = bazaarService.getCheckInterval();
         startProgressBarCountdown(timeBetweenChecks);
         nextCheck = core.executionService().schedule(() -> {
             checkPrice();
             if (toggleTrackingButton.isChecked()) registerNextCheck();
         }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
+        updateLastUpdated = core.executionService().scheduleWithFixedDelay(() -> {
+            Instant lastResponseTime = BazaarService.getLastUpdate();
+            if (lastResponseTime == null) return;
+            post(() -> {
+                lastUpdated.setText(getContext().getString(R.string.last_updated_s_seconds_ago).formatted(Duration.between(lastResponseTime, Instant.now()).getSeconds()));
+                lastUpdated.requestLayout();
+            });
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     private void startProgressBarCountdown(int timeBetweenChecks) {
@@ -148,8 +169,22 @@ public class BazaarOrdersScreen extends Screen {
 
     private void checkPrice() {
         try {
-            BazaarResponse response = bazaarService.getMaxAgeResponse();
-            if (response == null) return;
+            checkPrice(bazaarService.getMaxAgeResponse());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void checkPrice(BazaarResponse response) {
+        try {
+            if (response == null) {
+                dynamicScreen.removeAllViews();
+                TextView info = new TextView(context);
+                info.setText(R.string.no_data_tracking_stopped);
+                info.setGravity(Gravity.CENTER);
+                dynamicScreen.addView(info);
+                return;
+            }
             Map<String, BazaarProduct> items = response.getProducts();
             LinkedHashMap<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new LinkedHashMap<>();
             for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
@@ -229,5 +264,6 @@ public class BazaarOrdersScreen extends Screen {
         core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.close();
         if (nextCheck != null) nextCheck.cancel(true);
+        if (updateLastUpdated != null) updateLastUpdated.cancel(true);
     }
 }

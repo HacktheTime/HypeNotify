@@ -41,9 +41,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" android:id="@+id/bazaar_edit_trackers"
             app:icon="@android:drawable/ic_menu_manage"/>
+    <TextView
+            android:text="Last Updated: Never"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/bzaar_order_screen_last_updated"
+            android:gravity="center"/>
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:id="@+id/bazaar_item_layout"/>
+            android:layout_height="wrap_content" android:id="@+id/bazaar_item_layout">
+    </LinearLayout>
 
 </LinearLayout>

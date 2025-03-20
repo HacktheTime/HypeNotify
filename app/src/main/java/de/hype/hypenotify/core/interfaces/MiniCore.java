@@ -3,6 +3,7 @@ package de.hype.hypenotify.core.interfaces;
 import android.content.Context;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import de.hype.hypenotify.Config;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.core.WakeLockManager;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
@@ -36,4 +37,6 @@ public interface MiniCore {
     <T> T getData(String timers, TypeToken<T> type);
 
     String getStringData(String key);
+
+    Config config();
 }

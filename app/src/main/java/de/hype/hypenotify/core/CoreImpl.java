@@ -2,6 +2,7 @@ package de.hype.hypenotify.core;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import de.hype.hypenotify.Config;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.core.interfaces.Core;
@@ -91,5 +92,10 @@ public class CoreImpl implements Core {
     @Override
     public String getStringData(String key) {
         return miniCore.getStringData(key);
+    }
+
+    @Override
+    public Config config() {
+        return miniCore.config();
     }
 }
