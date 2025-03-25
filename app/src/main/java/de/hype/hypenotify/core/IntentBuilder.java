@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import de.hype.hypenotify.MainActivity;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -15,20 +16,23 @@ public class IntentBuilder {
     private final Set<ToDefineInBuilder> whatNeedsToBeSet = new HashSet<>(Set.of(ToDefineInBuilder.values()));
     private static int intentIdCounter = 1;
     private int intentId = intentIdCounter++;
-    public boolean staticIntent = false;
+    @NotNull
+    public PendingType pendingType;
 
-    public IntentBuilder(Context context, String action) {
+    public IntentBuilder(Context context, String action, @NotNull PendingType pendingType) {
         this.context = context;
+        this.pendingType = pendingType;
         intent = new Intent(action);
     }
 
     public IntentBuilder(Context context, de.hype.hypenotify.core.Intent intent) {
         this.context = context;
         if (intent instanceof StaticIntents) {
-            this.staticIntent = true;
+            this.pendingType = PendingType.BROADCAST;
             this.intent = new Intent(context, BroadcastIntentWatcher.class);
             this.intent.setAction(StaticIntents.BASE_INTENT_NAME);
         } else {
+            this.pendingType = PendingType.ACTIVITY;
             this.intent = new Intent(context, MainActivity.class);
             this.intent.setAction(DynamicIntents.DYNAMIC_INTENT);
         }
@@ -41,11 +45,31 @@ public class IntentBuilder {
     }
 
     public PendingIntent getAsPending(boolean mutable) {
-        Intent intent = getAsIntent();
+        return getAsPending(mutable, pendingType);
+    }
 
-        if (staticIntent)
-            return PendingIntent.getBroadcast(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
-        return PendingIntent.getActivity(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+    public PendingIntent getAsPending(boolean mutable, PendingType pendingType) {
+        Intent intent = getAsIntent();
+        return switch (pendingType) {
+            case SERVICE ->
+                    PendingIntent.getService(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+            case FOREGROUND_SERVICE ->
+                    PendingIntent.getForegroundService(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+            case BROADCAST ->
+                    PendingIntent.getBroadcast(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+            case ACTIVITY ->
+                    PendingIntent.getActivity(context, intentId, intent, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+            case ACTIVITIES ->
+                    PendingIntent.getActivities(context, intentId, new Intent[]{intent}, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
+        };
+    }
+
+    public enum PendingType {
+        ACTIVITY,
+        BROADCAST,
+        SERVICE,
+        FOREGROUND_SERVICE,
+        ACTIVITIES
     }
 
     public PendingIntent getAsPending() {
@@ -81,6 +105,10 @@ public class IntentBuilder {
 
     public void setCustomID(int id) {
         this.intentId = id;
+    }
+
+    public void setPackage(String id) {
+        intent.setPackage(id);
     }
 
     private enum ToDefineInBuilder {

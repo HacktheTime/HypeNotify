@@ -101,4 +101,12 @@ public class NotificationBuilder {
         builder.setFullScreenIntent(intent, true);
         return this;
     }
+
+    public void setExternalIntent(CharSequence code, PendingIntent intent) {
+        builder.addAction(new NotificationCompat.Action.Builder(R.mipmap.icon, code, intent).build());
+    }
+
+    public void setInvisibleAction(CharSequence code, PendingIntent pendingIntent) {
+        builder.addInvisibleAction(new NotificationCompat.Action.Builder(R.mipmap.icon, code, pendingIntent).build());
+    }
 }

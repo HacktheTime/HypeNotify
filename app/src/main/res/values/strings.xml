@@ -38,4 +38,5 @@
     <string name="edit_trackers">Edit Trackers</string>
     <string name="no_data_tracking_stopped">No Data / Tracking Stopped</string>
     <string name="last_updated_s_seconds_ago">Last updated: %s Seconds ago.</string>
+    <string name="openMinecraft">Open Minecraft</string>
 </resources>
