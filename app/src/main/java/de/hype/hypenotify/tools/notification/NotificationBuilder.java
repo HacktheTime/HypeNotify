@@ -102,11 +102,11 @@ public class NotificationBuilder {
         return this;
     }
 
-    public void setExternalIntent(CharSequence code, PendingIntent intent) {
-        builder.addAction(new NotificationCompat.Action.Builder(R.mipmap.icon, code, intent).build());
+    public void setAction(PendingIntent pendingIntent) {
+        builder.setContentIntent(pendingIntent);
     }
 
-    public void setInvisibleAction(CharSequence code, PendingIntent pendingIntent) {
-        builder.addInvisibleAction(new NotificationCompat.Action.Builder(R.mipmap.icon, code, pendingIntent).build());
+    public void addActionButton(String test, PendingIntent pendingIntent) {
+        builder.addAction(new NotificationCompat.Action.Builder(R.mipmap.icon, test, pendingIntent).build());
     }
 }

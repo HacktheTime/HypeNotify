@@ -1,6 +1,7 @@
 package de.hype.hypenotify.core;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import de.hype.hypenotify.MainActivity;
@@ -62,6 +63,10 @@ public class IntentBuilder {
             case ACTIVITIES ->
                     PendingIntent.getActivities(context, intentId, new Intent[]{intent}, mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
         };
+    }
+
+    public void setComponent(String packageName, String className) {
+        intent.setComponent(new ComponentName(packageName, className));
     }
 
     public enum PendingType {

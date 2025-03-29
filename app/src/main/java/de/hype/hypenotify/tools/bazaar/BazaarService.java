@@ -4,12 +4,11 @@ import android.app.PendingIntent;
 import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.hype.hypenotify.R;
 import de.hype.hypenotify.core.interfaces.MiniCore;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationVisibility;
-import de.hype.hypenotify.tools.pojav.OtherAppLauncher;
+import de.hype.hypenotify.tools.pojav.PojavLauncherUtils;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -170,9 +169,9 @@ public class BazaarService {
                         if (notificationText != null) {
                             NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", notificationText, NotificationChannels.BAZAAR_TRACKER);
                             notificationBuilder.setVisibility(NotificationVisibility.PUBLIC);
-                            PendingIntent pendingIntent = OtherAppLauncher.launchGameIntent(core.context(), null, null);
-                            notificationBuilder.setExternalIntent(core.context().getString(R.string.openMinecraft), pendingIntent);
-                            notificationBuilder.setInvisibleAction("Start MC", pendingIntent);
+                            PendingIntent pendingIntent = PojavLauncherUtils.launchGameIntent(core.context(), null, null);
+                            notificationBuilder.setAction(pendingIntent);
+                            notificationBuilder.send();
                         }
                     }
                 }
