@@ -1,12 +1,15 @@
 // File: src/main/java/com/example/otherapp/PojavLauncherUtils.java
 package de.hype.hypenotify.tools.pojav;
 
-import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
-import de.hype.hypenotify.core.IntentBuilder;
+import de.hype.hypenotify.core.interfaces.MiniCore;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class PojavLauncherUtils implements DataResultReceiver.Callback {
     private void fetchData() {
@@ -24,20 +27,40 @@ public class PojavLauncherUtils implements DataResultReceiver.Callback {
         // Process the received JSON data as needed.
     }
 
-    public static PendingIntent launchGameIntent(Context context, String profileId, String userDetail) {
-        IntentBuilder launchIntent = new IntentBuilder(context, "net.kdt.pojavlaunch.action.START_PROFILE", IntentBuilder.PendingType.ACTIVITY);
-        launchIntent.putExtra("profile_id", profileId);
-        launchIntent.putExtra("launch_user", userDetail);
-        launchIntent.setPackage("net.kdt.pojavlaunch.debug");
-        launchIntent.setFlags(IntentBuilder.IntentFlag.FLAG_INCLUDE_STOPPED_PACKAGES);
-        return launchIntent.getAsPending(false);
-    }
-
     public static Intent launchGameBaseIntent(String profileId, String userDetail) {
         Intent launchIntent = new Intent("net.kdt.pojavlaunch.action.START_PROFILE");
         launchIntent.putExtra("profile_id", profileId);
         launchIntent.putExtra("launch_user", userDetail);
         launchIntent.setComponent(new ComponentName("net.kdt.pojavlaunch.debug", "net.kdt.pojavlaunch.api.StartMinecraftActivity"));
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return launchIntent;
+    }
+
+    public static void launchToHub(MiniCore core) {
+        Socket socket = null;
+        int tryCount = 0;
+        while (socket == null) {
+            try {
+                socket = new Socket("localhost", 64987);
+            } catch (IOException ignored) {
+                if (tryCount == 0) {
+                    core.context().startActivity(launchGameBaseIntent(null, null));
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored2) {
+                }
+            }
+            if (tryCount > 120)
+                throw new IllegalStateException("Something went wrong. Could not connect to Bingo Net Socket Addon. Timeout after 60 Seconds.");
+            tryCount++;
+        }
+        try (OutputStream outputStream = socket.getOutputStream();
+             PrintWriter writer = new PrintWriter(outputStream, true)) {
+            writer.println("GoToIslandAddonPacket.{\"island\":\"HUB\",\"apiVersionMin\":1,\"apiVersionMax\":1}");
+            socket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

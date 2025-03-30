@@ -18,6 +18,9 @@ import de.hype.hypenotify.Config;
 import de.hype.hypenotify.DebugThread;
 import de.hype.hypenotify.ExecutionService;
 import de.hype.hypenotify.tools.bazaar.BazaarService;
+import de.hype.hypenotify.tools.notification.NotificationBuilder;
+import de.hype.hypenotify.tools.notification.NotificationChannels;
+import de.hype.hypenotify.tools.notification.NotificationVisibility;
 import de.hype.hypenotify.tools.timers.TimerService;
 
 import java.util.Calendar;
@@ -54,6 +57,10 @@ abstract class MiniCore implements de.hype.hypenotify.core.interfaces.MiniCore {
         scheduleDailyBatteryCheck();
         debugThread.setName("DebugThread");
         debugThread.start();
+        NotificationBuilder builder = new NotificationBuilder(context, "Title here", "message here", NotificationChannels.BAZAAR_TRACKER);
+        builder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(context).getAsPending());
+        builder.setVisibility(NotificationVisibility.PUBLIC);
+        builder.send();
     }
 
     public WifiInfo getCurrentWifiNetwork() {

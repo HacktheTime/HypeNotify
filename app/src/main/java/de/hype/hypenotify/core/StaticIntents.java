@@ -15,6 +15,7 @@ import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationCategory;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import de.hype.hypenotify.tools.notification.NotificationImportance;
+import de.hype.hypenotify.tools.pojav.PojavLauncherUtils;
 import de.hype.hypenotify.tools.timers.TimerWrapper;
 
 import java.util.List;
@@ -46,6 +47,17 @@ public enum StaticIntents implements de.hype.hypenotify.core.Intent {
         @Override
         public List<IntentBuilder.IntentFlag> getFlags() {
             return DEFAULT_CREATE_NEW;
+        }
+    },
+    LAUNCH_BAZAAR() {
+        @Override
+        public void handleIntentInternal(Intent intent, MiniCore core, Context context) {
+            PojavLauncherUtils.launchToHub(core);
+        }
+
+        @Override
+        public List<IntentBuilder.IntentFlag> getFlags() {
+            return List.of();
         }
     },
     BATTERY_REMINDER_CHECK {
