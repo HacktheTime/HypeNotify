@@ -16,3 +16,10 @@ for now though:
 While this Project is under work this is a first licensing version, HOWEVER It is quite likely that it will change in the future.
 
 This project is provided on an as is basis with no warranties or anything. I am not responsible for any damage or anything that happens with this project. You are using this project at your own risk.
+
+### Contributing
+Contributions are welcome!
+
+Setup Tips:
+
+if you are like me and use multiple devices to work on this Project I recommend copying your ~/.android/debug.keystore from the devices you used first. otherwise you can only update the app from that device (or have to reinstall it → all data bye bye). 
