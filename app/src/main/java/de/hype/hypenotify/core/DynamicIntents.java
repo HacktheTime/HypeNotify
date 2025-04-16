@@ -64,7 +64,7 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
         @Override
         public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
             if (core.isInFreeNetwork() && isBatteryLow(context)) {
-                notifyUser(context);
+                notifyUser(core, context);
             }
         }
 
@@ -74,19 +74,19 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
             return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) < 50;
         }
 
-        private void notifyUser(Context context) {
+        private void notifyUser(Core core, Context context) {
             NotificationUtils.createNotification(context, "Charge the Battery", "The Mobile Phone is not plugged in. Daily Reminder to charge it.", NotificationChannels.BATTERY_WARNING, NotificationImportance.DEFAULT);
             MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm);
             mediaPlayer.setLooping(true);
             mediaPlayer.start();
 
-            // Stop the sound after 5 minutes or if acknowledged
-            new android.os.Handler().postDelayed(() -> {
+            // Verwende executionService statt Handler
+            core.executionService().schedule(() -> {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.stop();
                     mediaPlayer.release();
                 }
-            }, 5 * 60 * 1000);
+            }, 5, TimeUnit.MINUTES);
         }
 
         @Override
@@ -105,7 +105,7 @@ public enum DynamicIntents implements de.hype.hypenotify.core.Intent {
     }
 
     /**
-     * @param context    the current context
+     * @param context the current context
      */
     public static void startBackgroundService(Context context) {
         Intent serviceIntent = new Intent(context, BackgroundService.class);
