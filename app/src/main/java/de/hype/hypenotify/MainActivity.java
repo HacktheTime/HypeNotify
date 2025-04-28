@@ -28,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private OverviewScreen overviewScreen;
     private View currentScreen;
     private View parent;
+    private boolean isPaused = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,8 +123,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        isPaused = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isPaused = false;
+    }
+
+    @Override
     public void setContentView(View view) {
-        if (view == null) finish();
+        if (isPaused) return;
+        if (view == null) {
+            finish();
+            return;
+        }
         parent = currentScreen;
         currentScreen = view;
         LinearLayout scrollView = findViewById(R.id.scroll_view);
