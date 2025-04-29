@@ -82,6 +82,16 @@ public class NotificationBuilder {
         return this;
     }
 
+    public NotificationBuilder setOngoing(boolean ongoing) {
+        builder.setOngoing(ongoing);
+        return this;
+    }
+
+    public NotificationBuilder setAutoCancel(boolean autoCancel) {
+        builder.setAutoCancel(autoCancel);
+        return this;
+    }
+
     public NotificationCompat.Builder getHiddenBuilder() {
         return builder;
     }
