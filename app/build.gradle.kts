@@ -30,6 +30,10 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_18.toString()
+    }
 }
 
 dependencies {
