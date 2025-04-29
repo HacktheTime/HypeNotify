@@ -169,6 +169,7 @@ public class BazaarService {
                             NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", notificationText, NotificationChannels.BAZAAR_TRACKER);
                             notificationBuilder.setVisibility(NotificationVisibility.PUBLIC);
                             notificationBuilder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(core.context()).getAsPending());
+                            notificationBuilder.setAutoCancel(true);
                             notificationBuilder.send();
                         }
                     }
