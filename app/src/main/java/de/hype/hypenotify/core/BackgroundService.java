@@ -16,6 +16,7 @@ import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.tools.notification.NotificationChannels;
 import org.jetbrains.annotations.Blocking;
+
 import java.util.function.Consumer;
 
 public class BackgroundService extends HypeNotifyService<BackgroundService> {
@@ -30,17 +31,20 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
             "de.hype.hypenotify.NOTIF_DISMISSED";
 
     private final BroadcastReceiver closeReceiver = new BroadcastReceiver() {
-        @Override public void onReceive(Context ctx, Intent i) {
+        @Override
+        public void onReceive(Context ctx, Intent i) {
             stopSelf();
         }
     };
     private final BroadcastReceiver dismissReceiver = new BroadcastReceiver() {
-        @Override public void onReceive(Context ctx, Intent i) {
+        @Override
+        public void onReceive(Context ctx, Intent i) {
             showNotificationWithCloseButton();
         }
     };
 
-    @Override public void onCreate() {
+    @Override
+    public void onCreate() {
         super.onCreate();
 
         // Register receivers
@@ -88,13 +92,15 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
         startForeground(nb.build().getID(), nb.build().get());
     }
 
-    @Override public int onStartCommand(Intent intent, int flags, int startId) {
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         if (isRunning) return START_NOT_STICKY;
         isRunning = true;
         return START_STICKY;
     }
 
-    @Override public void onTaskRemoved(Intent rootIntent) {
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
         Intent restart = new Intent(getApplicationContext(),
                 BackgroundService.class)
                 .setPackage(getPackageName());
@@ -108,7 +114,8 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
         super.onTaskRemoved(rootIntent);
     }
 
-    @Override public void onDestroy() {
+    @Override
+    public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(closeReceiver);
         unregisterReceiver(dismissReceiver);
@@ -149,7 +156,15 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
         thread.start();
     }
 
+    @Blocking
     public Core getCore(MainActivity context) {
+        while (core == null) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+
+            }
+        }
         return new CoreImpl(context, core);
     }
 }
