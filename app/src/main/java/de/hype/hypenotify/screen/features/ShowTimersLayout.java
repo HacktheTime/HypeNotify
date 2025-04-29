@@ -68,7 +68,7 @@ public class ShowTimersLayout extends Screen {
 //            for (TimerData timer : timers) {
 //                try {
 //                    // Add apiKey and userId parameters
-//                    URL url = new URL("http://hackthetime.de:8085/hypenotify/checkTimer?id="
+//                    URL url = new URL(/hypenotify/checkTimer?id="
 //                            + timer.id + "&apiKey=" + apiKey
 //                            + "&userId=" + deviceName);
 //                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();

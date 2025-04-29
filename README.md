@@ -1,4 +1,9 @@
-## This Project is mainly me coding for me in ways that are VERY specific. You will likely have to customise this project quite a bit for it to even run not even talking about making it useful for you! Keep in mind that this app will probably be under constant work etc.
+## This Project is mainly me coding for me in ways that are VERY specific. You will likely have to customise this project quite a bit for it to even run not even talking about making it useful for you! Keep in mind that this app will probably be under constant work etc. → Breaking Changes
+
+I have been working on adding Support for Notifications.
+
+This App will have Support for End-to-End encryption for Notifications!
+HOWEVER to keep an overview of what is being sent over my Server this is disabled on MY Server specifically. The Logics are written in a way that going anywhere else as a Server will automatically enable end to end encryption.
 
 
 All rights reserved.

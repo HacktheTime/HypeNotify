@@ -20,8 +20,6 @@ import java.util.List;
 import static de.hype.hypenotify.core.Constants.*;
 
 public class ServerUtils {
-    private static final String URL = "http://hackthetime.de:8085/hypenotify/";
-
     /**
      * @param apiKey      The Users API Key
      * @param deviceName  The Name of the Device (the device shall appear as)
@@ -35,7 +33,7 @@ public class ServerUtils {
         if (apiKey.isEmpty() || userId == 0) return;
         // Your existing code to send the token to the server
         String postData = "apiKey=%s&deviceName=%s&firebaseKey=%s&userId=%d".formatted(apiKey, deviceName, firebaseKey, userId);
-        URL url = new URL(URL + "addDevice");
+        URL url = new URL(Config.INSTANCE.serverURL + "addDevice");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);

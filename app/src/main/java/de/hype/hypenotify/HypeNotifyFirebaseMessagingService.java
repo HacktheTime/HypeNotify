@@ -6,14 +6,19 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import de.hype.hypenotify.shared.notification.NotificationContent;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-import static de.hype.hypenotify.core.Constants.*;
 import static de.hype.hypenotify.ServerUtils.sendTokenToServer;
+import static de.hype.hypenotify.core.Constants.*;
 
 public class HypeNotifyFirebaseMessagingService extends FirebaseMessagingService {
+    public static Gson customGson = new GsonBuilder().create();
+
     @Override
     public void onNewToken(@NotNull String token) {
         super.onNewToken(token);
@@ -31,8 +36,10 @@ public class HypeNotifyFirebaseMessagingService extends FirebaseMessagingService
     }
 
     @Override
-    public void onMessageReceived(@NonNull @NotNull RemoteMessage message) {
+    public void onMessageReceived(@NonNull RemoteMessage message) {
+        var string = message.getData().get("json");
+        if (string == null) return;
+        NotificationContent content = customGson.fromJson(string, NotificationContent.class);
         super.onMessageReceived(message);
-        // implement a post for notification
     }
 }
