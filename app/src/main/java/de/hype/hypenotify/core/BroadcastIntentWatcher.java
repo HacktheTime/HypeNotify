@@ -16,8 +16,7 @@ public class BroadcastIntentWatcher extends BroadcastReceiver {
     public void onReceive(Context context, Intent receivedIntent) {
         Log.d("BroadcastIntentWatcher", "BroadcastIntentWatcher received intent: " + receivedIntent.getAction());
         if (StaticIntents.BASE_INTENT_NAME.equals(receivedIntent.getAction())) {
-            Intent serviceIntent = new Intent(context, BackgroundService.class);
-            context.startService(serviceIntent);
+            DynamicIntents.startBackgroundService(context);
             BackgroundService.executeWithBackgroundService((s) -> StaticIntents.onIntent(s.getCore(), context, receivedIntent));
         }
     }
