@@ -364,6 +364,16 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
     protected LinearLayout getDynamicScreen() {
         return null;
     }

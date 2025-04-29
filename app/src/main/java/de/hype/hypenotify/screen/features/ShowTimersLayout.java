@@ -104,4 +104,14 @@ public class ShowTimersLayout extends Screen {
 //            });
 //        }).start();
     }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
 }

@@ -88,6 +88,7 @@ public abstract class Screen extends LinearLayout {
             backPressedCallback.remove();
         }
     }
-
+    public abstract void onPause();
+    public abstract void onResume();
     protected abstract LinearLayout getDynamicScreen();
 }

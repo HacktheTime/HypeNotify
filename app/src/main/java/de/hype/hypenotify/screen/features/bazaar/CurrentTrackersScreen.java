@@ -81,6 +81,16 @@ class CurrentTrackersScreen extends Screen {
     }
 
     @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
+    }
+
+    @Override
     protected LinearLayout getDynamicScreen() {
         return findViewById(R.id.tracker_list);
     }
@@ -152,6 +162,17 @@ class CreateTrackerScreen extends Screen {
                 }
             });
         }
+    }
+
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
     }
 
     private void createTracker() {
@@ -277,6 +298,16 @@ class EditTrackerScreen extends Screen {
         container.addView(descText);
 
         return checkBox;
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+
     }
 
     private void setupItemSuggestions() {

@@ -20,6 +20,9 @@ import de.hype.hypenotify.services.HypeNotifyService;
 import de.hype.hypenotify.services.HypeNotifyServiceConnection;
 import de.hype.hypenotify.tools.timers.TimerService;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Core core;
@@ -27,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private BackgroundService backgroundService;
     private OverviewScreen overviewScreen;
     private View currentScreen;
-    private View parent;
+    private List<View> parents = new ArrayList<>();
     private boolean isPaused = false;
 
 
@@ -50,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 toolbar.setNavigationOnClickListener(view -> {
                     if (currentScreen != null) {
                         if (currentScreen instanceof Screen screen) screen.close();
-                        else setContentView(parent);
+                        else setContentView(parents.removeLast());
                     }
                 });
             });
@@ -126,12 +129,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         isPaused = true;
+        if (currentScreen instanceof Screen c) c.onPause();
+        for (View parent : parents) {
+            if (parent instanceof Screen screen) {
+                screen.onPause();
+            }
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         isPaused = false;
+        if (currentScreen instanceof Screen c) c.onResume();
+        for (View parent : parents) {
+            if (parent instanceof Screen screen) {
+                screen.onResume();
+            }
+        }
     }
 
     @Override
@@ -141,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-        parent = currentScreen;
+        parents.add(currentScreen);
         currentScreen = view;
         LinearLayout scrollView = findViewById(R.id.scroll_view);
         if (scrollView != null) {

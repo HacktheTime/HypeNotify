@@ -266,4 +266,20 @@ public class BazaarOrdersScreen extends Screen {
         if (nextCheck != null) nextCheck.cancel(true);
         if (updateLastUpdated != null) updateLastUpdated.cancel(true);
     }
+
+    @Override
+    public void onPause() {
+        // Timer und Animationen pausieren
+        if (nextCheck != null) nextCheck.cancel(false);
+        if (updateLastUpdated != null) updateLastUpdated.cancel(false);
+        if (progressBarAnimation != null) progressBarAnimation.pause();
+    }
+
+    @Override
+    public void onResume() {
+        // Nur neu starten, wenn Tracking aktiv ist
+        if (toggleTrackingButton.isChecked()) {
+            registerNextCheck();
+        }
+    }
 }
