@@ -21,7 +21,7 @@
             android:inputType="text"
             android:layout_marginBottom="8dp"/>
 
-    <de.hype.hypenotify.screen.components.NonInterceptingListView
+    <de.hype.hypenotify.app.screen.components.NonInterceptingListView
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/item_suggestions"

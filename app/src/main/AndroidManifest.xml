@@ -63,22 +63,22 @@
             </intent-filter>
         </service>
         <service
-                android:name=".core.BackgroundService"
+                android:name=".app.core.BackgroundService"
                 android:foregroundServiceType="remoteMessaging">
         </service>
-        <receiver android:name=".core.BootReceiver" android:exported="true">
+        <receiver android:name=".app.core.BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".core.BroadcastIntentWatcher" android:exported="true">
+        <receiver android:name=".app.core.BroadcastIntentWatcher" android:exported="true">
             <intent-filter>
                 <action android:name="de.hype.hypenotify.ENUM_INTENT"/>
             </intent-filter>
         </receiver>
-        <receiver android:name=".services.WifiConnectionReceiver" android:exported="true">
+        <receiver android:name=".app.services.WifiConnectionReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.net.wifi.STATE_CHANGE"/>
             </intent-filter>

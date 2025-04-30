@@ -1,10 +1,6 @@
-package de.hype.hypenotify;
+package de.hype.hypenotify.server;
 
-import android.content.Context;
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
-import de.hype.hypenotify.core.interfaces.Core;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

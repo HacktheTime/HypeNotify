@@ -4,8 +4,7 @@ import ColorSerializer
 import android.graphics.Color
 import com.google.gson.*
 import com.google.gson.annotations.Expose
-import de.hype.hypenotify.core.interfaces.Core
-import de.hype.hypenotify.shared.notification.NotificationContent
+import de.hype.hypenotify.app.core.interfaces.Core
 import de.hype.hypenotify.shared.utils.FormattingUtils
 import java.lang.reflect.Type
 import java.time.Duration
@@ -36,7 +35,7 @@ object CustomGson {
         get() = GsonBuilder()
             .registerTypeAdapter(Color::class.java, ColorSerializer())
             .registerTypeAdapter(Instant::class.java, InstantSerializer())
-            .registerTypeAdapter(NotificationContent::class.java, NotificationContentSerializer())
+//            .registerTypeAdapter(NotificationContent::class.java, NotificationContentSerializer())
             .registerTypeAdapter(Duration::class.java, DurationSerializer())
             .addDeserializationExclusionStrategy(ExclusionStrategy(false))
             .addSerializationExclusionStrategy(ExclusionStrategy(true))
