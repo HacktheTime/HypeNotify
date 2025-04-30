@@ -54,7 +54,7 @@ public class ServerUtils {
 
     public static void checkTimersValidity(TimerWrapper timer, Core core) {
         try {
-            String finalURL = "%scheckTimer?id=%s&apiKey=%s&userId=%d".formatted(URL, timer.getServerId(), core.userAPIKey(), core.userId());
+            String finalURL = "%scheckTimer?id=%s&apiKey=%s&userId=%d".formatted(Config.INSTANCE.serverURL, timer.getServerId(), core.userAPIKey(), core.userId());
             URL url = new URL(finalURL);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");

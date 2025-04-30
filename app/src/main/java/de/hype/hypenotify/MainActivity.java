@@ -127,8 +127,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        super.onPause();
         isPaused = true;
+        super.onPause();
         if (currentScreen instanceof Screen c) c.onPause();
         for (View parent : parents) {
             if (parent instanceof Screen screen) {
@@ -139,8 +139,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        super.onResume();
         isPaused = false;
+        super.onResume();
         if (currentScreen instanceof Screen c) c.onResume();
         for (View parent : parents) {
             if (parent instanceof Screen screen) {
