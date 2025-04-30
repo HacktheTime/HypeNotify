@@ -5,15 +5,13 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
         mavenCentral()
+        google()
+        maven { url = uri("https://repo.hypixel.net/repository/Hypixel/") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
-
-rootProject.name = "HypeNotify"
-include(":app")
-include(":annotations") // The new module for annotations
-include(":processor") // The annotation processor module
