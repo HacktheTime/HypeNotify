@@ -47,6 +47,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("org.jsoup:jsoup:latest.release")
     implementation(kotlin("stdlib"))
+    implementation("com.google.firebase:firebase-messaging:latest.release")
+    implementation("com.google.firebase:firebase-admin:latest.release")
+    implementation("mysql:mysql-connector-java:latest.release")
 
     implementation("com.google.auto.service:auto-service:1.0-rc7")
     kapt("com.google.auto.service:auto-service:1.0-rc7")
