@@ -1,5 +1,6 @@
 package de.hype.hypenotify.server
 
+import de.hype.hypenotify.shared.EncryptionKey
 import de.hype.hypenotify.shared.data.Client
 
 public fun Client.save() {
@@ -7,7 +8,7 @@ public fun Client.save() {
     DatabaseConnection.runInDB { connection ->
         connection.prepareStatement(
             """
-            INSERT INTO clients (id, name, publicKey, firebase_key) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = ?, publicKey = ?, firebase_key = ?;)
+            INSERT INTO clients (id, name, public_key, firebase_key) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = ?, public_key = ?, firebase_key = ?
         """.trimIndent()
         )
             .apply {
@@ -21,4 +22,17 @@ public fun Client.save() {
             }
             .executeUpdate()
     }
+}
+public fun Client.Companion.load(id: String): Client? {
+    var client = null
+    DatabaseConnection.runInDB { connection ->
+        connection.prepareStatement("""
+            SELECT * FROM clients WHERE id = ?
+        """.trimIndent()).apply {
+            setString(1, id)
+        }.executeQuery().apply {
+            client = Client(getString("firebase_key"), EncryptionKey.get, getString("id"), getString("name"))
+        }
+    }
+    return client
 }
