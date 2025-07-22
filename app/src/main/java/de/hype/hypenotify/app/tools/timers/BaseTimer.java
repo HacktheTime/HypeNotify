@@ -1,6 +1,6 @@
 package de.hype.hypenotify.app.tools.timers;
 
-import de.hype.hypenotify.ServerUtils;
+import de.hype.hypenotify.app.ServerUtils;
 import de.hype.hypenotify.app.core.interfaces.MiniCore;
 
 import java.time.Instant;

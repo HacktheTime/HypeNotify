@@ -3,7 +3,7 @@ package de.hype.hypenotify.app.screen;
 import android.view.View;
 import android.widget.LinearLayout;
 import androidx.activity.OnBackPressedCallback;
-import de.hype.hypenotify.MainActivity;
+import de.hype.hypenotify.app.MainActivity;
 import de.hype.hypenotify.app.core.interfaces.Core;
 
 public abstract class Screen extends LinearLayout {

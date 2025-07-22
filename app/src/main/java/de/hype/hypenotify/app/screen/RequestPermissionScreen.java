@@ -7,8 +7,8 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import de.hype.hypenotify.MainActivity;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.app.MainActivity;
 
 import java.util.concurrent.CountDownLatch;
 

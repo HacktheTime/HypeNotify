@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BatteryManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-import de.hype.hypenotify.MainActivity;
-import de.hype.hypenotify.NotificationUtils;
 import de.hype.hypenotify.R;
+import de.hype.hypenotify.app.MainActivity;
+import de.hype.hypenotify.app.NotificationUtils;
 import de.hype.hypenotify.app.core.interfaces.Core;
 import de.hype.hypenotify.app.screen.TimerAlarmScreen;
 import de.hype.hypenotify.app.tools.notification.NotificationBuilder;
@@ -81,7 +83,8 @@ public enum DynamicIntents implements de.hype.hypenotify.app.core.Intent {
             mediaPlayer.start();
 
             // Stop the sound after 5 minutes or if acknowledged
-            new android.os.Handler().postDelayed(() -> {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> {
                 if (mediaPlayer.isPlaying()) {
                     mediaPlayer.stop();
                     mediaPlayer.release();

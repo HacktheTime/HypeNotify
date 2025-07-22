@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import androidx.core.app.NotificationCompat;
+import de.hype.hypenotify.R;
 import de.hype.hypenotify.app.tools.notification.NotificationChannels;
 import de.hype.hypenotify.app.tools.notification.NotificationImportance;
 

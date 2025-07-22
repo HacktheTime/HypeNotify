@@ -32,7 +32,7 @@ public class LayoutProcessor extends AbstractProcessor {
                 import java.util.HashMap;
                 import java.util.Map;
                 import de.hype.hypenotify.layouts.autodetection.Layout;
-                import de.hype.hypenotify.screen.Screen;
+                import de.hype.hypenotify.app.screen.Screen;
                 
                 public class LayoutRegistry {
                     private static final Map<String, Class<? extends Screen>> layouts = new HashMap<>();

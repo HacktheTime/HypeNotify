@@ -2,9 +2,9 @@ package de.hype.hypenotify.app.core;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.Config;
-import de.hype.hypenotify.ExecutionService;
-import de.hype.hypenotify.MainActivity;
+import de.hype.hypenotify.app.Config;
+import de.hype.hypenotify.app.ExecutionService;
+import de.hype.hypenotify.app.MainActivity;
 import de.hype.hypenotify.app.core.interfaces.Core;
 import de.hype.hypenotify.app.tools.bazaar.BazaarService;
 import de.hype.hypenotify.app.tools.timers.TimerService;

@@ -4,7 +4,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import de.hype.hypenotify.MainActivity;
+import de.hype.hypenotify.app.MainActivity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

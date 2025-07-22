@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import de.hype.hypenotify.R;
 import de.hype.hypenotify.app.core.BackgroundService;
 import de.hype.hypenotify.app.core.DynamicIntents;
 import de.hype.hypenotify.app.core.interfaces.Core;

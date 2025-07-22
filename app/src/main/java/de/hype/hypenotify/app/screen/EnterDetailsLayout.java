@@ -16,7 +16,7 @@ import de.hype.hypenotify.app.core.interfaces.Core;
 
 import java.util.concurrent.CountDownLatch;
 
-import static de.hype.hypenotify.ServerUtils.sendTokenToServer;
+import static de.hype.hypenotify.app.ServerUtils.sendTokenToServer;
 
 public class EnterDetailsLayout extends LinearLayout {
     private static final String TAG = "EnterDetailsLayout";

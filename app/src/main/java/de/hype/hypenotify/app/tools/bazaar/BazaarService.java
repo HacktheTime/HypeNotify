@@ -104,6 +104,8 @@ public class BazaarService {
             Log.i("BazaarService", "Hypixel BZ Connection EOF");
         } catch (IOException e) {
             Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.getMessage());
+        } catch (Throwable e) {
+            Log.e("BazaarService", "Hypixel BZ Error: ", e);
         }
     }
 

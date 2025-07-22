@@ -12,7 +12,7 @@ public class NotificationBuilder {
     NotificationCompat.Builder builder;
     Context context;
 
-    public NotificationBuilder(Context context, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
+    public NotificationBuilder(Context context, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility, GroupAlertBehavior groupAlertBehavior) {
         this.context = context;
         builder = new NotificationCompat.Builder(context, channel.channelId);
         builder.setContentText(message);
@@ -20,11 +20,12 @@ public class NotificationBuilder {
         builder.setContentTitle(title);
         builder.setPriority(importance.getInt());
         builder.setSmallIcon(R.mipmap.icon);
+        builder.setGroupAlertBehavior(groupAlertBehavior.getInt());
         setVisibility(visibility);
     }
 
     public NotificationBuilder(Context context, String title, String message, NotificationChannels channel) {
-        this(context, title, message, channel, channel.importance, NotificationVisibility.PUBLIC);
+        this(context, title, message, channel, channel.importance, NotificationVisibility.PUBLIC, GroupAlertBehavior.ALL);
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel) {
@@ -32,7 +33,7 @@ public class NotificationBuilder {
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
-        this(core.context(), title, message, channel, importance, visibility);
+        this(core.context(), title, message, channel, importance, visibility, GroupAlertBehavior.ALL);
     }
 
 

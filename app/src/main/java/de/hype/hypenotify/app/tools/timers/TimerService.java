@@ -6,7 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.ServerUtils;
+import de.hype.hypenotify.app.ServerUtils;
 import de.hype.hypenotify.app.core.IntentBuilder;
 import de.hype.hypenotify.app.core.StaticIntents;
 import de.hype.hypenotify.app.core.interfaces.MiniCore;

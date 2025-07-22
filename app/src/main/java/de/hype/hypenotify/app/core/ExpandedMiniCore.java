@@ -1,7 +1,7 @@
 package de.hype.hypenotify.app.core;
 
 import android.content.Context;
-import de.hype.hypenotify.ExecutionService;
+import de.hype.hypenotify.app.ExecutionService;
 import de.hype.hypenotify.app.tools.bazaar.BazaarService;
 import de.hype.hypenotify.app.tools.timers.TimerService;
 

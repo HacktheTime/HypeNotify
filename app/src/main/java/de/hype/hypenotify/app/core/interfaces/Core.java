@@ -1,6 +1,6 @@
 package de.hype.hypenotify.app.core.interfaces;
 
-import de.hype.hypenotify.MainActivity;
+import de.hype.hypenotify.app.MainActivity;
 
 public interface Core extends MiniCore {
     @Override

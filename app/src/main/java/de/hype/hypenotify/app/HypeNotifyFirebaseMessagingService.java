@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-import static de.hype.hypenotify.ServerUtils.sendTokenToServer;
+import static de.hype.hypenotify.app.ServerUtils.sendTokenToServer;
 import static de.hype.hypenotify.app.core.Constants.*;
 
 public class HypeNotifyFirebaseMessagingService extends FirebaseMessagingService {
