@@ -1,29 +1,30 @@
-package de.hype.hypenotify.app.tools.bazaar;
+package de.hype.hypenotify.app.tools.bazaar
 
-import com.google.gson.annotations.SerializedName;
-import de.hype.hypenotify.app.PrivateConfig;
-import de.hype.hypenotify.app.skyblockconstants.SBCollections;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.gson.annotations.SerializedName
+import de.hype.hypenotify.app.PrivateConfig
+import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager
+import de.hype.hypenotify.app.skyblockconstants.SBCollections
+import io.github.moulberry.repo.data.NEUItem
+import io.github.moulberry.repo.data.NEURecipe
 
-import java.util.List;
-import java.util.Locale;
-
-public class BazaarProduct {
+class BazaarProduct {
     @SerializedName("product_id")
-    private String productId;
-    @SerializedName("quick_status")
-    private QuickStatus quickStatus;
-    @SerializedName("sell_summary")
-    private List<Offer> sellOffers;
-    @SerializedName("buy_summary")
-    private List<Offer> buyOffers;
+    val productId: String? = null
 
-    public List<Offer> getOfferType(@NotNull OfferType type) {
+    @SerializedName("quick_status")
+    val quickStatus: QuickStatus? = null
+
+    @SerializedName("sell_summary")
+    private val sellOffers: MutableList<Offer>? = null
+
+    @SerializedName("buy_summary")
+    private val buyOffers: MutableList<Offer>? = null
+
+    fun getOfferType(type: OfferType): MutableList<Offer> {
         if (type == OfferType.INSTANT_BUY) {
-            return buyOffers;
+            return buyOffers!!
         } else {
-            return sellOffers;
+            return sellOffers!!
         }
     }
 
@@ -31,62 +32,73 @@ public class BazaarProduct {
      * @param type The type of offer you want to get the best price for.
      * @return The best price for the given offer type, taxed.
      */
-    public Double getBestPriceTaxed(@NotNull OfferType type) {
-        Double price = getBestPrice(type);
-        if (price == null) return null;
-        return price * (PrivateConfig.BAZAAR_TAX_RATE + 1);
+    fun getBestPriceTaxed(type: OfferType): Double? {
+        val price = getBestPrice(type)
+        if (price == null) return null
+        return price * (PrivateConfig.BAZAAR_TAX_RATE + 1)
     }
 
     /**
      * @param type The type of offer you want to get the best price for.
      * @return The best price for the given offer type. Null if no order.
      */
-    @Nullable
-    public Double getBestPrice(@NotNull OfferType type) {
-        List<Offer> offers = getOfferType(type);
-        if (offers == null || offers.isEmpty()) return null;
-        return offers.getFirst().pricePerUnit;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public QuickStatus getQuickStatus() {
-        return quickStatus;
+    fun getBestPrice(type: OfferType): Double? {
+        val offers = getOfferType(type)
+        if (offers == null || offers.isEmpty()) return null
+        return offers.first()?.pricePerUnit
     }
 
     /**
-     * Sell Price and Buy Price are Deprecated because they use a double value which is causing the stuff to be inaccurate. Use the {@link #getBestPrice(OfferType)} method instead.
+     * Sell Price and Buy Price are Deprecated because they use a double value which is causing the stuff to be inaccurate. Use the [.getBestPrice] method instead.
      */
-    public record QuickStatus(
-            @Deprecated
-            Double sellPrice,
-            Long sellOrders,
-            @Deprecated
-            Double buyPrice,
-            Long buyOrders,
-            Long buyMovingWeek,
-            Long sellMovingWeek,
-            Long buyVolume,
-            Long sellVolume) {
-    }
+    data class QuickStatus(
+        val sellPrice: Double?,
+        val sellOrders: Long?,
+        val buyPrice: Double?,
+        val buyOrders: Long?,
+        val buyMovingWeek: Long?,
+        val sellMovingWeek: Long?,
+        val buyVolume: Long?,
+        val sellVolume: Long?
+    )
 
-    public record Offer(int amount, Double pricePerUnit, int orders) {
-    }
+    data class Offer(@JvmField val amount: Int, @JvmField val pricePerUnit: Double?, @JvmField val orders: Int)
 
-    public enum OfferType {
+    enum class OfferType {
         INSTANT_SELL,
         INSTANT_BUY
     }
 
-    public String getDisplayName() {
-        String name = getProductId();
-        if (name.contains(":")) {
-            String sbCollection = SBCollections.getNameFromID(name);
-            if (sbCollection != null) name = sbCollection;
+    val displayName: String
+        get() {
+            var name = this.productId
+            if (name!!.contains(":")) {
+                val sbCollection = SBCollections.getNameFromID(name)
+                if (sbCollection != null) name = sbCollection
+            }
+            return name.replace("_", " ").lowercase()
         }
-        return name.replace("_", " ").toLowerCase(Locale.US);
+
+
+    val maxAmountPerStack by lazy {
+        return@lazy 64 //TODO Ill add an impl later
+    }
+
+    val canGoIntoSacks: Boolean by lazy {
+        return@lazy NeuRepoManager.sackableItems.contains(neuItem)
+    }
+
+    val neuItem: NEUItem by lazy {
+        return@lazy NeuRepoManager.getItemByProductId(productId!!)
+            ?: error("NEUItem not found for productId: $productId")
+    }
+
+    val recipies: List<NEURecipe> by lazy {
+        neuItem.recipes
+    }
+
+    override fun toString(): String {
+        return productId ?: "BazaarProduct(productId=null)"
     }
 }
 

@@ -18,6 +18,7 @@ import de.hype.hypenotify.app.Config;
 import de.hype.hypenotify.app.DebugThread;
 import de.hype.hypenotify.app.ExecutionService;
 import de.hype.hypenotify.app.NotificationUtils;
+import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager;
 import de.hype.hypenotify.app.tools.bazaar.BazaarService;
 import de.hype.hypenotify.app.tools.notification.*;
 import de.hype.hypenotify.app.tools.timers.TimerService;
@@ -64,6 +65,9 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
         builder.setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL);
         builder.setPriority(Priority.HIGH);
         builder.send();
+        executionService.execute(() -> {
+            NeuRepoManager.INSTANCE.init(this);
+        });
     }
 
     public WifiInfo getCurrentWifiNetwork() {

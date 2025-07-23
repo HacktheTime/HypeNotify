@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">HypeNotify</string>
     <string name="title_home">Home</string>
@@ -39,4 +40,7 @@
     <string name="no_data_tracking_stopped">No Data / Tracking Stopped</string>
     <string name="last_updated_s_seconds_ago">Last updated: %s Seconds ago.</string>
     <string name="openMinecraft">Open Minecraft</string>
+    <string name="suggested_item_format">%1$s | Profit: %2$d coins (%3$d%%)</string>
+    <string name="suggested_insta_sell_header">Suggested Insta Sell Items:</string>
+    <string name="suggested_sell_offer_header">Suggested Sell Offer Items:</string>
 </resources>

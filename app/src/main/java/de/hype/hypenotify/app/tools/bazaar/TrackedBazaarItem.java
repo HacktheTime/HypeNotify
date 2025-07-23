@@ -116,8 +116,8 @@ public class TrackedBazaarItem {
                 if (!oldOffers.isEmpty() && !newOffers.isEmpty()) {
                     BazaarProduct.Offer oldBest = oldOffers.get(0);
                     BazaarProduct.Offer newBest = newOffers.get(0);
-                    if (oldBest.amount() < newBest.amount() || oldBest.orders() < newBest.orders()) {
-                        notificationTextBuilder.append("Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(amountFormat.format(oldBest.pricePerUnit()), amountFormat.format(newBest.pricePerUnit()), amountFormat.format(newBest.amount() - oldBest.amount())));
+                    if (oldBest.amount < newBest.amount || oldBest.orders < newBest.orders) {
+                        notificationTextBuilder.append("Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(amountFormat.format(oldBest.pricePerUnit), amountFormat.format(newBest.pricePerUnit), amountFormat.format(newBest.amount - oldBest.amount)));
                     }
                 }
             }
@@ -125,7 +125,7 @@ public class TrackedBazaarItem {
                 List<BazaarProduct.Offer> offers = newProduct.getOfferType(trackType);
                 BazaarProduct.Offer bestOffer = null;
                 if (!offers.isEmpty()) bestOffer = offers.getFirst();
-                String bestOrderStatus = bestOffer == null ? "No orders" : "%s for %s each".formatted(amountFormat.format(bestOffer.amount()), priceFormat.format(bestOffer.pricePerUnit()));
+                String bestOrderStatus = bestOffer == null ? "No orders" : "%s for %s each".formatted(amountFormat.format(bestOffer.amount), priceFormat.format(bestOffer.pricePerUnit));
                 this.notificationText = """
                         Item: %s
                         %s

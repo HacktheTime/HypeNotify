@@ -1,287 +1,369 @@
-package de.hype.hypenotify.app.screen.features.bazaar;
+package de.hype.hypenotify.app.screen.features.bazaar
 
-import android.animation.ObjectAnimator;
-import android.annotation.SuppressLint;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.*;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.screen.Screen;
-import de.hype.hypenotify.app.tools.bazaar.BazaarProduct;
-import de.hype.hypenotify.app.tools.bazaar.BazaarResponse;
-import de.hype.hypenotify.app.tools.bazaar.BazaarService;
-import de.hype.hypenotify.app.tools.bazaar.TrackedBazaarItem;
-import de.hype.hypenotify.layouts.autodetection.Layout;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static de.hype.hypenotify.app.tools.bazaar.TrackedBazaarItem.amountFormat;
+import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.WindowManager
+import android.widget.*
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.screen.Screen
+import de.hype.hypenotify.app.skyblockconstants.getCost
+import de.hype.hypenotify.app.tools.bazaar.BazaarProduct
+import de.hype.hypenotify.app.tools.bazaar.BazaarProduct.Offer
+import de.hype.hypenotify.app.tools.bazaar.BazaarResponse
+import de.hype.hypenotify.app.tools.bazaar.BazaarService
+import de.hype.hypenotify.app.tools.bazaar.TrackedBazaarItem
+import de.hype.hypenotify.layouts.autodetection.Layout
+import java.io.IOException
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 @SuppressLint("ViewConstructor")
 @Layout(name = "Bazaar Order Tracker")
+class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
+    private var toggleTrackingButton: Switch? = null
+    private var checkNowButton: Button? = null
+    private var editTrackersButton: Button? = null
+    private var nextCheck: ScheduledFuture<*>? = null
+    private var updateLastUpdated: ScheduledFuture<*>? = null
+    private var progressBar: ProgressBar? = null
+    private var progressBarAnimation: ObjectAnimator? = null
+    private val bazaarService: BazaarService
+    private val trackedItemLabels: MutableMap<TrackedBazaarItem?, TextView?> = HashMap()
+    private val trackedItemTables: MutableMap<TrackedBazaarItem?, TableLayout?> =
+        HashMap()
+    private val loading: TextView
+    private var lastUpdated: TextView? = null
 
-public class BazaarOrdersScreen extends Screen {
-    private Switch toggleTrackingButton;
-    private Button checkNowButton;
-    private Button editTrackersButton;
-    private ScheduledFuture<?> nextCheck;
-    private ScheduledFuture<?> updateLastUpdated;
-    private ProgressBar progressBar;
-    private ObjectAnimator progressBarAnimation;
-    private BazaarService bazaarService;
-    private Map<TrackedBazaarItem, TextView> trackedItemLabels = new HashMap<>();
-    private Map<TrackedBazaarItem, TableLayout> trackedItemTables = new HashMap<>();
-    private TextView loading;
-    private TextView lastUpdated;
+    // Configurable thresholds (could be loaded from settings)
+    private val minProfitPercent = 10.0 // x% (example default)
+    private val minProfitCoins = 1000.0 // y coins (example default)
 
-    public BazaarOrdersScreen(Core core, View parent) {
-        super(core, parent);
-        loading = new TextView(context);
-        loading.setText(R.string.loading);
-        loading.setGravity(Gravity.CENTER);
-        bazaarService = core.bazaarService();
-        updateScreen();
-        core.context().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    private var suggestedItemsSection: LinearLayout? = null
+    private var suggestedInstaSellHeader: TextView? = null
+    private var suggestedSellOfferHeader: TextView? = null
+    private var suggestedInstaSellList: LinearLayout? = null
+    private var suggestedSellOfferList: LinearLayout? = null
+
+    init {
+        loading = TextView(context)
+        loading.setText(R.string.loading)
+        loading.setGravity(Gravity.CENTER)
+        bazaarService = core.bazaarService()
+        updateScreen()
+        core.context().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         // Add loading indicator
-        registerNextCheck();
+        registerNextCheck()
     }
 
-    @Override
-    protected void inflateLayouts() {
-        setOrientation(VERTICAL);
-        LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true);
-        LinearLayout layout = (findViewById(R.id.bazaar_item_layout));
-        layout.removeAllViews();
-        layout.addView(loading);
+    override fun inflateLayouts() {
+        setOrientation(VERTICAL)
+        LayoutInflater.from(context).inflate(R.layout.bazaar_orders_screen, this, true)
+        val layout = (findViewById<LinearLayout>(R.id.bazaar_item_layout))
+        layout.removeAllViews()
+        layout.addView(loading)
     }
 
-    @Override
-    protected void updateScreen(LinearLayout dynamicScreen) {
-        toggleTrackingButton = findViewById(R.id.toggle_tracking_button);
-        checkNowButton = findViewById(R.id.check_now_button);
-        progressBar = findViewById(R.id.next_bazaar_update);
-        editTrackersButton = findViewById(R.id.bazaar_edit_trackers);
-        lastUpdated = findViewById(R.id.bzaar_order_screen_last_updated);
-        dynamicScreen = findViewById(R.id.bazaar_item_layout);
+    override fun updateScreen(dynamicScreen: LinearLayout) {
+        toggleTrackingButton = findViewById(R.id.toggle_tracking_button)
+        checkNowButton = findViewById(R.id.check_now_button)
+        progressBar = findViewById(R.id.next_bazaar_update)
+        editTrackersButton = findViewById(R.id.bazaar_edit_trackers)
+        lastUpdated = findViewById(R.id.bzaar_order_screen_last_updated)
+        val dynamicScreen: LinearLayout = findViewById(R.id.bazaar_item_layout)
 
 
         // Set up listeners
-        toggleTrackingButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        toggleTrackingButton!!.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
             if (!isChecked) {
                 if (nextCheck != null) {
-                    nextCheck.cancel(false);
+                    nextCheck!!.cancel(false)
                 }
                 if (lastUpdated != null) {
-                    updateLastUpdated.cancel(false);
+                    updateLastUpdated!!.cancel(false)
                 }
                 if (progressBarAnimation != null) {
-                    progressBarAnimation.pause();
+                    progressBarAnimation!!.pause()
                 }
-                progressBar.setProgress(0);
+                progressBar!!.setProgress(0)
             } else {
-                checkPrice();
-                registerNextCheck();
+                checkPrice()
+                registerNextCheck()
             }
-        });
+        }
 
-        checkNowButton.setOnClickListener(v -> {
-            checkNowButton.setText(R.string.checking);
-            checkNowButton.requestLayout();
-            nextCheck.cancel(false);
-            core.executionService().execute(() -> {
+        checkNowButton!!.setOnClickListener { v: View? ->
+            checkNowButton!!.setText(R.string.checking)
+            checkNowButton!!.requestLayout()
+            nextCheck!!.cancel(false)
+            core.executionService().execute {
                 try {
-                    checkPrice(bazaarService.getMaxAgeResponse(Duration.ZERO));
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    checkPrice(bazaarService.getMaxAgeResponse(Duration.ZERO))
+                } catch (e: IOException) {
+                    e.printStackTrace()
                 }
-                registerNextCheck();
-                post(() -> {
-                    checkNowButton.setText(R.string.check_now);
-                    checkNowButton.requestLayout();
-                });
-            });
-        });
-
-        editTrackersButton.setOnClickListener(v -> {
-            context.setContentView(new CurrentTrackersScreen(core, this));
-        });
-
-        progressBar.setTooltipText("Time until next Refresh");
-    }
-
-    @Override
-    protected LinearLayout getDynamicScreen() {
-        dynamicScreen = findViewById(R.id.bazaar_item_layout);
-        core.executionService().execute(() -> {
-            checkPrice();
-            post(() -> dynamicScreen.removeView(loading));
-        });
-        return dynamicScreen;
-    }
-
-
-    private void registerNextCheck() {
-        int timeBetweenChecks = bazaarService.getCheckInterval();
-        startProgressBarCountdown(timeBetweenChecks);
-        nextCheck = core.executionService().schedule(() -> {
-            checkPrice();
-            if (toggleTrackingButton.isChecked()) registerNextCheck();
-        }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
-        updateLastUpdated = core.executionService().scheduleWithFixedDelay(() -> {
-            Instant lastResponseTime = BazaarService.getLastUpdate();
-            if (lastResponseTime == null) return;
-            post(() -> {
-                lastUpdated.setText(getContext().getString(R.string.last_updated_s_seconds_ago).formatted(Duration.between(lastResponseTime, Instant.now()).getSeconds()));
-                lastUpdated.requestLayout();
-            });
-        }, 0, 1, TimeUnit.SECONDS);
-    }
-
-    private void startProgressBarCountdown(int timeBetweenChecks) {
-        post(() -> {
-            if (progressBarAnimation != null) {
-                progressBarAnimation.cancel();
+                registerNextCheck()
+                post {
+                    checkNowButton!!.setText(R.string.check_now)
+                    checkNowButton!!.requestLayout()
+                }
             }
+        }
 
-            long max = ((long) timeBetweenChecks) * 1000;
-            int countDownSteps = 500;
-            progressBar.setMax((int) (max / countDownSteps));
-            progressBar.setProgress(progressBar.getMax());
+        editTrackersButton!!.setOnClickListener { v: View? ->
+            context.setContentView(CurrentTrackersScreen(core, this))
+        }
 
+        progressBar!!.setTooltipText("Time until next Refresh")
 
-            progressBarAnimation = ObjectAnimator.ofInt(progressBar, "progress", progressBar.getMax(), 0);
-            progressBarAnimation.setDuration(max); // Duration of the progressBarAnimation in milliseconds
-
-            progressBarAnimation.start();
-        });
-    }
-
-    private void checkPrice() {
-        try {
-            checkPrice(bazaarService.getMaxAgeResponse());
-        } catch (Exception e) {
-            e.printStackTrace();
+        // Add suggested items section at the bottom
+        if (suggestedItemsSection == null) {
+            suggestedItemsSection = LinearLayout(context)
+            suggestedItemsSection!!.setOrientation(VERTICAL)
+            suggestedInstaSellHeader = TextView(context)
+            suggestedInstaSellHeader!!.setText(R.string.suggested_insta_sell_header)
+            suggestedSellOfferHeader = TextView(context)
+            suggestedSellOfferHeader!!.setText(R.string.suggested_sell_offer_header)
+            suggestedInstaSellList = LinearLayout(context)
+            suggestedInstaSellList!!.setOrientation(VERTICAL)
+            suggestedSellOfferList = LinearLayout(context)
+            suggestedSellOfferList!!.setOrientation(VERTICAL)
+            suggestedItemsSection!!.addView(suggestedInstaSellHeader)
+            suggestedItemsSection!!.addView(suggestedInstaSellList)
+            suggestedItemsSection!!.addView(suggestedSellOfferHeader)
+            suggestedItemsSection!!.addView(suggestedSellOfferList)
+            dynamicScreen.addView(suggestedItemsSection)
+        } else if (suggestedItemsSection!!.parent == null) {
+            dynamicScreen.addView(suggestedItemsSection)
         }
     }
 
-    private void checkPrice(BazaarResponse response) {
+    override fun getDynamicScreen(): LinearLayout? {
+        dynamicScreen = findViewById(R.id.bazaar_item_layout)
+        core.executionService().execute {
+            checkPrice()
+            post { dynamicScreen.removeView(loading) }
+        }
+        return dynamicScreen
+    }
+
+
+    private fun registerNextCheck() {
+        val timeBetweenChecks = bazaarService.getCheckInterval()
+        startProgressBarCountdown(timeBetweenChecks)
+        nextCheck = core.executionService().schedule({
+            checkPrice()
+            if (toggleTrackingButton!!.isChecked()) registerNextCheck()
+        }, timeBetweenChecks.toLong(), TimeUnit.SECONDS)
+        updateLastUpdated = core.executionService().scheduleWithFixedDelay(Runnable {
+            val lastResponseTime = BazaarService.getLastUpdate()
+            if (lastResponseTime == null) return@Runnable
+            post {
+                lastUpdated?.setText(
+                    getContext().getString(R.string.last_updated_s_seconds_ago)
+                        .format(Duration.between(lastResponseTime, Instant.now()).getSeconds())
+                )
+                lastUpdated!!.requestLayout()
+            }
+        }, 0, 1, TimeUnit.SECONDS)
+    }
+
+    private fun startProgressBarCountdown(timeBetweenChecks: Int) {
+        post {
+            if (progressBarAnimation != null) {
+                progressBarAnimation!!.cancel()
+            }
+            val max = (timeBetweenChecks.toLong()) * 1000
+            val countDownSteps = 500
+            progressBar!!.setMax((max / countDownSteps).toInt())
+            progressBar!!.setProgress(progressBar!!.getMax())
+
+
+            progressBarAnimation = ObjectAnimator.ofInt(progressBar, "progress", progressBar!!.getMax(), 0)
+            progressBarAnimation!!.setDuration(max) // Duration of the progressBarAnimation in milliseconds
+            progressBarAnimation!!.start()
+        }
+    }
+
+    private fun checkPrice() {
+        try {
+            checkPrice(bazaarService.getMaxAgeResponse())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun checkPrice(response: BazaarResponse?) {
         try {
             if (response == null) {
-                post(() -> {
-                    dynamicScreen.removeAllViews();
-                    TextView info = new TextView(context);
-                    info.setText(R.string.no_data_tracking_stopped);
-                    info.setGravity(Gravity.CENTER);
-                    dynamicScreen.addView(info);
-                });
-                return;
+                post {
+                    dynamicScreen.removeAllViews()
+                    val info = TextView(context)
+                    info.setText(R.string.no_data_tracking_stopped)
+                    info.setGravity(Gravity.CENTER)
+                    dynamicScreen.addView(info)
+                    // Ensure suggestions section is present
+                    if (suggestedItemsSection != null && suggestedItemsSection!!.parent == null) {
+                        dynamicScreen.addView(suggestedItemsSection)
+                    }
+                }
+                return
             }
-            Map<String, BazaarProduct> items = response.getProducts();
-            LinkedHashMap<TrackedBazaarItem, List<BazaarProduct.Offer>> displayTables = new LinkedHashMap<>();
-            for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
-                if (!toTrackItem.showInOrderScreen()) continue;
-                BazaarProduct product = items.get(toTrackItem.itemId);
+            val items = response.getProducts()
+            val displayTables = LinkedHashMap<TrackedBazaarItem, MutableList<Offer>>()
+            for (toTrackItem in bazaarService.trackedItems) {
+                if (!toTrackItem.showInOrderScreen()) continue
+                val product = items.get(toTrackItem.itemId)
                 if (product == null) {
-                    Toast.makeText(context, "Item not found: %s. Skipping it".formatted(toTrackItem.itemId), Toast.LENGTH_SHORT).show();
-                    continue;
+                    Toast.makeText(
+                        context,
+                        "Item not found: ${toTrackItem.itemId}. Skipping it",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    continue
                 }
-                displayTables.put(toTrackItem, product.getOfferType(toTrackItem.trackType));
+                displayTables[toTrackItem] = product.getOfferType(toTrackItem.trackType)
             }
-            post(() -> {
-                dynamicScreen.removeAllViews();
-                for (Map.Entry<TrackedBazaarItem, List<BazaarProduct.Offer>> responseEntry : displayTables.sequencedEntrySet()) {
-                    String displayName = responseEntry.getKey().getDisplayName();
-                    List<BazaarProduct.Offer> toDisplayOrders = responseEntry.getValue();
+            post {
+                // Remove only tracked item views, keep suggestions section
+                dynamicScreen.removeAllViews()
+                for (responseEntry in displayTables.sequencedEntrySet()) {
+                    val displayName = responseEntry.key!!.getDisplayName()
+                    val toDisplayOrders: MutableList<Offer> = responseEntry.value
 
-                    TextView itemLabel = trackedItemLabels.get(responseEntry.getKey());
+                    var itemLabel = trackedItemLabels.get(responseEntry.key)
                     if (itemLabel == null) {
-                        itemLabel = new TextView(context);
-                        trackedItemLabels.put(responseEntry.getKey(), itemLabel);
-                        itemLabel.setGravity(Gravity.CENTER);
+                        itemLabel = TextView(context)
+                        trackedItemLabels.put(responseEntry.key, itemLabel)
+                        itemLabel.setGravity(Gravity.CENTER)
                     }
-                    dynamicScreen.addView(itemLabel);
-                    itemLabel.setText("Item: %s (%s)\n".formatted(displayName, responseEntry.getKey().trackType));
+                    dynamicScreen.addView(itemLabel)
+                    itemLabel.setText("Item: %s (%s)\n".format(displayName, responseEntry.key!!.trackType))
                     if (toDisplayOrders.isEmpty()) {
-                        itemLabel.append("No orders found");
-                        continue;
+                        itemLabel.append("No orders found")
+                        continue
                     }
-                    TableLayout orderTable = trackedItemTables.get(responseEntry.getKey());
+                    var orderTable = trackedItemTables.get(responseEntry.key)
                     if (orderTable == null) {
-                        orderTable = new TableLayout(context);
-                        orderTable.setStretchAllColumns(true);
-                        LayoutParams tableLayoutParams = new LayoutParams(
-                                LayoutParams.WRAP_CONTENT, // Change to MATCH_PARENT
-                                LayoutParams.WRAP_CONTENT
-                        );
-                        tableLayoutParams.gravity = Gravity.CENTER; // Ensure gravity is set
-                        orderTable.setLayoutParams(tableLayoutParams);
-                        trackedItemTables.put(responseEntry.getKey(), orderTable);
+                        orderTable = TableLayout(context)
+                        orderTable.setStretchAllColumns(true)
+                        val tableLayoutParams = LayoutParams(
+                            LayoutParams.WRAP_CONTENT,  // Change to MATCH_PARENT
+                            LayoutParams.WRAP_CONTENT
+                        )
+                        tableLayoutParams.gravity = Gravity.CENTER // Ensure gravity is set
+                        orderTable.setLayoutParams(tableLayoutParams)
+                        trackedItemTables.put(responseEntry.key, orderTable)
                     }
-                    dynamicScreen.addView(orderTable);
-                    orderTable.removeAllViews();
+                    dynamicScreen.addView(orderTable)
+                    orderTable.removeAllViews()
 
-                    TableRow headerRow = new TableRow(context);
-                    TextView headerAmount = new TextView(context);
-                    headerAmount.setText(R.string.amount);
-                    headerAmount.setGravity(Gravity.CENTER); // Center the text
-                    TextView headerCoins = new TextView(context);
-                    headerCoins.setText(R.string.coins);
-                    headerCoins.setGravity(Gravity.CENTER); // Center the text
-                    headerRow.addView(headerAmount);
-                    headerRow.addView(headerCoins);
-                    orderTable.addView(headerRow);
+                    val headerRow = TableRow(context)
+                    val headerAmount = TextView(context)
+                    headerAmount.setText(R.string.amount)
+                    headerAmount.setGravity(Gravity.CENTER) // Center the text
+                    val headerCoins = TextView(context)
+                    headerCoins.setText(R.string.coins)
+                    headerCoins.setGravity(Gravity.CENTER) // Center the text
+                    headerRow.addView(headerAmount)
+                    headerRow.addView(headerCoins)
+                    orderTable.addView(headerRow)
 
-                    for (BazaarProduct.Offer order : toDisplayOrders) {
-                        TableRow dataRow = new TableRow(context);
-                        TextView amountCell = new TextView(context);
-                        amountCell.setText(amountFormat.format(order.amount()));
-                        amountCell.setGravity(Gravity.CENTER); // Center the text
-                        TextView coinsCell = new TextView(context);
-                        coinsCell.setText(amountFormat.format(order.pricePerUnit()));
-                        coinsCell.setGravity(Gravity.CENTER); // Center the text
-                        dataRow.addView(amountCell);
-                        dataRow.addView(coinsCell);
-                        orderTable.addView(dataRow);
+                    for (order in toDisplayOrders) {
+                        val dataRow = TableRow(context)
+                        val amountCell = TextView(context)
+                        amountCell.setText(TrackedBazaarItem.amountFormat.format(order.amount.toLong()))
+                        amountCell.setGravity(Gravity.CENTER) // Center the text
+                        val coinsCell = TextView(context)
+                        coinsCell.setText(TrackedBazaarItem.amountFormat.format(order.pricePerUnit))
+                        coinsCell.setGravity(Gravity.CENTER) // Center the text
+                        dataRow.addView(amountCell)
+                        dataRow.addView(coinsCell)
+                        orderTable.addView(dataRow)
                     }
                 }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
+                // Ensure suggestions section is present at the end
+                //TODO reenable
+//                if (suggestedItemsSection != null && suggestedItemsSection!!.parent != dynamicScreen) {
+//                    dynamicScreen.addView(suggestedItemsSection)
+//                }
+//                updateSuggestedItems()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
-    @Override
-    public void close() {
-        core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        super.close();
-        if (nextCheck != null) nextCheck.cancel(true);
-        if (updateLastUpdated != null) updateLastUpdated.cancel(true);
+    private fun updateSuggestedItems() {
+        suggestedInstaSellList!!.removeAllViews()
+        suggestedSellOfferList!!.removeAllViews()
+        val response = bazaarService.getMaxAgeResponse()
+        if (response == null) return
+        val products = response.getProducts()
+        for (product in products.values) {
+            // Filter: stackable to 64, all materials sackable, meets profit thresholds
+            if (product.maxAmountPerStack < 32) continue
+            if (!product.canGoIntoSacks) continue
+            val craftCost = product.neuItem.getCost() ?: continue
+            val instaSellPrice: Double =
+                (if (product.getBestPrice(BazaarProduct.OfferType.INSTANT_SELL) != null) product.getBestPrice(
+                    BazaarProduct.OfferType.INSTANT_SELL
+                ) else Double.MAX_VALUE)!!
+            val sellOfferPrice: Double =
+                (if (product.getBestPrice(BazaarProduct.OfferType.INSTANT_BUY) != null) product.getBestPrice(
+                    BazaarProduct.OfferType.INSTANT_BUY
+                ) else Double.MAX_VALUE)!!
+            val profitInstaSell = instaSellPrice - craftCost
+            val profitSellOffer = sellOfferPrice - craftCost
+            val profitPercentInstaSell = if (craftCost > 0) (profitInstaSell / craftCost) * 100 else 0.0
+            val profitPercentSellOffer = if (craftCost > 0) (profitSellOffer / craftCost) * 100 else 0.0
+            // Score and filter
+            if (profitInstaSell >= minProfitCoins && profitPercentInstaSell >= minProfitPercent) {
+                val itemView = TextView(context)
+                itemView.text = context.getString(
+                    R.string.suggested_item_format,
+                    product.displayName,
+                    profitInstaSell.toInt(),
+                    profitPercentInstaSell.toInt()
+                )
+                suggestedInstaSellList!!.addView(itemView)
+            }
+            if (profitSellOffer >= minProfitCoins && profitPercentSellOffer >= minProfitPercent) {
+                val itemView = TextView(context)
+                itemView.text = context.getString(
+                    R.string.suggested_item_format,
+                    product.displayName,
+                    profitSellOffer.toInt(),
+                    profitPercentSellOffer.toInt()
+                )
+                suggestedSellOfferList!!.addView(itemView)
+            }
+        }
     }
 
-    @Override
-    public void onPause() {
+    override fun close() {
+        core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        super.close()
+        if (nextCheck != null) nextCheck!!.cancel(true)
+        if (updateLastUpdated != null) updateLastUpdated!!.cancel(true)
+    }
+
+    override fun onPause() {
         // Timer und Animationen pausieren
-        if (nextCheck != null) nextCheck.cancel(false);
-        if (updateLastUpdated != null) updateLastUpdated.cancel(false);
-        if (progressBarAnimation != null) progressBarAnimation.pause();
+        if (nextCheck != null) nextCheck!!.cancel(false)
+        if (updateLastUpdated != null) updateLastUpdated!!.cancel(false)
+        if (progressBarAnimation != null) progressBarAnimation!!.pause()
     }
 
-    @Override
-    public void onResume() {
+    override fun onResume() {
         // Nur neu starten, wenn Tracking aktiv ist
-        if (toggleTrackingButton.isChecked()) {
-            registerNextCheck();
+        if (toggleTrackingButton!!.isChecked()) {
+            registerNextCheck()
         }
     }
 }

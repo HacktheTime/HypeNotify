@@ -50,6 +50,8 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("com.google.code.gson:gson:latest.release")
     implementation("org.reflections:reflections:latest.release")
+    implementation("moe.nea:neurepoparser:latest.release")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:latest.release")
     // Instead, add a dependency on your annotation processor:
     kapt(project(":processor"))
     // If you moved your annotation definitions into a separate module, include it:

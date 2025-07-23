@@ -99,6 +99,7 @@ public class NotificationBuilder {
     }
 
     public de.hype.hypenotify.app.tools.notification.Notification send() {
+        builder.setGroup("google_bug"); //TODO remove but its needed rn due to a issue with android 16
         de.hype.hypenotify.app.tools.notification.Notification notification = new de.hype.hypenotify.app.tools.notification.Notification(context, this);
         notification.send();
         return notification;
