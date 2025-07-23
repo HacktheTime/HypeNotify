@@ -17,6 +17,7 @@ import de.hype.hypenotify.app.tools.bazaar.TrackedBazaarItem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -139,22 +140,21 @@ class CreateTrackerScreen extends Screen {
                     update = core.executionService().schedule(() -> {
                         post(() -> {
                             String filter = s.toString().toLowerCase();
-                            List<BazaarSuggestionItem> filtered = new ArrayList<>();
-
-                            for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
+                            List<BazaarSuggestionItem> filtered = bazaarResponse.getProducts().entrySet().parallelStream().map((entry) -> {
                                 String itemId = entry.getKey().toLowerCase();
                                 String displayName = entry.getValue().getDisplayName().toLowerCase();
 
                                 if (itemId.contains(filter) || displayName.contains(filter)) {
-                                    filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
+                                    return new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName());
                                 }
-                            }
+                                return null;
+                            }).filter(Objects::nonNull).toList();
 
                             BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
                             itemSuggestions.setAdapter(filteredAdapter);
                             itemSuggestions.setVisibility(VISIBLE);
                         });
-                    }, 2, TimeUnit.SECONDS);
+                    }, 1, TimeUnit.SECONDS);
                 }
 
                 @Override
