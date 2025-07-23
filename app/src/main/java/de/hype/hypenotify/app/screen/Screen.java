@@ -3,8 +3,10 @@ package de.hype.hypenotify.app.screen;
 import android.view.View;
 import android.widget.LinearLayout;
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import de.hype.hypenotify.app.MainActivity;
 import de.hype.hypenotify.app.core.interfaces.Core;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class Screen extends LinearLayout {
     protected final View parent;
@@ -34,6 +36,9 @@ public abstract class Screen extends LinearLayout {
         }
         if (parent != null) {
             core.context().setContentView(parent);
+            if (parent instanceof Screen screen) {
+                screen.updateScreen();
+            }
         } else {
             core.context().finish();
         }
@@ -91,4 +96,10 @@ public abstract class Screen extends LinearLayout {
     public abstract void onPause();
     public abstract void onResume();
     protected abstract LinearLayout getDynamicScreen();
+
+    @NonNull
+    @Override
+    public @NotNull String toString() {
+        return this.getClass().getSimpleName();
+    }
 }

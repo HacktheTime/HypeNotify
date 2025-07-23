@@ -17,10 +17,9 @@ import com.google.gson.reflect.TypeToken;
 import de.hype.hypenotify.app.Config;
 import de.hype.hypenotify.app.DebugThread;
 import de.hype.hypenotify.app.ExecutionService;
+import de.hype.hypenotify.app.NotificationUtils;
 import de.hype.hypenotify.app.tools.bazaar.BazaarService;
-import de.hype.hypenotify.app.tools.notification.NotificationBuilder;
-import de.hype.hypenotify.app.tools.notification.NotificationChannels;
-import de.hype.hypenotify.app.tools.notification.NotificationVisibility;
+import de.hype.hypenotify.app.tools.notification.*;
 import de.hype.hypenotify.app.tools.timers.TimerService;
 
 import java.util.Calendar;
@@ -57,9 +56,13 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
         scheduleDailyBatteryCheck();
         debugThread.setName("DebugThread");
         debugThread.start();
+        NotificationUtils.synchronizeNotificationChannels(context);
         NotificationBuilder builder = new NotificationBuilder(context, "Title here", "message here", NotificationChannels.BAZAAR_TRACKER);
         builder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(context).getAsPending());
         builder.setVisibility(NotificationVisibility.PUBLIC);
+        builder.setAlertOnlyOnce(false);
+        builder.setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL);
+        builder.setPriority(Priority.HIGH);
         builder.send();
     }
 

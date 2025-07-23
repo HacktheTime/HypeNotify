@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.hype.hypenotify.app.core.StaticIntents;
 import de.hype.hypenotify.app.core.interfaces.MiniCore;
+import de.hype.hypenotify.app.tools.notification.GroupBehaviour;
 import de.hype.hypenotify.app.tools.notification.NotificationBuilder;
 import de.hype.hypenotify.app.tools.notification.NotificationChannels;
 import de.hype.hypenotify.app.tools.notification.NotificationVisibility;
@@ -172,6 +173,8 @@ public class BazaarService {
                             notificationBuilder.setVisibility(NotificationVisibility.PUBLIC);
                             notificationBuilder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(core.context()).getAsPending());
                             notificationBuilder.setAutoCancel(true);
+                            notificationBuilder.setAlertOnlyOnce(false);
+                            notificationBuilder.setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL);
                             notificationBuilder.send();
                         }
                     }

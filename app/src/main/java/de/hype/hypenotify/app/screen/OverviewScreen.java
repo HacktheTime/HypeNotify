@@ -22,11 +22,6 @@ public class OverviewScreen extends Screen {
         updateScreen();
     }
 
-    @Override
-    public void close() {
-        super.close();
-    }
-
     private void updateLayoutList(String filter) {
         // Clear only dynamic items, preserving the search box.
         Map<String, Class<? extends Screen>> layouts = LayoutRegistry.getAllLayouts();

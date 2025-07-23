@@ -178,11 +178,13 @@ public class BazaarOrdersScreen extends Screen {
     private void checkPrice(BazaarResponse response) {
         try {
             if (response == null) {
-                dynamicScreen.removeAllViews();
-                TextView info = new TextView(context);
-                info.setText(R.string.no_data_tracking_stopped);
-                info.setGravity(Gravity.CENTER);
-                dynamicScreen.addView(info);
+                post(() -> {
+                    dynamicScreen.removeAllViews();
+                    TextView info = new TextView(context);
+                    info.setText(R.string.no_data_tracking_stopped);
+                    info.setGravity(Gravity.CENTER);
+                    dynamicScreen.addView(info);
+                });
                 return;
             }
             Map<String, BazaarProduct> items = response.getProducts();

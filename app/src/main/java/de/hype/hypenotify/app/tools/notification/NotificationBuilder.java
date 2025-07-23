@@ -12,7 +12,7 @@ public class NotificationBuilder {
     NotificationCompat.Builder builder;
     Context context;
 
-    public NotificationBuilder(Context context, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility, GroupAlertBehavior groupAlertBehavior) {
+    public NotificationBuilder(Context context, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
         this.context = context;
         builder = new NotificationCompat.Builder(context, channel.channelId);
         builder.setContentText(message);
@@ -20,12 +20,13 @@ public class NotificationBuilder {
         builder.setContentTitle(title);
         builder.setPriority(importance.getInt());
         builder.setSmallIcon(R.mipmap.icon);
-        builder.setGroupAlertBehavior(groupAlertBehavior.getInt());
+        setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL);
+        builder.setOnlyAlertOnce(false);
         setVisibility(visibility);
     }
 
     public NotificationBuilder(Context context, String title, String message, NotificationChannels channel) {
-        this(context, title, message, channel, channel.importance, NotificationVisibility.PUBLIC, GroupAlertBehavior.ALL);
+        this(context, title, message, channel, channel.importance, NotificationVisibility.PUBLIC);
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel) {
@@ -33,7 +34,7 @@ public class NotificationBuilder {
     }
 
     public NotificationBuilder(Core core, String title, String message, NotificationChannels channel, NotificationImportance importance, NotificationVisibility visibility) {
-        this(core.context(), title, message, channel, importance, visibility, GroupAlertBehavior.ALL);
+        this(core.context(), title, message, channel, importance, visibility);
     }
 
 
@@ -113,6 +114,11 @@ public class NotificationBuilder {
         return this;
     }
 
+    public NotificationBuilder setAlertOnlyOnce(boolean alertOnlyOnce) {
+        builder.setOnlyAlertOnce(alertOnlyOnce);
+        return this;
+    }
+
     public void setAction(PendingIntent pendingIntent) {
         builder.setContentIntent(pendingIntent);
     }
@@ -120,4 +126,9 @@ public class NotificationBuilder {
     public void addActionButton(String test, PendingIntent pendingIntent) {
         builder.addAction(new NotificationCompat.Action.Builder(R.mipmap.icon, test, pendingIntent).build());
     }
+
+    public void setPriority(Priority priority) {
+        builder.setPriority(priority.getInt());
+    }
 }
+
