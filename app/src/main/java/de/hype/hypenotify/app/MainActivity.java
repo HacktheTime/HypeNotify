@@ -76,9 +76,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 overviewScreen = new OverviewScreen(core);
-                runOnUiThread(() -> {
-                    setContentView(overviewScreen);
-                });
+                setOverviewPage();
             } catch (Exception e) {
                 Log.e(TAG, "Error: ", e);
                 throw new RuntimeException(e);
@@ -142,7 +140,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         isPaused = false;
         super.onResume();
-        if (currentScreen instanceof Screen c) c.onResume();
+        if (currentScreen instanceof Screen c) {
+            c.updateScreen();
+            c.onResume();
+        }
         for (View parent : parents) {
             if (parent instanceof Screen screen) {
                 screen.onResume();
@@ -191,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void setOverviewPage() {
         runOnUiThread(() -> {
-            super.setContentView(overviewScreen);
+            setContentView(overviewScreen);
         });
     }
 
