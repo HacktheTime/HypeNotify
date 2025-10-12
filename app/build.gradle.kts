@@ -1,3 +1,6 @@
+import android.R.attr.versionCode
+import android.R.attr.versionName
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -10,7 +13,6 @@ android {
     namespace = "de.hype.hypenotify"
     compileSdk = 35
 
-
     defaultConfig {
         applicationId = "de.hype.hypenotify"
         minSdk = 35
@@ -19,20 +21,66 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Moved multiDexEnabled out of nested defaultConfig block
         multiDexEnabled = true
+
+        // Speicher-Optimierungen
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true"
+                )
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_18
         targetCompatibility = JavaVersion.VERSION_18
     }
+
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_18.toString()
+        freeCompilerArgs += listOf(
+            "-Xjvm-default=all",
+            "-opt-in=kotlin.RequiresOptIn"
+        )
+    }
+
+    // Dex-Optionen für große Apps
+    dexOptions {
+        javaMaxHeapSize = "4g"
+        preDexLibraries = false
+    }
+
+    packagingOptions {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt"
+            )
+        }
     }
 }
 

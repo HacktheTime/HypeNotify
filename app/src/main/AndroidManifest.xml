@@ -45,6 +45,9 @@
             android:enableOnBackInvokedCallback="true"
             android:supportsRtl="true"
             android:theme="@style/Theme.HypeNotify"
+            android:largeHeap="true"
+            android:hardwareAccelerated="true"
+            android:name=".app.HypeNotifyApplication"
     >
         <activity
                 android:name=".app.MainActivity"

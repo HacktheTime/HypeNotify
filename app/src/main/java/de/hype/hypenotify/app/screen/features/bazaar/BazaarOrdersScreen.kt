@@ -2,6 +2,7 @@ package de.hype.hypenotify.app.screen.features.bazaar
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,10 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.MutableList
+import kotlin.collections.MutableMap
 
 @SuppressLint("ViewConstructor")
 @Layout(name = "Bazaar Order Tracker")
@@ -51,13 +56,13 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
     private var suggestedSellOfferList: LinearLayout? = null
 
     init {
+        // Kein manuelles registrieren mehr nötig - passiert automatisch in Screen-Basisklasse
         loading = TextView(context)
         loading.setText(R.string.loading)
         loading.setGravity(Gravity.CENTER)
         bazaarService = core.bazaarService()
         updateScreen()
         core.context().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        // Add loading indicator
         registerNextCheck()
     }
 
@@ -365,5 +370,37 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
         if (toggleTrackingButton!!.isChecked()) {
             registerNextCheck()
         }
+    }
+
+    override fun onSaveState(state: Bundle) {
+        // Nur wichtige Daten speichern
+        state.putBoolean("tracking_enabled", toggleTrackingButton?.isChecked ?: false)
+
+        val trackedItemIds = bazaarService.trackedItems.map { it.itemId }.toTypedArray()
+        state.putStringArray("tracked_items", trackedItemIds)
+
+        android.util.Log.d("BazaarOrdersScreen", "State saved: tracking=${toggleTrackingButton?.isChecked}")
+    }
+
+    override fun onRestoreState(state: Bundle) {
+        // State wiederherstellen
+        val wasTrackingEnabled = state.getBoolean("tracking_enabled", false)
+
+        // Nach Layout-Update anwenden
+        post {
+            toggleTrackingButton?.isChecked = wasTrackingEnabled
+
+            if (wasTrackingEnabled) {
+                // Tracking wieder starten
+                checkPrice()
+                registerNextCheck()
+            }
+        }
+
+        android.util.Log.d("BazaarOrdersScreen", "State restored: tracking=$wasTrackingEnabled")
+    }
+
+    override fun getScreenId(): String {
+        return "bazaar_orders_screen"
     }
 }
