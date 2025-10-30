@@ -1,6 +1,3 @@
-import android.R.attr.versionCode
-import android.R.attr.versionName
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
