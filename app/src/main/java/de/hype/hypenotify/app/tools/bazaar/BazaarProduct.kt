@@ -1,7 +1,7 @@
 package de.hype.hypenotify.app.tools.bazaar
 
 import com.google.gson.annotations.SerializedName
-import de.hype.hypenotify.app.PrivateConfig
+import de.hype.hypenotify.PrivateConfig
 import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager
 import de.hype.hypenotify.app.skyblockconstants.SBCollections
 import io.github.moulberry.repo.data.NEUItem
