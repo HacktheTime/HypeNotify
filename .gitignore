@@ -21,3 +21,16 @@ local.properties
 /processor/build/
 /processor/build/classes/java/main/
 /app/src/google-services.json
+/server-project/build/
+/.idea/
+/keystore/sign_keystore.jks
+/keystore.properties
+/app/google-services.json
+/gradle/wrapper/gradle-wrapper.jar
+/server-project/gradle/wrapper/gradle-wrapper.jar
+/gradle/wrapper/gradle-wrapper.properties
+/server-project/gradle/wrapper/gradle-wrapper.properties
+/server-project/gradlew
+/gradlew
+/server-project/gradlew.bat
+/gradlew.bat
