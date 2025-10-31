@@ -368,9 +368,9 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
         core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
         // Cancel all scheduled tasks
-        if (nextCheck != null) nextCheck!!.cancel(false)
-        if (updateLastUpdated != null) updateLastUpdated!!.cancel(false)
-        if (progressBarAnimation != null) progressBarAnimation!!.cancel()
+        nextCheck?.cancel(false)
+        updateLastUpdated?.cancel(false)
+        progressBarAnimation?.cancel()
         
         // Clear cached views to prevent memory leaks
         trackedItemLabels.clear()
