@@ -162,18 +162,30 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
         val timeBetweenChecks = bazaarService.getCheckInterval()
         startProgressBarCountdown(timeBetweenChecks)
         nextCheck = core.executionService().schedule({
-            checkPrice()
-            if (toggleTrackingButton!!.isChecked()) registerNextCheck()
+            try {
+                checkPrice()
+            } catch (e: Exception) {
+                android.util.Log.e("BazaarOrdersScreen", "Error checking price", e)
+            } finally {
+                // Always reschedule next check, even if checkPrice fails
+                if (toggleTrackingButton?.isChecked == true) {
+                    registerNextCheck()
+                }
+            }
         }, timeBetweenChecks.toLong(), TimeUnit.SECONDS)
         updateLastUpdated = core.executionService().scheduleWithFixedDelay(Runnable {
-            val lastResponseTime = BazaarService.getLastUpdate()
-            if (lastResponseTime == null) return@Runnable
-            post {
-                lastUpdated?.setText(
-                    getContext().getString(R.string.last_updated_s_seconds_ago)
-                        .format(Duration.between(lastResponseTime, Instant.now()).getSeconds())
-                )
-                lastUpdated!!.requestLayout()
+            try {
+                val lastResponseTime = BazaarService.getLastUpdate()
+                if (lastResponseTime == null) return@Runnable
+                post {
+                    lastUpdated?.setText(
+                        getContext().getString(R.string.last_updated_s_seconds_ago)
+                            .format(Duration.between(lastResponseTime, Instant.now()).getSeconds())
+                    )
+                    lastUpdated?.requestLayout()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("BazaarOrdersScreen", "Error updating last updated time", e)
             }
         }, 0, 1, TimeUnit.SECONDS)
     }
@@ -353,9 +365,17 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
 
     override fun close() {
         core.context().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        super.close()
+        
+        // Cancel all scheduled tasks
         if (nextCheck != null) nextCheck!!.cancel(true)
         if (updateLastUpdated != null) updateLastUpdated!!.cancel(true)
+        if (progressBarAnimation != null) progressBarAnimation!!.cancel()
+        
+        // Clear cached views to prevent memory leaks
+        trackedItemLabels.clear()
+        trackedItemTables.clear()
+        
+        super.close()
     }
 
     override fun onPause() {
