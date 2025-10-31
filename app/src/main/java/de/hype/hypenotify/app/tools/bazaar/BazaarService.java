@@ -86,15 +86,16 @@ public class BazaarService {
     }
 
     private static void fetchBazaar() {
+        HttpURLConnection connection = null;
+        InputStreamReader reader = null;
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
+            connection = (HttpURLConnection) new URL(API_URL).openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.getResponseCode();
 
-            InputStreamReader reader =
-                    new InputStreamReader(connection.getInputStream());
+            reader = new InputStreamReader(connection.getInputStream());
             BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
             lastUpdate = Instant.now();
         } catch (SocketTimeoutException e) {
@@ -107,6 +108,18 @@ public class BazaarService {
             Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.getMessage());
         } catch (Throwable e) {
             Log.e("BazaarService", "Hypixel BZ Error: ", e);
+        } finally {
+            // Properly close resources to prevent memory leaks
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    Log.w("BazaarService", "Failed to close reader", e);
+                }
+            }
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
