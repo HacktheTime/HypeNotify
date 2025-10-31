@@ -139,7 +139,7 @@ class CreateTrackerScreen extends Screen {
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     // Cancel previous scheduled task to prevent memory leaks and task accumulation
                     if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-                        pendingFilterTask.cancel(true);
+                        pendingFilterTask.cancel(false);
                     }
                     pendingFilterTask = core.executionService().schedule(() -> {
                         post(() -> {
@@ -173,7 +173,7 @@ class CreateTrackerScreen extends Screen {
     public void close() {
         // Cancel any pending filter task to prevent memory leaks
         if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-            pendingFilterTask.cancel(true);
+            pendingFilterTask.cancel(false);
         }
         super.close();
     }
@@ -182,7 +182,7 @@ class CreateTrackerScreen extends Screen {
     public void onPause() {
         // Cancel pending tasks when pausing
         if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-            pendingFilterTask.cancel(true);
+            pendingFilterTask.cancel(false);
         }
     }
 
@@ -321,7 +321,7 @@ class EditTrackerScreen extends Screen {
     public void close() {
         // Cancel any pending filter task to prevent memory leaks
         if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-            pendingFilterTask.cancel(true);
+            pendingFilterTask.cancel(false);
         }
         super.close();
     }
@@ -330,7 +330,7 @@ class EditTrackerScreen extends Screen {
     public void onPause() {
         // Cancel pending tasks when pausing
         if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-            pendingFilterTask.cancel(true);
+            pendingFilterTask.cancel(false);
         }
     }
 
@@ -367,7 +367,7 @@ class EditTrackerScreen extends Screen {
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     // Cancel previous scheduled task to prevent memory leaks
                     if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
-                        pendingFilterTask.cancel(true);
+                        pendingFilterTask.cancel(false);
                     }
                     
                     pendingFilterTask = core.executionService().schedule(() -> {
