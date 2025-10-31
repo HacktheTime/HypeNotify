@@ -137,7 +137,9 @@ public class BazaarService {
         }
 
         public void stop() {
-            nextCheck.cancel(false);
+            if (nextCheck != null) {
+                nextCheck.cancel(true);
+            }
         }
 
         public void start() {
@@ -162,8 +164,14 @@ public class BazaarService {
             }
             checkWifiStateCounter = 0;
             nextCheck = core.executionService().schedule(() -> {
-                checkPrice();
-                registerNextCheck();
+                try {
+                    checkPrice();
+                } catch (Exception e) {
+                    Log.e("BazaarService", "Error checking price in OrderTrackingService", e);
+                } finally {
+                    // Always reschedule, even if checkPrice fails
+                    registerNextCheck();
+                }
             }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
         }
 
