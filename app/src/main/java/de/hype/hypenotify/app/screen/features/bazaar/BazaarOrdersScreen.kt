@@ -177,12 +177,13 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
             try {
                 val lastResponseTime = BazaarService.getLastUpdate()
                 if (lastResponseTime == null) return@Runnable
+                val newText = getContext().getString(R.string.last_updated_s_seconds_ago)
+                    .format(Duration.between(lastResponseTime, Instant.now()).getSeconds())
                 post {
-                    lastUpdated?.setText(
-                        getContext().getString(R.string.last_updated_s_seconds_ago)
-                            .format(Duration.between(lastResponseTime, Instant.now()).getSeconds())
-                    )
-                    lastUpdated?.requestLayout()
+                    // Only update if text actually changed to avoid unnecessary layout recalculations
+                    if (lastUpdated?.text?.toString() != newText) {
+                        lastUpdated?.setText(newText)
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("BazaarOrdersScreen", "Error updating last updated time", e)

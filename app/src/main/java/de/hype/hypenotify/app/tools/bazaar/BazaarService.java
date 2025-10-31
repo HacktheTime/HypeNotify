@@ -138,7 +138,7 @@ public class BazaarService {
 
         public void stop() {
             if (nextCheck != null) {
-                nextCheck.cancel(true);
+                nextCheck.cancel(false);
             }
         }
 

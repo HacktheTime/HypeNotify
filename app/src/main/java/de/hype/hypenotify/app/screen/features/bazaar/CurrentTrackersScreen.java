@@ -159,7 +159,7 @@ class CreateTrackerScreen extends Screen {
                             itemSuggestions.setAdapter(filteredAdapter);
                             itemSuggestions.setVisibility(VISIBLE);
                         });
-                    }, 500, TimeUnit.MILLISECONDS);  // Reduced delay from 1s to 500ms for better responsiveness
+                    }, 300, TimeUnit.MILLISECONDS);
                 }
 
                 @Override
