@@ -1,5 +1,6 @@
 package de.hype.hypenotify.app.core;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.wifi.WifiInfo;
+import androidx.annotation.RequiresPermission;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -54,7 +56,7 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
         deviceName = prefs.getString(KEY_DEVICE, "");
         wakeLock = new WakeLockManager(this);
         timerService = new TimerService(this);
-        scheduleDailyBatteryCheck();
+        StaticIntents.scheduleDailyBatteryCheck(this,true);
         debugThread.setName("DebugThread");
         debugThread.start();
         NotificationUtils.synchronizeNotificationChannels(context);
@@ -89,22 +91,6 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
             return false;
         }
         return true;
-    }
-
-    public void scheduleDailyBatteryCheck() {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        IntentBuilder intent = DynamicIntents.BATTERY_REMINDER_CHECK.getAsIntent(context);
-
-        PendingIntent pendingIntent = intent.getAsPending();
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 19); // 7 PM
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-
-        if (alarmManager != null) {
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
-        }
     }
 
     public void fullInit() throws ExecutionException, InterruptedException {

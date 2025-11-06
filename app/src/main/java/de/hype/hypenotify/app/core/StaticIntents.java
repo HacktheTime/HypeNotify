@@ -1,10 +1,13 @@
 package de.hype.hypenotify.app.core;
 
+import android.Manifest;
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BatteryManager;
+import androidx.annotation.RequiresPermission;
 import androidx.core.app.NotificationCompat;
 import de.hype.hypenotify.R;
 import de.hype.hypenotify.app.MainActivity;
@@ -18,6 +21,7 @@ import de.hype.hypenotify.app.tools.notification.NotificationImportance;
 import de.hype.hypenotify.app.tools.pojav.PojavLauncherUtils;
 import de.hype.hypenotify.app.tools.timers.TimerWrapper;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,6 +70,7 @@ public enum StaticIntents implements de.hype.hypenotify.app.core.Intent {
             if (core.isInFreeNetwork() && isBatteryLow(context)) {
                 notifyUser(context);
             }
+            scheduleDailyBatteryCheck(core,false);
         }
 
         private boolean isBatteryLow(Context context) {
@@ -162,6 +167,25 @@ public enum StaticIntents implements de.hype.hypenotify.app.core.Intent {
             notifyicationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
 //            context.getSystemService(NotificationManager.class).notify(Notification.generateId(), notifyicationBuilder.build());
             context.startActivity(intent);
+        }
+    }
+
+
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
+    public static void scheduleDailyBatteryCheck(MiniCore core, boolean fromInit) {
+        AlarmManager alarmManager = (AlarmManager) core.context().getSystemService(Context.ALARM_SERVICE);
+        IntentBuilder intent = DynamicIntents.BATTERY_REMINDER_CHECK.getAsIntent(core.context());
+
+        PendingIntent pendingIntent = intent.getAsPending();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 19); // 7 PM
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        if (!fromInit) calendar.add(Calendar.DAY_OF_MONTH, 1);
+
+        if (alarmManager != null) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
         }
     }
 }
