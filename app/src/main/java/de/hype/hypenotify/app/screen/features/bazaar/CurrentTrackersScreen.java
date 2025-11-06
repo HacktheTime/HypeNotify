@@ -83,12 +83,13 @@ class CurrentTrackersScreen extends Screen {
 
     @Override
     public void onPause() {
-
+        // Nothing to pause for this screen
     }
 
     @Override
     public void onResume() {
-
+        // Refresh the screen when resuming to show any changes made in child screens
+        updateScreen();
     }
 
     @Override
@@ -103,6 +104,7 @@ class CreateTrackerScreen extends Screen {
     private ListView itemSuggestions;
     private CheckBox notifyGoodChangesCheckbox;
     private CheckBox trackPriceChangesCheckbox;
+    private ScheduledFuture<?> pendingFilterTask;
 
     public CreateTrackerScreen(Core core, Screen parent) {
         super(core, parent);
@@ -129,32 +131,35 @@ class CreateTrackerScreen extends Screen {
 
             // Filter suggestions as user types
             itemIdInput.addTextChangedListener(new TextWatcher() {
-                ScheduledFuture<?> update = null;
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (update != null) update.cancel(false);
-                    update = core.executionService().schedule(() -> {
+                    // Cancel previous scheduled task to prevent memory leaks and task accumulation
+                    if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+                        pendingFilterTask.cancel(false);
+                    }
+                    pendingFilterTask = core.executionService().schedule(() -> {
                         post(() -> {
                             String filter = s.toString().toLowerCase();
-                            List<BazaarSuggestionItem> filtered = bazaarResponse.getProducts().entrySet().parallelStream().map((entry) -> {
+                            // Use regular stream instead of parallelStream to avoid potential thread leaks
+                            List<BazaarSuggestionItem> filtered = new ArrayList<>();
+                            for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
                                 String itemId = entry.getKey().toLowerCase();
                                 String displayName = entry.getValue().getDisplayName().toLowerCase();
 
                                 if (itemId.contains(filter) || displayName.contains(filter)) {
-                                    return new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName());
+                                    filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
                                 }
-                                return null;
-                            }).filter(Objects::nonNull).toList();
+                            }
 
                             BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
                             itemSuggestions.setAdapter(filteredAdapter);
                             itemSuggestions.setVisibility(VISIBLE);
                         });
-                    }, 1, TimeUnit.SECONDS);
+                    }, 300, TimeUnit.MILLISECONDS);
                 }
 
                 @Override
@@ -164,15 +169,26 @@ class CreateTrackerScreen extends Screen {
         }
     }
 
+    @Override
+    public void close() {
+        // Cancel any pending filter task to prevent memory leaks
+        if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+            pendingFilterTask.cancel(false);
+        }
+        super.close();
+    }
 
     @Override
     public void onPause() {
-
+        // Cancel pending tasks when pausing
+        if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+            pendingFilterTask.cancel(false);
+        }
     }
 
     @Override
     public void onResume() {
-
+        // Nothing to resume
     }
 
     private void createTracker() {
@@ -250,6 +266,7 @@ class EditTrackerScreen extends Screen {
     private ListView itemSuggestions;
     private CheckBox notifyGoodChangesCheckbox;
     private CheckBox trackPriceChangesCheckbox;
+    private ScheduledFuture<?> pendingFilterTask;
 
     public EditTrackerScreen(Core core, Screen parent, TrackedBazaarItem trackedItem) {
         super(core, parent);
@@ -301,13 +318,25 @@ class EditTrackerScreen extends Screen {
     }
 
     @Override
-    public void onPause() {
+    public void close() {
+        // Cancel any pending filter task to prevent memory leaks
+        if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+            pendingFilterTask.cancel(false);
+        }
+        super.close();
+    }
 
+    @Override
+    public void onPause() {
+        // Cancel pending tasks when pausing
+        if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+            pendingFilterTask.cancel(false);
+        }
     }
 
     @Override
     public void onResume() {
-
+        // Nothing to resume
     }
 
     private void setupItemSuggestions() {
@@ -328,7 +357,7 @@ class EditTrackerScreen extends Screen {
                 itemSuggestions.setVisibility(GONE);
             });
 
-            // Filter suggestions as user types
+            // Filter suggestions as user types (with debouncing to prevent excessive updates)
             itemIdInput.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -336,21 +365,30 @@ class EditTrackerScreen extends Screen {
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    String filter = s.toString().toLowerCase();
-                    List<BazaarSuggestionItem> filtered = new ArrayList<>();
-
-                    for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
-                        String itemId = entry.getKey().toLowerCase();
-                        String displayName = entry.getValue().getDisplayName().toLowerCase();
-
-                        if (itemId.contains(filter) || displayName.contains(filter)) {
-                            filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
-                        }
+                    // Cancel previous scheduled task to prevent memory leaks
+                    if (pendingFilterTask != null && !pendingFilterTask.isDone()) {
+                        pendingFilterTask.cancel(false);
                     }
+                    
+                    pendingFilterTask = core.executionService().schedule(() -> {
+                        post(() -> {
+                            String filter = s.toString().toLowerCase();
+                            List<BazaarSuggestionItem> filtered = new ArrayList<>();
 
-                    BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
-                    itemSuggestions.setAdapter(filteredAdapter);
-                    itemSuggestions.setVisibility(VISIBLE);
+                            for (Map.Entry<String, BazaarProduct> entry : bazaarResponse.getProducts().entrySet()) {
+                                String itemId = entry.getKey().toLowerCase();
+                                String displayName = entry.getValue().getDisplayName().toLowerCase();
+
+                                if (itemId.contains(filter) || displayName.contains(filter)) {
+                                    filtered.add(new BazaarSuggestionItem(entry.getKey(), entry.getValue().getDisplayName()));
+                                }
+                            }
+
+                            BazaarSuggestionAdapter filteredAdapter = new BazaarSuggestionAdapter(context, filtered);
+                            itemSuggestions.setAdapter(filteredAdapter);
+                            itemSuggestions.setVisibility(VISIBLE);
+                        });
+                    }, 300, TimeUnit.MILLISECONDS);
                 }
 
                 @Override
