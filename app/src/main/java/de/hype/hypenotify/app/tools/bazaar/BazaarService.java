@@ -86,17 +86,19 @@ public class BazaarService {
     }
 
     private static void fetchBazaar() {
+        HttpURLConnection connection = null;
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(API_URL).openConnection();
+            connection = (HttpURLConnection) new URL(API_URL).openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
             connection.getResponseCode();
 
-            InputStreamReader reader =
-                    new InputStreamReader(connection.getInputStream());
-            BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
-            lastUpdate = Instant.now();
+            // Use try-with-resources for automatic resource management
+            try (InputStreamReader reader = new InputStreamReader(connection.getInputStream())) {
+                BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
+                lastUpdate = Instant.now();
+            }
         } catch (SocketTimeoutException e) {
             Log.i("BazaarService", "Hypixel BZ Connection Timeout");
         } catch (UnknownHostException e) {
@@ -107,6 +109,11 @@ public class BazaarService {
             Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.getMessage());
         } catch (Throwable e) {
             Log.e("BazaarService", "Hypixel BZ Error: ", e);
+        } finally {
+            // Disconnect connection to free resources
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -124,7 +131,9 @@ public class BazaarService {
         }
 
         public void stop() {
-            nextCheck.cancel(false);
+            if (nextCheck != null) {
+                nextCheck.cancel(false);
+            }
         }
 
         public void start() {
@@ -149,8 +158,14 @@ public class BazaarService {
             }
             checkWifiStateCounter = 0;
             nextCheck = core.executionService().schedule(() -> {
-                checkPrice();
-                registerNextCheck();
+                try {
+                    checkPrice();
+                } catch (Exception e) {
+                    Log.e("BazaarService", "Error checking price in OrderTrackingService", e);
+                } finally {
+                    // Always reschedule, even if checkPrice fails
+                    registerNextCheck();
+                }
             }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
         }
 
