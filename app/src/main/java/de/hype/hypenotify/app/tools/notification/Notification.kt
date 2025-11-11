@@ -1,44 +1,41 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-import android.app.NotificationManager;
-import android.content.Context;
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.Context
 
-public class Notification {
-    public final Context context;
-    private NotificationBuilder builder;
-    private static int notificationId = 20;
-    private int id = notificationId++;
-
-    public Notification(Context context, NotificationBuilder builder) {
-        this.context = context;
-        this.builder = builder;
-    }
-
-    public static int generateId() {
-        return notificationId++;
-    }
-
-    public void send() {
-        context.getSystemService(NotificationManager.class).notify(id, builder.builder.build());
-    }
-
-    public void update(NotificationBuilder builder) {
-        this.builder = builder;
-        context.getSystemService(NotificationManager.class).notify(id, builder.builder.build());
-    }
+class Notification(context: Context, builder: NotificationBuilder) {
+    val context: Context
 
     /**
      * Get the builder of this notification. (to possibly modify it.)
      */
-    public NotificationBuilder getBuilder() {
-        return builder;
+    var builder: NotificationBuilder
+        private set
+    val iD: Int = notificationId++
+
+    init {
+        this.context = context
+        this.builder = builder
     }
 
-    public android.app.Notification get() {
-        return builder.builder.build();
+    fun send() {
+        context.getSystemService<NotificationManager?>(NotificationManager::class.java).notify(this.iD, builder.builder.build())
     }
 
-    public int getID() {
-        return id;
+    fun update(builder: NotificationBuilder) {
+        this.builder = builder
+        context.getSystemService<NotificationManager?>(NotificationManager::class.java).notify(this.iD, builder.builder.build())
+    }
+
+    fun get(): Notification {
+        return builder.builder.build()
+    }
+
+    companion object {
+        private var notificationId = 20
+        fun generateId(): Int {
+            return notificationId++
+        }
     }
 }

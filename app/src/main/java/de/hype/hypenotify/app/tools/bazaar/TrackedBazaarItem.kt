@@ -1,172 +1,150 @@
-package de.hype.hypenotify.app.tools.bazaar;
+package de.hype.hypenotify.app.tools.bazaar
 
-import de.hype.hypenotify.app.skyblockconstants.SBCollections;
-import org.jetbrains.annotations.Nullable;
+import de.hype.hypenotify.app.skyblockconstants.SBCollections
+import de.hype.hypenotify.app.tools.bazaar.BazaarProduct.Offer
+import de.hype.hypenotify.app.tools.bazaar.BazaarProduct.OfferType
+import java.text.NumberFormat
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.min
 
-import java.text.NumberFormat;
-import java.util.List;
-import java.util.Locale;
+class TrackedBazaarItem(val itemId: String, var trackType: OfferType) {
+    private var lastTime: BazaarProduct? = null
 
-public class TrackedBazaarItem {
-    public final String itemId;
-    public BazaarProduct.OfferType trackType;
-    private BazaarProduct lastTime;
     /**
      * inform about changes that are beneficial to you. for example if a order gets filled or canceled.
      */
-    private boolean notifyGoodChanges = true;
-    private boolean informAboutOrderAttachments = false;
-    private boolean trackPriceChanges = true;
-    private boolean showInOrderScreen = true;
-    private boolean enabled = true;
-    public static final NumberFormat amountFormat;
-    public static final NumberFormat priceFormat;
-
-    static {
-        amountFormat = NumberFormat.getInstance(java.util.Locale.US);
-        priceFormat = NumberFormat.getInstance(java.util.Locale.US);
-        priceFormat.setMinimumFractionDigits(1);
-        priceFormat.setMaximumFractionDigits(1);
+    var isNotifyGoodChanges: Boolean = true
+    var isInformAboutOrderAttachments: Boolean = false
+    private var trackPriceChanges = true
+    private var showInOrderScreen = true
+    var isEnabled: Boolean = true
+    fun showInOrderScreen(): Boolean {
+        return this.isEnabled && showInOrderScreen
     }
 
-    public boolean showInOrderScreen() {
-        return enabled && showInOrderScreen;
+    fun trackPriceChanges(): Boolean {
+        return this.isEnabled && trackPriceChanges
     }
 
-    public boolean trackPriceChanges() {
-        return enabled && trackPriceChanges;
+    fun maxOrdersToTrack(): Int {
+        return 3
     }
 
-    public TrackedBazaarItem(String itemId, BazaarProduct.OfferType trackType) {
-        this.itemId = itemId;
-        this.trackType = trackType;
-    }
-
-    public int maxOrdersToTrack() {
-        return 3;
-    }
-
-    public TrackChanges checkForChanges(BazaarProduct newProduct) {
+    fun checkForChanges(newProduct: BazaarProduct): TrackChanges? {
         if (lastTime == null) {
-            lastTime = newProduct;
-            return null;
+            lastTime = newProduct
+            return null
         }
-        BazaarProduct oldProduct = lastTime;
-        lastTime = newProduct;
-        return new TrackChanges(oldProduct, newProduct);
+        val oldProduct = lastTime
+        lastTime = newProduct
+        return TrackChanges(oldProduct!!, newProduct)
     }
 
-    public String getDisplayName() {
-        String name = itemId;
-        if (!name.contains(":")) return name.replace("_", " ").toUpperCase(Locale.US);
-        return SBCollections.getNameFromID(name).replace("_", " ").toUpperCase(Locale.US);
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean newState) {
-        enabled = newState;
-    }
-
-    public boolean isNotifyGoodChanges() {
-        return notifyGoodChanges;
-    }
-
-    public boolean isInformAboutOrderAttachments() {
-        return informAboutOrderAttachments;
-    }
-
-    public class TrackChanges {
-        private final BazaarProduct oldProduct, newProduct;
-        private String notificationText;
-
-        public TrackChanges(BazaarProduct oldProduct, BazaarProduct newProduct) {
-            this.oldProduct = oldProduct;
-            this.newProduct = newProduct;
-            proccessChanges();
+    val displayName: String
+        get() {
+            val name = itemId
+            if (!name.contains(":")) return name.replace("_", " ").uppercase()
+            return SBCollections.Companion.getNameFromID(name).replace("_", " ").uppercase()
         }
 
-        private void proccessChanges() {
-            StringBuilder notificationTextBuilder = new StringBuilder();
-            double priceChange = newProduct.getBestPrice(trackType) - oldProduct.getBestPrice(trackType);
-            if (Math.abs(priceChange) < 0.04) priceChange = 0;
-            if (trackType == BazaarProduct.OfferType.INSTANT_BUY) {
+    inner class TrackChanges(private val oldProduct: BazaarProduct, private val newProduct: BazaarProduct) {
+        /**
+         * @return Return the Text that should be displayed in the notification. `null` if no notification should be sent.
+         */
+        var notificationText: String? = null
+            private set
+
+        init {
+            proccessChanges()
+        }
+
+        private fun proccessChanges() {
+            val notificationTextBuilder = StringBuilder()
+            var priceChange = newProduct.getBestPrice(trackType)!! - oldProduct.getBestPrice(trackType)!!
+            if (abs(priceChange) < 0.04) priceChange = 0.0
+            if (trackType == OfferType.INSTANT_BUY) {
                 if (priceChange > 0) {
-                    if (notifyGoodChanges) {
-                        notificationTextBuilder.append("(good) Order got filled / canceled.\n");
+                    if (isNotifyGoodChanges) {
+                        notificationTextBuilder.append("(good) Order got filled / canceled.\n")
                     }
                 } else if (priceChange < 0) {
-                    notificationTextBuilder.append("(bad) You got underbid!\n");
+                    notificationTextBuilder.append("(bad) You got underbid!\n")
                 }
-            } else if (trackType == BazaarProduct.OfferType.INSTANT_SELL) {
+            } else if (trackType == OfferType.INSTANT_SELL) {
                 if (priceChange > 0) {
-                    notificationTextBuilder.append("(bad) You got overbid!\n");
+                    notificationTextBuilder.append("(bad) You got overbid!\n")
                 } else if (priceChange < 0) {
-                    if (notifyGoodChanges) {
-                        notificationTextBuilder.append("(good) Order got filled / canceled.\n");
+                    if (isNotifyGoodChanges) {
+                        notificationTextBuilder.append("(good) Order got filled / canceled.\n")
                     }
                 }
             }
 
-            if (priceChange == 0 && informAboutOrderAttachments) {
-                List<BazaarProduct.Offer> oldOffers = oldProduct.getOfferType(trackType);
-                List<BazaarProduct.Offer> newOffers = newProduct.getOfferType(trackType);
+            if (priceChange == 0.0 && isInformAboutOrderAttachments) {
+                val oldOffers = oldProduct.getOfferType(trackType)
+                val newOffers = newProduct.getOfferType(trackType)
                 if (!oldOffers.isEmpty() && !newOffers.isEmpty()) {
-                    BazaarProduct.Offer oldBest = oldOffers.get(0);
-                    BazaarProduct.Offer newBest = newOffers.get(0);
+                    val oldBest = oldOffers.get(0)
+                    val newBest = newOffers.get(0)
                     if (oldBest.amount < newBest.amount || oldBest.orders < newBest.orders) {
-                        notificationTextBuilder.append("Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(amountFormat.format(oldBest.pricePerUnit), amountFormat.format(newBest.pricePerUnit), amountFormat.format(newBest.amount - oldBest.amount)));
+                        notificationTextBuilder.append(
+                            "Someone attached an order to the best offer!\n (%s -> %s = %s items)\n".formatted(
+                                amountFormat.format(oldBest.pricePerUnit),
+                                amountFormat.format(newBest.pricePerUnit),
+                                amountFormat.format((newBest.amount - oldBest.amount).toLong())
+                            )
+                        )
                     }
                 }
             }
             if (!notificationTextBuilder.isEmpty()) {
-                List<BazaarProduct.Offer> offers = newProduct.getOfferType(trackType);
-                BazaarProduct.Offer bestOffer = null;
-                if (!offers.isEmpty()) bestOffer = offers.getFirst();
-                String bestOrderStatus = bestOffer == null ? "No orders" : "%s for %s each".formatted(amountFormat.format(bestOffer.amount), priceFormat.format(bestOffer.pricePerUnit));
+                val offers = newProduct.getOfferType(trackType)
+                var bestOffer: Offer? = null
+                if (!offers.isEmpty()) bestOffer = offers.first()
+                val bestOrderStatus =
+                    if (bestOffer == null) "No orders" else "%s for %s each".formatted(
+                        amountFormat.format(bestOffer.amount.toLong()),
+                        priceFormat.format(bestOffer.pricePerUnit)
+                    )
                 this.notificationText = """
                         Item: %s
                         %s
                         Best Order Status:
                         %s
-                        """.formatted(newProduct.getDisplayName(), notificationTextBuilder.toString(), bestOrderStatus);
+                        
+                        """.trimIndent().formatted(newProduct.displayName, notificationTextBuilder.toString(), bestOrderStatus)
             }
         }
 
-        /**
-         * Return the list of orders that shall be displayed in the table. null means not shown. if list is empty it is shown that there are no orders!
-         */
-        @Nullable
-        public List<BazaarProduct.Offer> getOfferTableValues() {
-            List<BazaarProduct.Offer> offers = newProduct.getOfferType(trackType);
-            offers.subList(0, Math.min(offers.size(), maxOrdersToTrack()));
-            return offers;
+        val offerTableValues: MutableList<Offer>
+            /**
+             * Return the list of orders that shall be displayed in the table. null means not shown. if list is empty it is shown that there are no orders!
+             */
+            get() {
+                val offers = newProduct.getOfferType(trackType)
+                offers.subList(0, min(offers.size, maxOrdersToTrack()))
+                return offers
+            }
+    }
+
+    fun setTrackPriceChanges(trackPriceChanges: Boolean) {
+        this.trackPriceChanges = trackPriceChanges
+    }
+
+    fun setShowInOrderScreen(showInOrderScreen: Boolean) {
+        this.showInOrderScreen = showInOrderScreen
+    }
+
+    companion object {
+        val amountFormat: NumberFormat
+        val priceFormat: NumberFormat
+
+        init {
+            amountFormat = NumberFormat.getInstance(Locale.US)
+            priceFormat = NumberFormat.getInstance(Locale.US)
+            priceFormat.setMinimumFractionDigits(1)
+            priceFormat.setMaximumFractionDigits(1)
         }
-
-        /**
-         * @return Return the Text that should be displayed in the notification. {@code null} if no notification should be sent.
-         */
-        @Nullable
-        public String getNotificationText() {
-            return notificationText;
-        }
-    }
-
-    public void setNotifyGoodChanges(boolean notifyGoodChanges) {
-        this.notifyGoodChanges = notifyGoodChanges;
-    }
-
-    public void setInformAboutOrderAttachments(boolean informAboutOrderAttachments) {
-        this.informAboutOrderAttachments = informAboutOrderAttachments;
-    }
-
-    public void setTrackPriceChanges(boolean trackPriceChanges) {
-        this.trackPriceChanges = trackPriceChanges;
-    }
-
-    public void setShowInOrderScreen(boolean showInOrderScreen) {
-        this.showInOrderScreen = showInOrderScreen;
     }
 }

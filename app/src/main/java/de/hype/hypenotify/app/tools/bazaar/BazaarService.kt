@@ -1,234 +1,246 @@
-package de.hype.hypenotify.app.tools.bazaar;
+package de.hype.hypenotify.app.tools.bazaar
 
-import android.util.Log;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import de.hype.hypenotify.app.core.StaticIntents;
-import de.hype.hypenotify.app.core.interfaces.MiniCore;
-import de.hype.hypenotify.app.tools.notification.GroupBehaviour;
-import de.hype.hypenotify.app.tools.notification.NotificationBuilder;
-import de.hype.hypenotify.app.tools.notification.NotificationChannels;
-import de.hype.hypenotify.app.tools.notification.NotificationVisibility;
+import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import de.hype.hypenotify.app.core.StaticIntents
+import de.hype.hypenotify.app.core.interfaces.MiniCore
+import de.hype.hypenotify.app.tools.bazaar.BazaarProduct.OfferType
+import de.hype.hypenotify.app.tools.notification.GroupBehaviour
+import de.hype.hypenotify.app.tools.notification.NotificationBuilder
+import de.hype.hypenotify.app.tools.notification.NotificationChannels
+import de.hype.hypenotify.app.tools.notification.NotificationVisibility
+import java.io.EOFException
+import java.io.IOException
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.URL
+import java.net.UnknownHostException
+import java.time.Duration
+import java.time.Instant
+import java.util.List
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.Volatile
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
-
-public class BazaarService {
-    private static final Gson gson = new GsonBuilder().registerTypeAdapter(Double.class, new PriceDoubleAdapter()).create();
-    private static final String API_URL = "https://api.hypixel.net/v2/skyblock/bazaar";
-    private final MiniCore core;
-    private static BazaarResponse lastResponse;
-    public List<TrackedBazaarItem> trackedItems = new ArrayList<>();
-    private static OrderTrackingService orderTracker;
-    private static Instant lastUpdate;
+class BazaarService(private val core: MiniCore) {
+    var trackedItems: MutableList<TrackedBazaarItem> = ArrayList<TrackedBazaarItem>()
 
     // Flag to suppress the very next notification that would be sent after a manual update
-    private volatile boolean suppressNextNotification = false;
+    @Volatile
+    private var suppressNextNotification = false
 
-    public BazaarService(MiniCore core) {
-        this.core = core;
-        initTrackedItems();
-        orderTracker = new OrderTrackingService(core, this);
+    init {
+        initTrackedItems()
+        orderTracker = OrderTrackingService(core, this)
     }
 
-    public static Instant getLastUpdate() {
-        return lastUpdate;
-    }
+    val checkInterval: Int
+        get() {
+            val isInFreeNetwork = core.isInFreeNetwork
+            if (isInFreeNetwork) {
+                return 15
+            } else {
+                return core.config().bazaarCheckerNoWlanDelaySeconds
+            }
+        }
 
-    public Integer getCheckInterval() {
-        boolean isInFreeNetwork = core.isInFreeNetwork();
-        if (isInFreeNetwork) {
-            return 15;
-        } else {
-            return core.config().bazaarCheckerNoWlanDelaySeconds;
+    private fun initTrackedItems() {
+        val addToTrack = listOf(
+            TrackedBazaarItem("ENCHANTED_REDSTONE_LAMP", OfferType.INSTANT_BUY)
+        )
+        for (item in addToTrack) {
+            trackedItems.add(item)
         }
     }
 
-    private void initTrackedItems() {
-        List<TrackedBazaarItem> addToTrack = List.of(
-                new TrackedBazaarItem("ENCHANTED_REDSTONE_LAMP", BazaarProduct.OfferType.INSTANT_BUY)
-        );
-        for (TrackedBazaarItem item : addToTrack) {
-            trackedItems.add(item);
-        }
+    @Throws(IOException::class)
+    fun update() {
+        fetchBazaar()
     }
 
-    public static BazaarResponse getLastResponse() {
-        return lastResponse;
-    }
-
-    public void update() throws IOException {
-        fetchBazaar();
-    }
-
-    public BazaarResponse getMaxAgeResponse(Duration maxAge) throws IOException {
-        if (lastResponse == null || lastUpdate.plusSeconds(maxAge.getSeconds()).isBefore(Instant.now())) fetchBazaar();
-        return lastResponse;
+    @Throws(IOException::class)
+    fun getMaxAgeResponse(maxAge: Duration): BazaarResponse? {
+        if (lastResponse == null || lastUpdate!!.plusSeconds(maxAge.getSeconds()).isBefore(Instant.now())) fetchBazaar()
+        return lastResponse
     }
 
     /**
      * Returns the last fetched Bazaar response if it is not older than the given maxAge.
-     * <p>
-     * /**
+     *
+     *
+     * / **
      * Manual immediate update. If suppressNotification is true, the next notification that would be
      * generated because of this update will be suppressed (no sound/alert).
      */
-    public void updateNow(boolean suppressNotification) throws IOException {
+    @Throws(IOException::class)
+    fun updateNow(suppressNotification: Boolean) {
         // set suppression for this manual run
-        this.suppressNextNotification = suppressNotification;
-        fetchBazaar();
+        this.suppressNextNotification = suppressNotification
+        fetchBazaar()
         // run a check immediately so any notifications related to this update happen now (and will be suppressed if requested)
-        if (orderTracker != null) orderTracker.checkPrice();
+        if (orderTracker != null) orderTracker.checkPrice()
     }
 
-    public BazaarResponse getMaxAgeResponse() throws IOException {
-        Integer delay = getCheckInterval();
-        if (delay == null) {
-            return null;
+    @get:Throws(IOException::class) val maxAgeResponse: BazaarResponse?
+        get() {
+            val delay = this.checkInterval
+            if (delay == null) {
+                return null
+            }
+            return getMaxAgeResponse(Duration.ofSeconds((delay - 1).toLong()))
         }
-        return getMaxAgeResponse(Duration.ofSeconds(delay - 1));
-    }
 
     /**
      * Pause any active tracking (called when low battery detected). This cancels scheduled checks but keeps the service alive.
      */
-    public void pauseTrackingForLowBattery() {
-        if (orderTracker != null) orderTracker.stop();
+    fun pauseTrackingForLowBattery() {
+        if (orderTracker != null) orderTracker!!.stop()
     }
 
     /**
      * Resume tracking after battery recovered.
      */
-    public void resumeTrackingAfterBatteryOK() {
+    fun resumeTrackingAfterBatteryOK() {
         if (orderTracker == null) {
-            orderTracker = new OrderTrackingService(core, this);
+            orderTracker = OrderTrackingService(core, this)
         } else {
-            orderTracker.start();
+            orderTracker!!.start()
         }
     }
 
-    private static void fetchBazaar() {
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(API_URL).openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.getResponseCode();
+    class OrderTrackingService(private val core: MiniCore, private val bazaarService: BazaarService) {
+        private var checkWifiStateCounter = 0
+        private var nextCheck: ScheduledFuture<*>? = null
 
-            // Use try-with-resources for automatic resource management
-            try (InputStreamReader reader = new InputStreamReader(connection.getInputStream())) {
-                BazaarService.lastResponse = gson.fromJson(reader, BazaarResponse.class);
-                lastUpdate = Instant.now();
-            }
-        } catch (SocketTimeoutException e) {
-            Log.i("BazaarService", "Hypixel BZ Connection Timeout");
-        } catch (UnknownHostException e) {
-            Log.i("BazaarService", "Hypixel BZ Connection Unknown Host");
-        } catch (EOFException e) {
-            Log.i("BazaarService", "Hypixel BZ Connection EOF");
-        } catch (IOException e) {
-            Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.getMessage());
-        } catch (Throwable e) {
-            Log.e("BazaarService", "Hypixel BZ Error: ", e);
-        } finally {
-            // Disconnect connection to free resources
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-    }
-
-
-    public static class OrderTrackingService {
-        private final MiniCore core;
-        private Integer checkWifiStateCounter = 0;
-        private BazaarService bazaarService;
-        private ScheduledFuture<?> nextCheck;
-
-        public OrderTrackingService(MiniCore core, BazaarService bazaarService) {
-            this.core = core;
-            this.bazaarService = bazaarService;         // Bazaar Service is needed since this is called from within ints constructor meaning that it is still null in core
-            start();
+        init {
+            // Bazaar Service is needed since this is called from within ints constructor meaning that it is still null in core
+            start()
         }
 
-        public void stop() {
+        fun stop() {
             if (nextCheck != null) {
-                nextCheck.cancel(false);
+                nextCheck!!.cancel(false)
             }
         }
 
-        public void start() {
-            core.executionService().execute(() -> {
-                checkPrice();
-                registerNextCheck();
-            });
+        fun start() {
+            core.executionService().execute(Runnable {
+                checkPrice()
+                registerNextCheck()
+            })
         }
 
-        private void registerNextCheck() {
-            Integer timeBetweenChecks = bazaarService.getCheckInterval();
+        private fun registerNextCheck() {
+            val timeBetweenChecks = bazaarService.checkInterval
             if (timeBetweenChecks == null) {
-                checkWifiStateCounter++;
+                checkWifiStateCounter++
                 if (checkWifiStateCounter >= 20) {
                     if (!core.isInFreeNetwork()) {
-                        NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", "You are no longer in a Wifi. Tracking stopped!", NotificationChannels.BAZAAR_TRACKER);
-                        notificationBuilder.send();
-                        return;
+                        val notificationBuilder =
+                            NotificationBuilder(
+                                core.context(),
+                                "Bazaar Price Checker",
+                                "You are no longer in a Wifi. Tracking stopped!",
+                                NotificationChannels.BAZAAR_TRACKER
+                            )
+                        notificationBuilder.send()
+                        return
                     }
                 }
-                return;
+                return
             }
-            checkWifiStateCounter = 0;
-            nextCheck = core.executionService().schedule(() -> {
+            checkWifiStateCounter = 0
+            nextCheck = core.executionService().schedule(Runnable {
                 try {
-                    checkPrice();
-                } catch (Exception e) {
-                    Log.e("BazaarService", "Error checking price in OrderTrackingService", e);
+                    checkPrice()
+                } catch (e: Exception) {
+                    Log.e("BazaarService", "Error checking price in OrderTrackingService", e)
                 } finally {
                     // Always reschedule, even if checkPrice fails
-                    registerNextCheck();
+                    registerNextCheck()
                 }
-            }, timeBetweenChecks, java.util.concurrent.TimeUnit.SECONDS);
+            }, timeBetweenChecks.toLong(), TimeUnit.SECONDS)
         }
 
-        private void checkPrice() {
+        private fun checkPrice() {
             try {
-                BazaarResponse response = bazaarService.getMaxAgeResponse();
-                if (response == null) return;
-                Map<String, BazaarProduct> items = response.getProducts();
-                for (TrackedBazaarItem toTrackItem : bazaarService.trackedItems) {
-                    if (!toTrackItem.trackPriceChanges()) continue;
-                    BazaarProduct product = items.get(toTrackItem.itemId);
+                val response = bazaarService.maxAgeResponse
+                if (response == null) return
+                val items = response.products
+                for (toTrackItem in bazaarService.trackedItems) {
+                    if (!toTrackItem.trackPriceChanges()) continue
+                    val product = items.get(toTrackItem.itemId)
                     if (product == null) {
-                        continue;
+                        continue
                     }
-                    TrackedBazaarItem.TrackChanges wrappedChanges = toTrackItem.checkForChanges(product);
+                    val wrappedChanges = toTrackItem.checkForChanges(product)
                     if (wrappedChanges != null) {
-                        String notificationText = wrappedChanges.getNotificationText();
+                        val notificationText = wrappedChanges.getNotificationText()
                         if (notificationText != null) {
-                            NotificationBuilder notificationBuilder = new NotificationBuilder(core.context(), "Bazaar Price Checker", notificationText, NotificationChannels.BAZAAR_TRACKER);
-                            notificationBuilder.setVisibility(NotificationVisibility.PUBLIC);
-                            notificationBuilder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(core.context()).getAsPending());
-                            notificationBuilder.setAutoCancel(true);
-                            notificationBuilder.setAlertOnlyOnce(false);
-                            notificationBuilder.setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL);
-                            notificationBuilder.send();
+                            val notificationBuilder =
+                                NotificationBuilder(
+                                    core.context(),
+                                    "Bazaar Price Checker",
+                                    notificationText,
+                                    NotificationChannels.BAZAAR_TRACKER
+                                )
+                            notificationBuilder.setVisibility(NotificationVisibility.Companion.PUBLIC)
+                            notificationBuilder.setAction(StaticIntents.LAUNCH_BAZAAR.getAsIntent(core.context()).getAsPending())
+                            notificationBuilder.setAutoCancel(true)
+                            notificationBuilder.setAlertOnlyOnce(false)
+                            notificationBuilder.setGroupAlertBehaviour(GroupBehaviour.GROUP_ALERT_ALL)
+                            notificationBuilder.send()
                         }
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    companion object {
+        private val gson: Gson = GsonBuilder().registerTypeAdapter(Double::class.java, PriceDoubleAdapter()).create()
+        private const val API_URL = "https://api.hypixel.net/v2/skyblock/bazaar"
+        var lastResponse: BazaarResponse? = null
+            private set
+        private var orderTracker: OrderTrackingService?
+        private var lastUpdate: Instant? = null
+
+        fun getLastUpdate(): Instant {
+            return lastUpdate!!
+        }
+
+        private fun fetchBazaar() {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = URL(API_URL).openConnection() as HttpURLConnection?
+                connection!!.setRequestMethod("GET")
+                connection.setConnectTimeout(5000)
+                connection.setReadTimeout(5000)
+                connection.getResponseCode()
+
+                InputStreamReader(connection.getInputStream()).use { reader ->
+                    lastResponse = gson.fromJson<BazaarResponse?>(reader, BazaarResponse::class.java)
+                    lastUpdate = Instant.now()
+                }
+            } catch (e: SocketTimeoutException) {
+                Log.i("BazaarService", "Hypixel BZ Connection Timeout")
+            } catch (e: UnknownHostException) {
+                Log.i("BazaarService", "Hypixel BZ Connection Unknown Host")
+            } catch (e: EOFException) {
+                Log.i("BazaarService", "Hypixel BZ Connection EOF")
+            } catch (e: IOException) {
+                Log.i("BazaarService", "Hypixel BZ Connection Error: " + e.message)
+            } catch (e: Throwable) {
+                Log.e("BazaarService", "Hypixel BZ Error: ", e)
+            } finally {
+                // Disconnect connection to free resources
+                if (connection != null) {
+                    connection.disconnect()
+                }
             }
         }
     }

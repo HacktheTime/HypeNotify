@@ -1,20 +1,16 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat
 
-public enum Priority {
+enum class Priority(priority: Int) {
     HIGH(NotificationCompat.PRIORITY_HIGH),
     DEFAULT(NotificationCompat.PRIORITY_DEFAULT),
     LOW(NotificationCompat.PRIORITY_LOW),
     MIN(NotificationCompat.PRIORITY_MIN);
 
-    private final int priority;
+    val int: Int
 
-    Priority(int priority) {
-        this.priority = priority;
-    }
-
-    public int getInt() {
-        return priority;
+    init {
+        this.int = priority
     }
 }

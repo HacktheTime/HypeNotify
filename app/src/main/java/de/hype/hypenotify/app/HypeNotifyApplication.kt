@@ -1,140 +1,133 @@
-package de.hype.hypenotify.app;
+package de.hype.hypenotify.app
 
-import android.app.Application;
-import android.content.ComponentCallbacks2;
-import android.content.res.Configuration;
-import android.util.Log;
-import androidx.multidex.MultiDexApplication;
-import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager;
+import android.content.res.Configuration
+import android.util.Log
+import androidx.multidex.MultiDexApplication
+import de.hype.hypenotify.app.core.BackgroundService
+import de.hype.hypenotify.app.core.interfaces.MiniCore
+import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager
+import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager.clearCache
 
-public class HypeNotifyApplication extends MultiDexApplication {
-    private static final String TAG = "HypeNotifyApp";
-    private static long lastMemoryTrim = 0;
-    private static final long MEMORY_TRIM_COOLDOWN = 30000; // 30 Sekunden
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        Log.d(TAG, "Application created for background service");
+class HypeNotifyApplication : MultiDexApplication() {
+    override fun onCreate() {
+        super.onCreate()
+        Log.d(TAG, "Application created for background service")
     }
 
-    // Dynamische Überprüfung ob Bazaar-Tracking aktiv ist
-    private boolean isBazaarTrackingActive() {
-        try {
-            // Über BackgroundService zum Core und dann zum BazaarService
-            if (de.hype.hypenotify.app.core.BackgroundService.instance != null) {
-                var core = de.hype.hypenotify.app.core.BackgroundService.instance.getCore();
-                if (core != null && core.bazaarService() != null) {
-                    // Prüfe ob trackedItems vorhanden sind und Service läuft
-                    return !core.bazaarService().trackedItems.isEmpty();
+    private val isBazaarTrackingActive: Boolean
+        // Dynamische Überprüfung ob Bazaar-Tracking aktiv ist
+        get() {
+            try {
+                // Über BackgroundService zum Core und dann zum BazaarService
+                if (BackgroundService.Companion.instance != null) {
+                    val core: MiniCore? = BackgroundService.Companion.instance.getCore()
+                    if (core != null && core.bazaarService() != null) {
+                        // Prüfe ob trackedItems vorhanden sind und Service läuft
+                        return !core.bazaarService().trackedItems.isEmpty()
+                    }
                 }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not check bazaar tracking status", e)
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Could not check bazaar tracking status", e);
+            return false
         }
-        return false;
-    }
 
-    @Override
-    public void onTrimMemory(int level) {
-        super.onTrimMemory(level);
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
 
         // Cooldown für häufige Memory Trim Requests
-        long currentTime = System.currentTimeMillis();
+        val currentTime = System.currentTimeMillis()
         if (currentTime - lastMemoryTrim < MEMORY_TRIM_COOLDOWN) {
-            Log.d(TAG, "Memory trim skipped - cooldown active");
-            return;
+            Log.d(TAG, "Memory trim skipped - cooldown active")
+            return
         }
-        lastMemoryTrim = currentTime;
+        lastMemoryTrim = currentTime
 
-        boolean bazaarActive = isBazaarTrackingActive();
-        Log.d(TAG, "Memory trim requested: level " + level + " (Bazaar active: " + bazaarActive + ")");
+        val bazaarActive = this.isBazaarTrackingActive
+        Log.d(TAG, "Memory trim requested: level " + level + " (Bazaar active: " + bazaarActive + ")")
 
-        switch (level) {
-            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE:
-                Log.d(TAG, "Memory trim: RUNNING_MODERATE");
+        when (level) {
+            TRIM_MEMORY_RUNNING_MODERATE -> {
+                Log.d(TAG, "Memory trim: RUNNING_MODERATE")
                 if (!bazaarActive) {
-                    NeuRepoManager.INSTANCE.clearCache();
+                    clearCache()
                 }
-                break;
-
-            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW:
-                Log.d(TAG, "Memory trim: RUNNING_LOW");
+            }
+            TRIM_MEMORY_RUNNING_LOW -> {
+                Log.d(TAG, "Memory trim: RUNNING_LOW")
                 if (bazaarActive) {
-                    clearItemCacheOnly();
+                    clearItemCacheOnly()
                 } else {
-                    NeuRepoManager.INSTANCE.clearCache();
-                    System.gc();
+                    clearCache()
+                    System.gc()
                 }
-                break;
-
-            case ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL:
-                Log.w(TAG, "Memory trim: RUNNING_CRITICAL - Emergency cleanup");
-                NeuRepoManager.INSTANCE.clearCache();
-                System.gc();
-                break;
-
-            case ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN:
-                Log.d(TAG, "Memory trim: UI_HIDDEN");
+            }
+            TRIM_MEMORY_RUNNING_CRITICAL -> {
+                Log.w(TAG, "Memory trim: RUNNING_CRITICAL - Emergency cleanup")
+                clearCache()
+                System.gc()
+            }
+            TRIM_MEMORY_UI_HIDDEN -> {
+                Log.d(TAG, "Memory trim: UI_HIDDEN")
                 if (!bazaarActive) {
-                    NeuRepoManager.INSTANCE.clearCache();
+                    clearCache()
                 }
-                break;
-
-            case ComponentCallbacks2.TRIM_MEMORY_BACKGROUND:
-            case ComponentCallbacks2.TRIM_MEMORY_MODERATE:
-            case ComponentCallbacks2.TRIM_MEMORY_COMPLETE:
-                Log.d(TAG, "Memory trim: BACKGROUND/MODERATE/COMPLETE");
+            }
+            TRIM_MEMORY_BACKGROUND, TRIM_MEMORY_MODERATE, TRIM_MEMORY_COMPLETE -> {
+                Log.d(TAG, "Memory trim: BACKGROUND/MODERATE/COMPLETE")
                 if (bazaarActive) {
-                    clearItemCacheOnly();
+                    clearItemCacheOnly()
                 } else {
-                    NeuRepoManager.INSTANCE.clearCache();
-                    System.gc();
+                    clearCache()
+                    System.gc()
                 }
-                break;
+            }
         }
     }
 
-    private void clearItemCacheOnly() {
+    private fun clearItemCacheOnly() {
         try {
             // Nur Item-Cache leeren, Repository-Daten behalten für Bazaar-Tracking
-            Log.d(TAG, "Clearing item cache only (preserving repo for bazaar tracking)");
-            NeuRepoManager.INSTANCE.clearItemCacheOnly();
-        } catch (Exception e) {
-            Log.e(TAG, "Error during selective cache cleanup", e);
+            Log.d(TAG, "Clearing item cache only (preserving repo for bazaar tracking)")
+            NeuRepoManager.clearItemCacheOnly()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during selective cache cleanup", e)
         }
     }
 
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        boolean bazaarActive = isBazaarTrackingActive();
-        Log.w(TAG, "Low memory warning - emergency cleanup (Bazaar active: " + bazaarActive + ")");
+    override fun onLowMemory() {
+        super.onLowMemory()
+        val bazaarActive = this.isBazaarTrackingActive
+        Log.w(TAG, "Low memory warning - emergency cleanup (Bazaar active: " + bazaarActive + ")")
 
         if (bazaarActive) {
-            Log.w(TAG, "Critical memory situation with active bazaar tracking - selective cleanup");
-            clearItemCacheOnly();
+            Log.w(TAG, "Critical memory situation with active bazaar tracking - selective cleanup")
+            clearItemCacheOnly()
         } else {
-            NeuRepoManager.INSTANCE.clearCache();
+            clearCache()
         }
 
-        System.gc();
-        Log.d(TAG, "Emergency cleanup completed");
+        System.gc()
+        Log.d(TAG, "Emergency cleanup completed")
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        Log.d(TAG, "Configuration changed");
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig!!)
+        Log.d(TAG, "Configuration changed")
     }
 
-    @Override
-    public void onTerminate() {
-        Log.d(TAG, "Application terminating");
+    override fun onTerminate() {
+        Log.d(TAG, "Application terminating")
 
         // Final cleanup
-        NeuRepoManager.INSTANCE.clearCache();
+        clearCache()
 
-        super.onTerminate();
+        super.onTerminate()
+    }
+
+    companion object {
+        private const val TAG = "HypeNotifyApp"
+        private var lastMemoryTrim: Long = 0
+        private const val MEMORY_TRIM_COOLDOWN: Long = 30000 // 30 Sekunden
     }
 }

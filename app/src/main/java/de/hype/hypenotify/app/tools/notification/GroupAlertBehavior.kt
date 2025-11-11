@@ -1,19 +1,15 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat
 
-public enum GroupAlertBehavior {
+enum class GroupAlertBehavior(behavior: Int) {
     ALL(NotificationCompat.GROUP_ALERT_ALL),
     CHILDREN(NotificationCompat.GROUP_ALERT_CHILDREN),
     SUMMARY(NotificationCompat.GROUP_ALERT_SUMMARY);
 
-    private final int behavior;
+    val int: Int
 
-    GroupAlertBehavior(int behavior) {
-        this.behavior = behavior;
-    }
-
-    public int getInt() {
-        return behavior;
+    init {
+        this.int = behavior
     }
 }

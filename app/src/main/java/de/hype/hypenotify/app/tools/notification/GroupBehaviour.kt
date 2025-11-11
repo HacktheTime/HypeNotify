@@ -1,29 +1,27 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat
 
-public enum GroupBehaviour {
-        /**
-         * @see NotificationCompat#GROUP_ALERT_ALL
-         */
-        GROUP_ALERT_ALL(NotificationCompat.GROUP_ALERT_ALL),
-        /**
-         * @see NotificationCompat#GROUP_ALERT_CHILDREN
-         */
-        GROUP_ALERT_CHILDREN(NotificationCompat.GROUP_ALERT_CHILDREN),
-        /**
-         * @see NotificationCompat#GROUP_ALERT_SUMMARY
-         */
-        GROUP_ALERT_SUMMARY(NotificationCompat.GROUP_ALERT_SUMMARY)
-        ;
-        private final int intKey;
+enum class GroupBehaviour(intKey: Int) {
+    /**
+     * @see NotificationCompat.GROUP_ALERT_ALL
+     */
+    GROUP_ALERT_ALL(NotificationCompat.GROUP_ALERT_ALL),
 
-        GroupBehaviour(int intKey) {
-            this.intKey = intKey;
-        }
+    /**
+     * @see NotificationCompat.GROUP_ALERT_CHILDREN
+     */
+    GROUP_ALERT_CHILDREN(NotificationCompat.GROUP_ALERT_CHILDREN),
 
-        public int getInt() {
-            return intKey;
-        }
+    /**
+     * @see NotificationCompat.GROUP_ALERT_SUMMARY
+     */
+    GROUP_ALERT_SUMMARY(NotificationCompat.GROUP_ALERT_SUMMARY);
+
+    val int: Int
+
+    init {
+        this.int = intKey
     }
+}
 

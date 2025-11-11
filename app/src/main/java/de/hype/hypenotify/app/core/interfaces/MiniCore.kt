@@ -1,48 +1,46 @@
-package de.hype.hypenotify.app.core.interfaces;
+package de.hype.hypenotify.app.core.interfaces
 
-import android.content.Context;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.app.Config;
-import de.hype.hypenotify.app.ExecutionService;
-import de.hype.hypenotify.app.core.WakeLockManager;
-import de.hype.hypenotify.app.tools.bazaar.BazaarService;
-import de.hype.hypenotify.app.tools.timers.TimerService;
+import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import de.hype.hypenotify.app.Config
+import de.hype.hypenotify.app.ExecutionService
+import de.hype.hypenotify.app.core.WakeLockManager
+import de.hype.hypenotify.app.tools.bazaar.BazaarService
+import de.hype.hypenotify.app.tools.timers.TimerService
 
-public interface MiniCore {
-    Context context();
+interface MiniCore {
+    fun context(): Context
 
-    boolean areKeysSet();
+    fun areKeysSet(): Boolean
 
-    TimerService timerService();
+    fun timerService(): TimerService
 
-    WakeLockManager wakeLock();
+    fun wakeLock(): WakeLockManager
 
-    String userAPIKey();
+    fun userAPIKey(): String?
 
-    int userId();
+    fun userId(): Int
 
-    void setUserData(int userId, String bbAPIKey, String deviceName);
+    fun setUserData(userId: Int, bbAPIKey: String, deviceName: String)
 
-    BazaarService bazaarService();
+    fun bazaarService(): BazaarService
 
-    boolean isInFreeNetwork();
+    val isInFreeNetwork: Boolean
 
-    ExecutionService executionService();
+    fun executionService(): ExecutionService
 
-    void saveData(String key, Object data);
+    fun saveData(key: String, data: Any?)
 
-    Gson gson();
+    fun gson(): Gson?
 
-    <T> T getData(String timers, TypeToken<T> type);
+    fun <T> getData(timers: String, type: TypeToken<T>): T?
 
-    String getStringData(String key);
+    fun getStringData(key: String): String?
 
-    Config config();
+    fun config(): Config
 
     // Mark that the service was stopped due to low battery and should not be auto-restarted.
-    void setLowBatteryStop(boolean value);
-
     // Query whether a low-battery stop was set previously.
-    boolean isLowBatteryStop();
+    var isLowBatteryStop: Boolean
 }

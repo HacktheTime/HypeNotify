@@ -1,10 +1,9 @@
-package de.hype.hypenotify.app.core.interfaces;
+package de.hype.hypenotify.app.core.interfaces
 
-import de.hype.hypenotify.app.MainActivity;
+import de.hype.hypenotify.app.MainActivity
 
-public interface Core extends MiniCore {
-    @Override
-    MainActivity context();
+interface Core : MiniCore {
+    override fun context(): MainActivity
 
-    void onDestroy();
+    fun onDestroy()
 }

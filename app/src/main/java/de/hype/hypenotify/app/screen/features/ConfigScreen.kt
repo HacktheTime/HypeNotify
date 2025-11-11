@@ -1,380 +1,381 @@
-package de.hype.hypenotify.app.screen.features;
+package de.hype.hypenotify.app.screen.features
 
-import android.annotation.SuppressLint;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.*;
-import androidx.appcompat.app.AlertDialog;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.Config;
-import de.hype.hypenotify.app.ConfigField;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.screen.Screen;
-import de.hype.hypenotify.layouts.autodetection.Layout;
-
-import java.lang.reflect.Field;
-import java.time.Instant;
-import java.util.Arrays;
+import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.text.InputType
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
+import android.widget.CompoundButton
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.Config
+import de.hype.hypenotify.app.ConfigField
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.screen.Screen
+import de.hype.hypenotify.layouts.autodetection.Layout
+import java.lang.reflect.Field
+import java.time.Instant
+import java.util.*
 
 @Layout(name = "Config")
 @SuppressLint("ViewConstructor")
-public class ConfigScreen extends Screen {
-    private final Config configObject;
+class ConfigScreen(core: Core, parent: View?) : Screen(core, parent) {
+    private val configObject: Config = core.config()
 
-    public ConfigScreen(Core core, View parent) {
-        super(core, parent);
-        this.configObject = core.config();
-        inflateLayouts();
+    init {
+        inflateLayouts()
     }
 
-    @Override
-    protected void inflateLayouts() {
-        setOrientation(VERTICAL);
-        LayoutInflater.from(context).inflate(R.layout.config_screen, this, true);
-        LinearLayout layout = findViewById(R.id.config_layout);
-        layout.removeAllViews();
-        populateConfigFields(layout);
+    override fun inflateLayouts() {
+        setOrientation(VERTICAL)
+        LayoutInflater.from(context).inflate(R.layout.config_screen, this, true)
+        val layout = findViewById<LinearLayout>(R.id.config_layout)
+        layout.removeAllViews()
+        populateConfigFields(layout)
     }
 
-    private void populateConfigFields(LinearLayout layout) {
-        Field[] fields = configObject.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            field.setAccessible(true);
-            ConfigField configField = field.getAnnotation(ConfigField.class);
+    private fun populateConfigFields(layout: LinearLayout) {
+        val fields = configObject.javaClass.getDeclaredFields()
+        for (field in fields) {
+            field.setAccessible(true)
+            val configField = field.getAnnotation<ConfigField?>(ConfigField::class.java)
             if (configField != null) {
                 try {
-                    Class<?> fieldType = field.getType();
-                    Object value = field.get(configObject);
-                    if (fieldType == Boolean.class || fieldType == boolean.class) {
-                        addSwitch(layout, field, (Boolean) value, configField);
-                    } else if (fieldType == String.class) {
-                        addTextField(layout, field, (String) value, configField);
-                    } else if (fieldType == Integer.class || fieldType == int.class) {
-                        addNumberInput(layout, field, (Integer) value, configField);
-                    } else if (fieldType == Long.class || fieldType == long.class) {
-                        addLongInput(layout, field, (Long) value, configField);
-                    } else if (fieldType == Double.class || fieldType == double.class) {
-                        addDoubleInput(layout, field, (Double) value, configField);
-                    } else if (fieldType == Instant.class) {
-                        addTimeInput(layout, field, (Instant) value, configField);
+                    val fieldType = field.getType()
+                    val value = field.get(configObject)
+                    if (fieldType == Boolean::class.java || fieldType == Boolean::class.javaPrimitiveType) {
+                        addSwitch(layout, field, value as Boolean?, configField)
+                    } else if (fieldType == String::class.java) {
+                        addTextField(layout, field, value as String?, configField)
+                    } else if (fieldType == Int::class.java || fieldType == Int::class.javaPrimitiveType) {
+                        addNumberInput(layout, field, value as Int?, configField)
+                    } else if (fieldType == Long::class.java || fieldType == Long::class.javaPrimitiveType) {
+                        addLongInput(layout, field, value as Long?, configField)
+                    } else if (fieldType == Double::class.java || fieldType == Double::class.javaPrimitiveType) {
+                        addDoubleInput(layout, field, value as Double?, configField)
+                    } else if (fieldType == Instant::class.java) {
+                        addTimeInput(layout, field, value as Instant?, configField)
                     } else if (fieldType.isEnum()) {
-                        addEnumSelection(layout, field, (Enum<?>) value, configField);
+                        addEnumSelection(layout, field, value as Enum<*>?, configField)
                     }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
             }
         }
     }
 
-    private void addSwitch(LinearLayout layout, Field field, Boolean value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addSwitch(layout: LinearLayout, field: Field, value: Boolean?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        Switch switchView = new Switch(context);
-        switchView.setChecked(value != null && value);
-        switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        val switchView = Switch(context)
+        switchView.setChecked(value != null && value)
+        switchView.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
             try {
-                field.set(configObject, isChecked);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                field.set(configObject, isChecked)
+            } catch (e: IllegalAccessException) {
+                e.printStackTrace()
             }
-        });
-        fieldLayout.addView(switchView);
+        })
+        fieldLayout.addView(switchView)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    switchView.setChecked(false);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    switchView.setChecked(false)
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addTextField(LinearLayout layout, Field field, String value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addTextField(layout: LinearLayout, field: Field, value: String?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        EditText editText = new EditText(context);
-        editText.setText(value);
-        editText.setHint(field.getName());
-        LinearLayout.LayoutParams editTextParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        editText.setLayoutParams(editTextParams);
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
+        val editText = EditText(context)
+        editText.setText(value)
+        editText.setHint(field.getName())
+        val editTextParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        editText.setLayoutParams(editTextParams)
+        editText.setOnFocusChangeListener(OnFocusChangeListener { v: View?, hasFocus: Boolean ->
             if (!hasFocus) {
                 try {
-                    String text = editText.getText().toString();
-                    field.set(configObject, text.isEmpty() ? null : text);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    val text = editText.getText().toString()
+                    field.set(configObject, if (text.isEmpty()) null else text)
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
             }
-        });
-        fieldLayout.addView(editText);
+        })
+        fieldLayout.addView(editText)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    editText.setText("");
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    editText.setText("")
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addNumberInput(LinearLayout layout, Field field, Integer value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addNumberInput(layout: LinearLayout, field: Field, value: Int?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        EditText editText = new EditText(context);
-        editText.setText(value != null ? String.valueOf(value) : "");
-        editText.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        LinearLayout.LayoutParams editTextParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        editText.setLayoutParams(editTextParams);
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
+        val editText = EditText(context)
+        editText.setText(if (value != null) value.toString() else "")
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER)
+        val editTextParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        editText.setLayoutParams(editTextParams)
+        editText.setOnFocusChangeListener(OnFocusChangeListener { v: View?, hasFocus: Boolean ->
             if (!hasFocus) {
                 try {
-                    String text = editText.getText().toString();
-                    field.set(configObject, text.isEmpty() ? null : Integer.parseInt(text));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    val text = editText.getText().toString()
+                    field.set(configObject, if (text.isEmpty()) null else text.toInt())
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
             }
-        });
-        fieldLayout.addView(editText);
+        })
+        fieldLayout.addView(editText)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    editText.setText("");
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    editText.setText("")
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addLongInput(LinearLayout layout, Field field, Long value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addLongInput(layout: LinearLayout, field: Field, value: Long?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        EditText editText = new EditText(context);
-        editText.setText(value != null ? String.valueOf(value) : "");
-        editText.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        LinearLayout.LayoutParams editTextParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        editText.setLayoutParams(editTextParams);
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
+        val editText = EditText(context)
+        editText.setText(if (value != null) value.toString() else "")
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER)
+        val editTextParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        editText.setLayoutParams(editTextParams)
+        editText.setOnFocusChangeListener(OnFocusChangeListener { v: View?, hasFocus: Boolean ->
             if (!hasFocus) {
                 try {
-                    String text = editText.getText().toString();
-                    field.set(configObject, text.isEmpty() ? null : Long.parseLong(text));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    val text = editText.getText().toString()
+                    field.set(configObject, if (text.isEmpty()) null else text.toLong())
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
             }
-        });
-        fieldLayout.addView(editText);
+        })
+        fieldLayout.addView(editText)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    editText.setText("");
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    editText.setText("")
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addDoubleInput(LinearLayout layout, Field field, Double value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addDoubleInput(layout: LinearLayout, field: Field, value: Double?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        EditText editText = new EditText(context);
-        editText.setText(value != null ? String.valueOf(value) : "");
-        editText.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        LinearLayout.LayoutParams editTextParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        editText.setLayoutParams(editTextParams);
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
+        val editText = EditText(context)
+        editText.setText(if (value != null) value.toString() else "")
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+        val editTextParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        editText.setLayoutParams(editTextParams)
+        editText.setOnFocusChangeListener(OnFocusChangeListener { v: View?, hasFocus: Boolean ->
             if (!hasFocus) {
                 try {
-                    String text = editText.getText().toString();
-                    field.set(configObject, text.isEmpty() ? null : Double.parseDouble(text));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    val text = editText.getText().toString()
+                    field.set(configObject, if (text.isEmpty()) null else text.toDouble())
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
             }
-        });
-        fieldLayout.addView(editText);
+        })
+        fieldLayout.addView(editText)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    editText.setText("");
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    editText.setText("")
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addTimeInput(LinearLayout layout, Field field, Instant value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addTimeInput(layout: LinearLayout, field: Field, value: Instant?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        TextView timeView = new TextView(context);
-        timeView.setText(value != null ? value.toString() : "null");
-        LinearLayout.LayoutParams timeViewParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        timeView.setLayoutParams(timeViewParams);
-        timeView.setOnClickListener(v -> {
+        val timeView = TextView(context)
+        timeView.setText(if (value != null) value.toString() else "null")
+        val timeViewParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        timeView.setLayoutParams(timeViewParams)
+        timeView.setOnClickListener(OnClickListener { v: View? ->
             // Show time picker dialog and update the field
-            Toast.makeText(context, "Time picker not implemented", Toast.LENGTH_SHORT).show();
-        });
-        fieldLayout.addView(timeView);
+            Toast.makeText(context, "Time picker not implemented", Toast.LENGTH_SHORT).show()
+        })
+        fieldLayout.addView(timeView)
 
-        if (configField.allowNull()) {
-            Button nullButton = new Button(context);
-            nullButton.setText("Set Null");
-            nullButton.setOnClickListener(v -> {
+        if (configField.allowNull) {
+            val nullButton = Button(context)
+            nullButton.setText("Set Null")
+            nullButton.setOnClickListener(OnClickListener { v: View? ->
                 try {
-                    field.set(configObject, null);
-                    timeView.setText("null");
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(configObject, null)
+                    timeView.setText("null")
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            fieldLayout.addView(nullButton);
+            })
+            fieldLayout.addView(nullButton)
         }
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    private void addEnumSelection(LinearLayout layout, Field field, Enum<?> value, ConfigField configField) {
-        LinearLayout fieldLayout = new LinearLayout(context);
-        fieldLayout.setOrientation(LinearLayout.HORIZONTAL);
+    private fun addEnumSelection(layout: LinearLayout, field: Field, value: Enum<*>?, configField: ConfigField) {
+        val fieldLayout = LinearLayout(context)
+        fieldLayout.setOrientation(HORIZONTAL)
 
-        TextView label = new TextView(context);
-        label.setText(configField.description().isEmpty() ? field.getName() : configField.description());
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        label.setLayoutParams(labelParams);
-        fieldLayout.addView(label);
+        val label = TextView(context)
+        label.setText(if (configField.description.isEmpty()) field.getName() else configField.description)
+        val labelParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
+        label.setLayoutParams(labelParams)
+        fieldLayout.addView(label)
 
-        TextView enumView = new TextView(context);
-        enumView.setText(value != null ? value.name() : "null");
-        LinearLayout.LayoutParams enumViewParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f);
-        enumView.setLayoutParams(enumViewParams);
-        enumView.setOnClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle("Select " + field.getName());
-            String[] enumNames = Arrays.stream(field.getType().getEnumConstants())
-                    .map(Object::toString)
-                    .toArray(String[]::new);
-            if (configField.allowNull()) {
-                enumNames = Arrays.copyOf(enumNames, enumNames.length + 1);
-                enumNames[enumNames.length - 1] = "null";
+        val enumView = TextView(context)
+        enumView.setText(if (value != null) value.name else "null")
+        val enumViewParams = LayoutParams(0, LayoutParams.WRAP_CONTENT, 2f)
+        enumView.setLayoutParams(enumViewParams)
+        enumView.setOnClickListener(OnClickListener { v: View? ->
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Select " + field.getName())
+            var enumNames = Arrays.stream(field.getType().getEnumConstants())
+                .map<String?> { obj: Any? -> obj.toString() }
+                .toArray<String?> { _Dummy_.__Array__() }
+            if (configField.allowNull) {
+                enumNames = enumNames.copyOf<String?>(enumNames.size + 1)
+                enumNames[enumNames.size - 1] = "null"
             }
-            String[] finalEnumNames = enumNames;
-            builder.setItems(enumNames, (dialog, which) -> {
+            val finalEnumNames = enumNames
+            builder.setItems(enumNames, DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
                 try {
-                    field.set(configObject, which == finalEnumNames.length - 1 && configField.allowNull() ? null : field.getType().getEnumConstants()[which]);
-                    enumView.setText(finalEnumNames[which]);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    field.set(
+                        configObject,
+                        if (which == finalEnumNames.size - 1 && configField.allowNull) null else field.getType().getEnumConstants()[which]
+                    )
+                    enumView.setText(finalEnumNames[which])
+                } catch (e: IllegalAccessException) {
+                    e.printStackTrace()
                 }
-            });
-            builder.show();
-        });
-        fieldLayout.addView(enumView);
+            })
+            builder.show()
+        })
+        fieldLayout.addView(enumView)
 
-        layout.addView(fieldLayout);
+        layout.addView(fieldLayout)
     }
 
-    @Override
-    protected void updateScreen(LinearLayout dynamicScreen) {
+    override fun updateScreen(dynamicScreen: LinearLayout) {
         // No dynamic updates needed for this screen
     }
 
-    @Override
-    public void onPause() {
-
+    override fun onPause() {
     }
 
-    @Override
-    public void onResume() {
-
+    override fun onResume() {
     }
 
-    @Override
-    protected LinearLayout getDynamicScreen() {
-        return null;
+    override fun getDynamicScreen(): LinearLayout? {
+        return null
     }
 }

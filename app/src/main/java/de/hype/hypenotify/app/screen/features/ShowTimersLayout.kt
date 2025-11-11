@@ -1,35 +1,34 @@
-package de.hype.hypenotify.app.screen.features;
+package de.hype.hypenotify.app.screen.features
 
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.screen.Screen;
-import de.hype.hypenotify.layouts.autodetection.Layout;
-
+import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ListView
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.screen.Screen
+import de.hype.hypenotify.layouts.autodetection.Layout
 
 @Layout(name = "Timers")
-public class ShowTimersLayout extends Screen {
-    private ListView timerListView;
-    private Button checkValidityButton;
-    private ArrayAdapter<String> timerAdapter;
+class ShowTimersLayout(core: Core, parent: View?) : Screen(core, parent) {
+    private val timerListView: ListView
+    private val checkValidityButton: Button
+    private val timerAdapter: ArrayAdapter<String?>?
 
-    public ShowTimersLayout(Core core, View parent) {
-        super(core, parent);
-        timerListView = new ListView(context);
-        checkValidityButton = new Button(context);
-        checkValidityButton.setText(R.string.check_timers_validity);
+    init {
+        timerListView = ListView(context)
+        checkValidityButton = Button(context)
+        checkValidityButton.setText(R.string.check_timers_validity)
 
-        setOrientation(LinearLayout.VERTICAL);
-        addView(timerListView);
-        addView(checkValidityButton);
+        setOrientation(VERTICAL)
+        addView(timerListView)
+        addView(checkValidityButton)
 
-        timerAdapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1);
-        timerListView.setAdapter(timerAdapter);
-//TODO
+        timerAdapter = ArrayAdapter<String?>(context, android.R.layout.simple_list_item_1)
+        timerListView.setAdapter(timerAdapter)
+
+        //TODO
 //        timerListView.setOnItemClickListener((parent, view, position, id) -> {
 //            TimerData timer = timers.get(position);
 //            if (timer.active) {
@@ -43,26 +42,20 @@ public class ShowTimersLayout extends Screen {
 //            timerAdapter.addAll(getTimerDescriptions());
 //            timerAdapter.notifyDataSetChanged();
 //        });
-
-        checkValidityButton.setOnClickListener(view -> checkTimersValidity());
+        checkValidityButton.setOnClickListener(OnClickListener { view: View? -> checkTimersValidity() })
     }
 
-    @Override
-    protected void inflateLayouts() {
-
+    override fun inflateLayouts() {
     }
 
-    @Override
-    protected void updateScreen(LinearLayout dynamicScreen) {
-
+    override fun updateScreen(dynamicScreen: LinearLayout) {
     }
 
-    @Override
-    protected LinearLayout getDynamicScreen() {
-        return null;
+    override fun getDynamicScreen(): LinearLayout? {
+        return null
     }
 
-    private void checkTimersValidity() {
+    private fun checkTimersValidity() {
         //TODO
 //        new Thread(() -> {
 //            for (TimerData timer : timers) {
@@ -105,13 +98,9 @@ public class ShowTimersLayout extends Screen {
 //        }).start();
     }
 
-    @Override
-    public void onPause() {
-
+    override fun onPause() {
     }
 
-    @Override
-    public void onResume() {
-
+    override fun onResume() {
     }
 }

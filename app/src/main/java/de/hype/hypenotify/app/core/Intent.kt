@@ -1,10 +1,11 @@
-package de.hype.hypenotify.app.core;
+package de.hype.hypenotify.app.core
 
-import de.hype.hypenotify.app.MainActivity;
-import de.hype.hypenotify.app.core.interfaces.Core;
+import android.content.Intent
+import de.hype.hypenotify.app.MainActivity
+import de.hype.hypenotify.app.core.interfaces.Core
 
-public interface Intent {
-    void handleIntentInternal(android.content.Intent intent, Core core, MainActivity context);
+interface Intent {
+    fun handleIntentInternal(intent: Intent?, core: Core?, context: MainActivity?)
 
-    String intentId();
+    fun intentId(): String?
 }

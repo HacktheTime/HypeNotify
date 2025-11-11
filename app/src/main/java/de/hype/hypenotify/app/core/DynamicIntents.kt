@@ -1,153 +1,143 @@
-package de.hype.hypenotify.app.core;
+package de.hype.hypenotify.app.core
 
-import android.content.Context;
-import android.content.Intent;
-import android.media.MediaPlayer;
-import android.os.BatteryManager;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.MainActivity;
-import de.hype.hypenotify.app.NotificationUtils;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.screen.TimerAlarmScreen;
-import de.hype.hypenotify.app.tools.notification.NotificationBuilder;
-import de.hype.hypenotify.app.tools.notification.NotificationChannels;
-import de.hype.hypenotify.app.tools.notification.NotificationImportance;
-import de.hype.hypenotify.app.tools.timers.TimerWrapper;
+import android.content.Context
+import android.content.Intent
+import android.media.MediaPlayer
+import android.os.BatteryManager
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.MainActivity
+import de.hype.hypenotify.app.NotificationUtils
+import de.hype.hypenotify.app.core.IntentBuilder.IntentFlag
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.screen.TimerAlarmScreen
+import de.hype.hypenotify.app.tools.notification.NotificationBuilder
+import de.hype.hypenotify.app.tools.notification.NotificationChannels
+import de.hype.hypenotify.app.tools.notification.NotificationImportance
+import java.time.Duration
+import java.time.Instant
+import java.util.*
+import java.util.concurrent.TimeUnit
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static android.content.Context.BATTERY_SERVICE;
-import static de.hype.hypenotify.app.core.IntentBuilder.DEFAULT_CREATE_NEW;
-import static de.hype.hypenotify.app.core.IntentBuilder.DEFAULT_FRONT_OR_CREATE;
-
-public enum DynamicIntents implements de.hype.hypenotify.app.core.Intent {
+enum class DynamicIntents(val intentId: String) : de.hype.hypenotify.app.core.Intent {
     TIMER_HIT("timer_hit") {
-        @Override
-        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
-            context.setShowWhenLocked(true);
-            context.setTurnScreenOn(true);
-            NotificationBuilder notificationBuilder = new NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR);
-            String uuidString = intent.getStringExtra("timerId");
+        override fun handleIntentInternal(intent: Intent, core: Core, context: MainActivity) {
+            context.setShowWhenLocked(true)
+            context.setTurnScreenOn(true)
+            val notificationBuilder =
+                NotificationBuilder(context, "SmartTimer hit", "SmartTimer hit intent received without timerId", NotificationChannels.ERROR)
+            val uuidString = intent.getStringExtra("timerId")
             if (uuidString == null) {
-                notificationBuilder.send();
-                return;
+                notificationBuilder.send()
+                return
             }
-            UUID timerId = UUID.fromString(uuidString);
-            TimerWrapper timer = core.timerService().getTimerByClientId(timerId);
+            val timerId = UUID.fromString(uuidString)
+            val timer = core.timerService().getTimerByClientId(timerId)
             if (timer != null) {
-                Duration between = Duration.between(Instant.now(), timer.getTime());
-                ScheduledFuture<?> alarm = core.executionService().schedule(() -> {
-                    TimerAlarmScreen timerAlarmScreen = new TimerAlarmScreen(core, timer);
-                    context.runOnUiThread(() -> {
-                        context.setContentViewNoOverride(timerAlarmScreen);
-                    });
-                }, between.getSeconds(), TimeUnit.SECONDS);
-                core.executionService().execute(() -> {
-                    boolean shouldRing = timer.shouldRing(core);
-                    if (shouldRing) alarm.cancel(false);
-                });
+                val between = Duration.between(Instant.now(), timer.getTime())
+                val alarm = core.executionService().schedule(Runnable {
+                    val timerAlarmScreen = TimerAlarmScreen(core, timer)
+                    context.runOnUiThread(Runnable {
+                        context.setContentViewNoOverride(timerAlarmScreen)
+                    })
+                }, between.getSeconds(), TimeUnit.SECONDS)
+                core.executionService().execute(Runnable {
+                    val shouldRing = timer.shouldRing(core)
+                    if (shouldRing) alarm.cancel(false)
+                })
             }
         }
 
-        @Override
-        public List<IntentBuilder.IntentFlag> getFlags() {
-            return DEFAULT_CREATE_NEW;
+        override fun getFlags(): MutableList<IntentFlag?>? {
+            return IntentBuilder.Companion.DEFAULT_CREATE_NEW
         }
     },
     BATTERY_REMINDER_CHECK("battery_reminder_check") {
-        @Override
-        public void handleIntentInternal(Intent intent, Core core, MainActivity context) {
+        override fun handleIntentInternal(intent: Intent?, core: Core, context: MainActivity) {
             if (core.isInFreeNetwork() && isBatteryLow(context)) {
-                notifyUser(context);
+                notifyUser(context)
             }
         }
 
-        private boolean isBatteryLow(Context context) {
-            BatteryManager bm = (BatteryManager) context.getSystemService(BATTERY_SERVICE);
-            if (bm.isCharging()) return false;
-            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) < 50;
+        private fun isBatteryLow(context: Context): Boolean {
+            val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            if (bm.isCharging()) return false
+            return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) < 50
         }
 
-        private void notifyUser(Context context) {
-            NotificationUtils.createNotification(context, "Charge the Battery", "The Mobile Phone is not plugged in. Daily Reminder to charge it.", NotificationChannels.BATTERY_WARNING, NotificationImportance.DEFAULT);
-            MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.alarm);
-            mediaPlayer.setLooping(true);
-            mediaPlayer.start();
+        private fun notifyUser(context: Context?) {
+            NotificationUtils.createNotification(
+                context,
+                "Charge the Battery",
+                "The Mobile Phone is not plugged in. Daily Reminder to charge it.",
+                NotificationChannels.BATTERY_WARNING,
+                NotificationImportance.DEFAULT
+            )
+            val mediaPlayer = MediaPlayer.create(context, R.raw.alarm)
+            mediaPlayer.setLooping(true)
+            mediaPlayer.start()
 
             // Stop the sound after 5 minutes or if acknowledged
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> {
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed(Runnable {
                 if (mediaPlayer.isPlaying()) {
-                    mediaPlayer.stop();
-                    mediaPlayer.release();
+                    mediaPlayer.stop()
+                    mediaPlayer.release()
                 }
-            }, 5 * 60 * 1000);
+            }, (5 * 60 * 1000).toLong())
         }
 
-        @Override
-        public List<IntentBuilder.IntentFlag> getFlags() {
-            return DEFAULT_FRONT_OR_CREATE;
+        override fun getFlags(): MutableList<IntentFlag?>? {
+            return IntentBuilder.Companion.DEFAULT_FRONT_OR_CREATE
         }
     };
 
-    public final String intentId;
-    public static final String PACKAGE_NAME = "de.hype.hypenotify";
-    public static final String DYNAMIC_INTENT = PACKAGE_NAME + ".DYNAMIC_ENUM_INTENT";
+    abstract override fun handleIntentInternal(intent: Intent?, core: Core?, context: MainActivity?)
 
-
-    DynamicIntents(String intentId) {
-        this.intentId = intentId;
+    fun getAsIntent(context: Context?): IntentBuilder {
+        val builder = IntentBuilder(context, this)
+        builder.setFlags(this.flags)
+        return builder
     }
 
-    /**
-     * @param context    the current context
-     */
-    public static void startBackgroundService(Context context) {
-        Intent serviceIntent = new Intent(context, BackgroundService.class);
-        context.startService(serviceIntent);
+    abstract val flags: MutableList<IntentFlag?>?
+
+    override fun intentId(): String {
+        return intentId
     }
 
-    @Override
-    public abstract void handleIntentInternal(Intent intent, Core core, MainActivity context);
 
-    public static boolean handleIntent(Intent intent, Core core, MainActivity context) {
-        Log.i("DynamicIntents", "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent.getAction(), intent.getData()));
-        DynamicIntents smartIntent = getIntentByAction(intent.getStringExtra("intentId"));
-        if (smartIntent == null) return false;
-        smartIntent.handleIntentInternal(intent, core, context);
-        return true;
-    }
+    companion object {
+        const val PACKAGE_NAME: String = "de.hype.hypenotify"
+        val DYNAMIC_INTENT: String = PACKAGE_NAME + ".DYNAMIC_ENUM_INTENT"
 
-    private static DynamicIntents getIntentByAction(String intentId) {
-        if (intentId == null) return null;
-        for (DynamicIntents i : DynamicIntents.values()) {
-            if (i.intentId.equals(intentId)) {
-                return i;
-            }
+
+        /**
+         * @param context    the current context
+         */
+        fun startBackgroundService(context: Context) {
+            val serviceIntent = Intent(context, BackgroundService::class.java)
+            context.startService(serviceIntent)
         }
-        return null;
+
+        fun handleIntent(intent: Intent, core: Core?, context: MainActivity?): Boolean {
+            Log.i("DynamicIntents", "hypeNotify: Intent specified in onCreate(): %s (%s)".formatted(intent.getAction(), intent.getData()))
+            val smartIntent: DynamicIntents? = getIntentByAction(intent.getStringExtra("intentId"))
+            if (smartIntent == null) return false
+            smartIntent.handleIntentInternal(intent, core, context)
+            return true
+        }
+
+        private fun getIntentByAction(intentId: String?): DynamicIntents? {
+            if (intentId == null) return null
+            for (i in DynamicIntents.entries) {
+                if (i.intentId == intentId) {
+                    return i
+                }
+            }
+            return null
+        }
     }
-
-    public IntentBuilder getAsIntent(Context context) {
-        IntentBuilder builder = new IntentBuilder(context, this);
-        builder.setFlags(getFlags());
-        return builder;
-    }
-
-    public abstract List<IntentBuilder.IntentFlag> getFlags();
-
-    @Override
-    public String intentId() {
-        return intentId;
-    }
-
-
 }

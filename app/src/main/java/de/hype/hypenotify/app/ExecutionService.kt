@@ -1,179 +1,176 @@
-package de.hype.hypenotify.app;
+package de.hype.hypenotify.app
 
-import org.jetbrains.annotations.NotNull;
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
+class ExecutionService(threadPoolSize: Int) {
+    var provider: ScheduledExecutorService
 
-public class ExecutionService {
-    ScheduledExecutorService provider;
-
-    public ExecutionService(int threadPoolSize) {
-        provider = Executors.newScheduledThreadPool(threadPoolSize);
-        if (provider instanceof ScheduledThreadPoolExecutor) {
-            ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) provider;
-            exec.setRemoveOnCancelPolicy(true);
-            exec.setKeepAliveTime(60, TimeUnit.SECONDS);
-            exec.allowCoreThreadTimeOut(true); // erlaubt, dass Threads nach Inaktivität beendet werden
+    init {
+        provider = Executors.newScheduledThreadPool(threadPoolSize)
+        if (provider is ScheduledThreadPoolExecutor) {
+            val exec = provider as ScheduledThreadPoolExecutor
+            exec.setRemoveOnCancelPolicy(true)
+            exec.setKeepAliveTime(60, TimeUnit.SECONDS)
+            exec.allowCoreThreadTimeOut(true) // erlaubt, dass Threads nach Inaktivität beendet werden
         }
     }
 
-    private void handleError(Throwable e) {
-        e.printStackTrace();
+    private fun handleError(e: Throwable) {
+        e.printStackTrace()
     }
 
-    @NotNull
-    public ScheduledFuture<?> schedule(@NotNull Runnable runnable, long delay, @NotNull TimeUnit timeUnit) {
-        return provider.schedule(() -> {
+    fun schedule(runnable: Runnable, delay: Long, timeUnit: TimeUnit): ScheduledFuture<*> {
+        return provider.schedule(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        }, delay, timeUnit);
+        }, delay, timeUnit)
     }
 
-    @NotNull
-    public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit timeUnit) {
-        return provider.schedule(() -> {
+    fun <V> schedule(callable: Callable<V?>, delay: Long, timeUnit: TimeUnit): ScheduledFuture<V?> {
+        return provider.schedule<V?>(Callable {
             try {
-                return callable.call();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                return@schedule callable.call()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        }, delay, timeUnit);
+        }, delay, timeUnit)
     }
 
-    @NotNull
-    public ScheduledFuture<?> scheduleAtFixedRate(@NotNull Runnable runnable, long initialDelay, long delayBetween, @NotNull TimeUnit timeUnit) {
-        return provider.scheduleWithFixedDelay(() -> {
+    fun scheduleAtFixedRate(runnable: Runnable, initialDelay: Long, delayBetween: Long, timeUnit: TimeUnit): ScheduledFuture<*> {
+        return provider.scheduleWithFixedDelay(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        }, initialDelay, delayBetween, timeUnit);
+        }, initialDelay, delayBetween, timeUnit)
     }
 
-    @NotNull
-    public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable runnable, long initialDelay, long betweenDelay, @NotNull TimeUnit timeUnit) {
-        return provider.scheduleWithFixedDelay(() -> {
+    fun scheduleWithFixedDelay(runnable: Runnable, initialDelay: Long, betweenDelay: Long, timeUnit: TimeUnit): ScheduledFuture<*> {
+        return provider.scheduleWithFixedDelay(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        }, initialDelay, betweenDelay, timeUnit);
+        }, initialDelay, betweenDelay, timeUnit)
     }
 
-    public void shutdown() {
-        provider.shutdown();
+    fun shutdown() {
+        provider.shutdown()
     }
 
-    @NotNull
-    public List<Runnable> shutdownNow() {
-        return provider.shutdownNow();
+    fun shutdownNow(): MutableList<Runnable?> {
+        return provider.shutdownNow()
     }
 
-    public boolean isShutdown() {
-        return provider.isShutdown();
+    val isShutdown: Boolean
+        get() = provider.isShutdown()
+
+    val isTerminated: Boolean
+        get() = provider.isTerminated()
+
+    @Throws(InterruptedException::class)
+    fun awaitTermination(l: Long, timeUnit: TimeUnit): Boolean {
+        return provider.awaitTermination(l, timeUnit)
     }
 
-    public boolean isTerminated() {
-        return provider.isTerminated();
-    }
-
-    public boolean awaitTermination(long l, @NotNull TimeUnit timeUnit) throws InterruptedException {
-        return provider.awaitTermination(l, timeUnit);
-    }
-
-    @NotNull
-    public <T> Future<T> submit(@NotNull Callable<T> callable) {
-        return provider.submit(() -> {
+    fun <T> submit(callable: Callable<T?>): Future<T?> {
+        return provider.submit<T?>(Callable {
             try {
-                return callable.call();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                return@submit callable.call()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        });
+        })
     }
 
-    @NotNull
-    public <T> Future<T> submit(@NotNull Runnable runnable, T task) {
-        return provider.submit(() -> {
+    fun <T> submit(runnable: Runnable, task: T?): Future<T?> {
+        return provider.submit<T?>(Callable {
             try {
-                runnable.run();
-                return task;
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+                return@submit task
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        });
+        })
     }
 
-    @NotNull
-    public Future<?> submit(@NotNull Runnable runnable) {
-        return provider.submit(() -> {
+    fun submit(runnable: Runnable): Future<*> {
+        return provider.submit(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        });
+        })
     }
 
-    public void execute(@NotNull Runnable runnable) {
-        provider.execute(() -> {
+    fun execute(runnable: Runnable) {
+        provider.execute(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        });
+        })
     }
 
-    @NotNull
-    public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> collection) throws InterruptedException {
-        return provider.invokeAll(collection.stream().map(callable -> (Callable<T>) () -> {
-            try {
-                return callable.call();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+    @Throws(InterruptedException::class)
+    fun <T> invokeAll(collection: MutableCollection<out Callable<T?>?>): MutableList<Future<T?>?> {
+        return provider.invokeAll<T?>(collection.stream().map<Callable<T?>?> { callable: Callable<T?>? ->
+            Callable {
+                try {
+                    return@Callable callable!!.call()
+                } catch (e: Throwable) {
+                    handleError(e)
+                    throw e
+                }
             }
-        }).toList());
+        }.toList())
     }
 
-    @NotNull
-    public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> collection, long l, @NotNull TimeUnit timeUnit) throws InterruptedException {
-        return provider.invokeAll(collection.stream().map(callable -> (Callable<T>) () -> {
-            try {
-                return callable.call();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+    @Throws(InterruptedException::class)
+    fun <T> invokeAll(collection: MutableCollection<out Callable<T?>?>, l: Long, timeUnit: TimeUnit): MutableList<Future<T?>?> {
+        return provider.invokeAll<T?>(collection.stream().map<Callable<T?>?> { callable: Callable<T?>? ->
+            Callable {
+                try {
+                    return@Callable callable!!.call()
+                } catch (e: Throwable) {
+                    handleError(e)
+                    throw e
+                }
             }
-        }).toList(), l, timeUnit);
+        }.toList(), l, timeUnit)
     }
 
-    public ScheduledFuture<?> scheduleAt(Runnable runnable, Instant instant) {
-        return provider.schedule(() -> {
+    fun scheduleAt(runnable: Runnable, instant: Instant?): ScheduledFuture<*> {
+        return provider.schedule(Runnable {
             try {
-                runnable.run();
-            } catch (Throwable e) {
-                handleError(e);
-                throw e;
+                runnable.run()
+            } catch (e: Throwable) {
+                handleError(e)
+                throw e
             }
-        }, Instant.now().until(instant, ChronoUnit.MILLIS), TimeUnit.MILLISECONDS);
+        }, Instant.now().until(instant, ChronoUnit.MILLIS), TimeUnit.MILLISECONDS)
     }
 }

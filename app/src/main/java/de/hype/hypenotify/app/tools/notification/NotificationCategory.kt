@@ -1,6 +1,6 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-public enum NotificationCategory {
+enum class NotificationCategory(categoryId: String) {
     CATEGORY_CALL("call"),
 
     /**
@@ -74,6 +74,7 @@ public enum NotificationCategory {
      * Notification category: user-scheduled reminder.
      */
     CATEGORY_REMINDER("reminder"),
+
     /**
      * Notification category: tracking a user's workout.
      */
@@ -99,9 +100,9 @@ public enum NotificationCategory {
      */
     CATEGORY_VOICEMAIL("voicemail");
 
-    public final String categoryId;
+    val categoryId: String?
 
-    NotificationCategory(String categoryId) {
-        this.categoryId = categoryId;
+    init {
+        this.categoryId = categoryId
     }
 }

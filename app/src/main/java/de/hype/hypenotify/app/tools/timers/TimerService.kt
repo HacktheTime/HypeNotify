@@ -1,53 +1,54 @@
-package de.hype.hypenotify.app.tools.timers;
+package de.hype.hypenotify.app.tools.timers
 
-import android.annotation.SuppressLint;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.app.ServerUtils;
-import de.hype.hypenotify.app.core.IntentBuilder;
-import de.hype.hypenotify.app.core.StaticIntents;
-import de.hype.hypenotify.app.core.interfaces.MiniCore;
-
-import java.lang.reflect.Type;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-
-import static android.content.Context.ALARM_SERVICE;
-
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.AlarmManager.AlarmClockInfo
+import android.app.PendingIntent
+import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
+import com.google.gson.reflect.TypeToken
+import de.hype.hypenotify.app.ServerUtils
+import de.hype.hypenotify.app.core.StaticIntents
+import de.hype.hypenotify.app.core.interfaces.MiniCore
+import java.lang.reflect.Type
+import java.time.Instant
+import java.util.*
 
 /**
  * Gson Adapter for handling Timer polymorphic serialization & deserialization.
  */
-class TimerAdapter implements JsonSerializer<TimerWrapper>, JsonDeserializer<TimerWrapper> {
-    private final MiniCore core;
+internal class TimerAdapter(core: MiniCore) : JsonSerializer<TimerWrapper?>, JsonDeserializer<TimerWrapper?> {
+    private val core: MiniCore
 
-    public TimerAdapter(MiniCore core) {
-        this.core = core;
+    init {
+        this.core = core
     }
 
-    @Override
-    public JsonElement serialize(TimerWrapper wrapped, Type typeOfSrc, JsonSerializationContext context) {
-        BaseTimer src = wrapped.getBaseTimer();
-        JsonObject obj = context.serialize(src, src.getClass()).getAsJsonObject();
-        obj.addProperty("className", src.getClass().getName());
-        return obj;
+    override fun serialize(wrapped: TimerWrapper, typeOfSrc: Type?, context: JsonSerializationContext): JsonElement {
+        val src = wrapped.getBaseTimer()
+        val obj = context.serialize(src, src.javaClass).getAsJsonObject()
+        obj.addProperty("className", src.javaClass.getName())
+        return obj
     }
 
-    @Override
-    public TimerWrapper deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        JsonObject obj = json.getAsJsonObject();
-        String className = obj.get("className").getAsString();
+    @Throws(JsonParseException::class)
+    override fun deserialize(json: JsonElement, typeOfT: Type?, context: JsonDeserializationContext): TimerWrapper {
+        val obj = json.getAsJsonObject()
+        val className = obj.get("className").getAsString()
         try {
-            Class<?> clazz = Class.forName(className);
-            BaseTimer timer = context.deserialize(obj, clazz);
-            timer.onInit(core);
-            return new TimerWrapper(timer, core.timerService());
-        } catch (ClassNotFoundException e) {
-            throw new JsonParseException("Unknown class: " + className, e);
+            val clazz = Class.forName(className)
+            val timer = context.deserialize<BaseTimer>(obj, clazz)
+            timer.onInit(core)
+            return TimerWrapper(timer, core.timerService())
+        } catch (e: ClassNotFoundException) {
+            throw JsonParseException("Unknown class: " + className, e)
         }
     }
 }
@@ -55,73 +56,65 @@ class TimerAdapter implements JsonSerializer<TimerWrapper>, JsonDeserializer<Tim
 /**
  * LocalTimer - Queries "test.de" and checks if "test" is true.
  */
-class LocalTimer extends BaseTimer {
-    public LocalTimer(UUID clientId, Instant time, String message) {
-        super(clientId, null, time, message);
-    }
-
-    @Override
-    public boolean wouldRing(MiniCore core) {
+internal class LocalTimer(clientId: UUID?, time: Instant?, message: String?) : BaseTimer(clientId, null, time, message) {
+    override fun wouldRing(core: MiniCore?): Boolean {
 //        String response = core.getHttp("https://test.de");
-        String response = "{\"test\":true}";
-        return !isDeactivated && response.contains("\"test\":true");
+        val response = "{\"test\":true}"
+        return !isDeactivated && response.contains("\"test\":true")
     }
 }
 
 /**
  * ServerTimer - Checks with the server at "test.de/checkTimer?id="
  */
-class ServerTimer extends BaseTimer {
-    public ServerTimer(UUID clientId, UUID serverId, Instant time, String message) {
-        super(clientId, serverId, time, message);
-    }
-
-    @Override
-    public boolean wouldRing(MiniCore core) {
+internal class ServerTimer(clientId: UUID?, serverId: UUID?, time: Instant?, message: String?) :
+    BaseTimer(clientId, serverId, time, message) {
+    override fun wouldRing(core: MiniCore?): Boolean {
 //        String response = core.getHttp("https://test.de/checkTimer?id=" + id);
-        String response = "{\"ring\":true}";
-        return !isDeactivated && response.contains("\"ring\":true");
+        val response = "{\"ring\":true}"
+        return !isDeactivated && response.contains("\"ring\":true")
     }
 }
 
 /**
  * Timer Service - Handles scheduling and cancellation.
  */
-public class TimerService {
-    private final MiniCore core;
-    private final DualKeyMap<UUID, UUID, TimerWrapper> timers = new DualKeyMap<>();
-    private final AlarmManager alarmManager;
-    private final Gson gson;
-    private final Context context;
+class TimerService(core: MiniCore) {
+    private val core: MiniCore
+    private val timers = DualKeyMap<UUID?, UUID?, TimerWrapper>()
+    private val alarmManager: AlarmManager?
+    private val gson: Gson
+    private val context: Context
 
-    public TimerService(MiniCore core) {
-        this.core = core;
-        this.context = core.context();
-        this.alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        gson = new GsonBuilder()
-                .registerTypeAdapter(Instant.class, new InstantAdapter())
-                .registerTypeAdapter(BaseTimer.class, new TimerAdapter(core))
-                .create();
-        loadTimers();
+    init {
+        this.core = core
+        this.context = core.context()
+        this.alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager?
+        gson = GsonBuilder()
+            .registerTypeAdapter(Instant::class.java, InstantAdapter())
+            .registerTypeAdapter(BaseTimer::class.java, TimerAdapter(core))
+            .create()
+        loadTimers()
     }
 
-    /**
-     * Get a new client ID for a timer. Guaranteed to be unique.
-     */
-    public UUID getNewClientId() {
-        UUID id;
-        do {
-            id = UUID.randomUUID();
-        } while (timers.containsPrimaryKey(id));
-        return id;
-    }
+    val newClientId: UUID?
+        /**
+         * Get a new client ID for a timer. Guaranteed to be unique.
+         */
+        get() {
+            var id: UUID?
+            do {
+                id = UUID.randomUUID()
+            } while (timers.containsPrimaryKey(id))
+            return id
+        }
 
-    public void addOrReplaceTimer(TimerWrapper timer) {
-        TimerWrapper oldTimer = timers.removeByPrimary(timer.getClientId());
-        oldTimer.cancel();
-        timers.put(timer.getClientId(), timer.getServerId(), timer);
-        scheduleTimer(timer);
-        saveTimers();
+    fun addOrReplaceTimer(timer: TimerWrapper) {
+        val oldTimer = timers.removeByPrimary(timer.getClientId())
+        oldTimer.cancel()
+        timers.put(timer.getClientId(), timer.getServerId(), timer)
+        scheduleTimer(timer)
+        saveTimers()
     }
 
     /**
@@ -129,79 +122,82 @@ public class TimerService {
      *
      * @param timer The timer to cancel and remove.
      */
-    public void cancelAndRemoveTimer(TimerWrapper timer) {
-        cancelAndRemoveTimer(timer.getClientId());
+    fun cancelAndRemoveTimer(timer: TimerWrapper) {
+        cancelAndRemoveTimer(timer.getClientId())
     }
 
-    public void cancelAndRemoveTimer(UUID clientId) {
-        TimerWrapper timer = timers.removeByPrimary(clientId);
+    fun cancelAndRemoveTimer(clientId: UUID?) {
+        val timer = timers.removeByPrimary(clientId)
         if (timer != null) {
-            cancelTimer(timer);
-            saveTimers();
+            cancelTimer(timer)
+            saveTimers()
         }
     }
 
-    private void cancelTimer(TimerWrapper timer) {
-        PendingIntent pendingIntent = getSchedulingIntent(timer);
+    private fun cancelTimer(timer: TimerWrapper) {
+        val pendingIntent = getSchedulingIntent(timer)
         if (alarmManager != null) {
-            alarmManager.cancel(pendingIntent);
+            alarmManager.cancel(pendingIntent!!)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private void scheduleTimer(TimerWrapper timer) {
+    private fun scheduleTimer(timer: TimerWrapper) {
         if (alarmManager != null) {
-            PendingIntent pendingIntent = getSchedulingIntent(timer);
-            AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(timer.getTime().toEpochMilli(), pendingIntent); // Set alarm to go off in 1 minute
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
-            AlarmManager.AlarmClockInfo next = alarmManager.getNextAlarmClock();
+            val pendingIntent = getSchedulingIntent(timer)
+            val alarmClockInfo = AlarmClockInfo(timer.getTime().toEpochMilli(), pendingIntent) // Set alarm to go off in 1 minute
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent!!)
+            val next = alarmManager.getNextAlarmClock()
         }
     }
 
-    private PendingIntent getSchedulingIntent(TimerWrapper timer) {
-        IntentBuilder intent = StaticIntents.TIMER_HIT.getAsIntent(context);
-        intent.putExtra("timerId", timer.getClientId().toString());
-        return intent.getAsPending();
+    private fun getSchedulingIntent(timer: TimerWrapper): PendingIntent? {
+        val intent = StaticIntents.TIMER_HIT.getAsIntent(context)
+        intent.putExtra("timerId", timer.getClientId().toString())
+        return intent.getAsPending()
     }
 
-    private void saveTimers() {
-        core.saveData("timers", gson.toJson(timers));
+    private fun saveTimers() {
+        core.saveData("timers", gson.toJson(timers))
     }
 
-    private void loadTimers() {
-        DualKeyMap<UUID, UUID, TimerWrapper> loadedTimers = gson.fromJson(core.getStringData("timers"), new TypeToken<DualKeyMap<Integer, Integer, TimerWrapper>>() {
-        }.getType());
+    private fun loadTimers() {
+        val loadedTimers =
+            gson.fromJson<DualKeyMap<UUID?, UUID?, TimerWrapper?>?>(
+                core.getStringData("timers"),
+                object : TypeToken<DualKeyMap<Int?, Int?, TimerWrapper?>?>() {
+                }.getType()
+            )
         if (loadedTimers != null) {
-            timers.putAll(loadedTimers);
+            timers.putAll(loadedTimers)
         }
-        List<BaseTimer> timer = ServerUtils.getServerTimers(core);
-        for (BaseTimer t : timer) {
-            t.onInit(core);
-            timers.put(t.getClientId(), t.getServerId(), new TimerWrapper(t, this));
+        val timer = ServerUtils.getServerTimers(core)
+        for (t in timer) {
+            t.onInit(core)
+            timers.put(t.getClientId(), t.getServerId(), TimerWrapper(t, this))
         }
     }
 
-    public TimerWrapper getTimerByClientId(UUID clientId) {
-        return timers.getPrimary(clientId);
+    fun getTimerByClientId(clientId: UUID?): TimerWrapper? {
+        return timers.getPrimary(clientId)
     }
 
-    public void addTimer(JsonElement replacementTimer) {
-        BaseTimer timer = gson.fromJson(replacementTimer, BaseTimer.class);
-        timer.onInit(core);
-        timers.put(timer.getClientId(), timer.getServerId(), new TimerWrapper(timer, this));
-        saveTimers();
+    fun addTimer(replacementTimer: JsonElement?) {
+        val timer = gson.fromJson<BaseTimer>(replacementTimer, BaseTimer::class.java)
+        timer.onInit(core)
+        timers.put(timer.getClientId(), timer.getServerId(), TimerWrapper(timer, this))
+        saveTimers()
     }
 
-    public void createNewTimer(ICreateTimer timer) {
-        UUID clientId = getNewClientId();
-        TimerWrapper timerWrapper = new TimerWrapper(timer.createTimer(clientId), this);
-        timers.put(timerWrapper.getClientId(), timerWrapper.getServerId(), timerWrapper);
-        saveTimers();
+    fun createNewTimer(timer: ICreateTimer) {
+        val clientId = this.newClientId
+        val timerWrapper = TimerWrapper(timer.createTimer(clientId), this)
+        timers.put(timerWrapper.getClientId(), timerWrapper.getServerId(), timerWrapper)
+        saveTimers()
     }
 
-    @FunctionalInterface
-    public interface ICreateTimer {
-        BaseTimer createTimer(UUID clientId);
+    fun interface ICreateTimer {
+        fun createTimer(clientId: UUID?): BaseTimer?
     }
 }
 

@@ -1,65 +1,50 @@
-package de.hype.hypenotify.app.core;
+package de.hype.hypenotify.app.core
 
-import android.content.Context;
-import de.hype.hypenotify.app.ExecutionService;
-import de.hype.hypenotify.app.tools.bazaar.BazaarService;
-import de.hype.hypenotify.app.tools.timers.TimerService;
+import android.content.Context
+import de.hype.hypenotify.app.ExecutionService
+import de.hype.hypenotify.app.tools.bazaar.BazaarService
+import de.hype.hypenotify.app.tools.timers.TimerService
 
-public class ExpandedMiniCore extends MiniCore {
-    public ExpandedMiniCore(BackgroundService context) {
-        super(context);
+class ExpandedMiniCore(context: BackgroundService) : MiniCore(context) {
+    override fun context(): Context? {
+        return super.context
     }
 
-    @Override
-    public Context context() {
-        return super.context;
+    override fun timerService(): TimerService? {
+        return super.timerService
     }
 
-    @Override
-    public TimerService timerService() {
-        return super.timerService;
+    override fun wakeLock(): WakeLockManager? {
+        return super.wakeLock
     }
 
-    @Override
-    public WakeLockManager wakeLock() {
-        return super.wakeLock;
+    override fun userAPIKey(): String? {
+        return super.userAPIKey
     }
 
-    @Override
-    public String userAPIKey() {
-        return super.userAPIKey;
+    override fun userId(): Int {
+        return super.userId
     }
 
-    @Override
-    public int userId() {
-        return super.userId;
+    override fun setUserData(userId: Int, bbAPIKey: String?, deviceName: String?) {
+        super.setUserData(userId, bbAPIKey, deviceName)
     }
 
-    @Override
-    public void setUserData(int userId, String bbAPIKey, String deviceName) {
-        super.setUserData(userId, bbAPIKey, deviceName);
+    override fun bazaarService(): BazaarService? {
+        return super.bazaarService
     }
 
-    @Override
-    public BazaarService bazaarService() {
-        return super.bazaarService;
+    override fun executionService(): ExecutionService? {
+        return super.executionService
     }
 
-    @Override
-    public ExecutionService executionService() {
-        return super.executionService;
+    private var lowBatteryStop = false
+
+    override fun isLowBatteryStop(): Boolean {
+        return lowBatteryStop
     }
 
-    private boolean lowBatteryStop = false;
-
-    @Override
-    public boolean isLowBatteryStop() {
-        return lowBatteryStop;
+    override fun setLowBatteryStop(stop: Boolean) {
+        this.lowBatteryStop = stop
     }
-
-    @Override
-    public void setLowBatteryStop(boolean stop) {
-        this.lowBatteryStop = stop;
-    }
-
 }

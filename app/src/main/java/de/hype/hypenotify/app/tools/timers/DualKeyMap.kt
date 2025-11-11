@@ -1,49 +1,47 @@
-package de.hype.hypenotify.app.tools.timers;
+package de.hype.hypenotify.app.tools.timers
 
-import java.util.HashMap;
+class DualKeyMap<Primary, Secondary, V> {
+    private val map = HashMap<Primary?, V?>()
+    private val secondKeyMap = HashMap<Secondary?, Primary?>()
 
-public class DualKeyMap<Primary, Secondary, V> {
-    private final HashMap<Primary, V> map = new HashMap<>();
-    private final HashMap<Secondary, Primary> secondKeyMap = new HashMap<>();
-
-    public void put(Primary primaryKey, Secondary secondaryKey, V value) {
-        map.put(primaryKey, value);
-        secondKeyMap.put(secondaryKey, primaryKey);
+    fun put(primaryKey: Primary?, secondaryKey: Secondary?, value: V?) {
+        map.put(primaryKey, value)
+        secondKeyMap.put(secondaryKey, primaryKey)
     }
 
-    public V getPrimary(Primary primaryKey) {
-        return map.get(primaryKey);
+    fun getPrimary(primaryKey: Primary?): V? {
+        return map.get(primaryKey)
     }
 
-    public V getSecondary(Secondary secondaryKey) {
-        Primary primaryKey = secondKeyMap.get(secondaryKey);
-        return primaryKey != null ? map.get(primaryKey) : null;
+    fun getSecondary(secondaryKey: Secondary?): V? {
+        val primaryKey = secondKeyMap.get(secondaryKey)
+        return if (primaryKey != null) map.get(primaryKey) else null
     }
 
-    public boolean containsPrimaryKey(Primary primaryKey) {
-        return map.containsKey(primaryKey);
+    fun containsPrimaryKey(primaryKey: Primary?): Boolean {
+        return map.containsKey(primaryKey)
     }
 
-    public boolean containsSecondaryKey(Secondary secondaryKey) {
-        return secondKeyMap.containsKey(secondaryKey);
+    fun containsSecondaryKey(secondaryKey: Secondary?): Boolean {
+        return secondKeyMap.containsKey(secondaryKey)
     }
 
-    public V removeByPrimary(Primary primaryKey) {
-        V value = map.remove(primaryKey);
+    fun removeByPrimary(primaryKey: Primary?): V? {
+        val value = map.remove(primaryKey)
         if (value != null) {
-            secondKeyMap.values().removeIf(v -> v.equals(primaryKey));
+            secondKeyMap.values.removeIf { v: Primary? -> v == primaryKey }
         }
-        return value;
+        return value
     }
 
-    public void removeBySecondary(Secondary secondaryKey) {
-        Primary primaryKey = secondKeyMap.remove(secondaryKey);
+    fun removeBySecondary(secondaryKey: Secondary?) {
+        val primaryKey = secondKeyMap.remove(secondaryKey)
         if (primaryKey != null) {
-            map.remove(primaryKey);
+            map.remove(primaryKey)
         }
     }
 
-    public void putAll(DualKeyMap<Primary, Secondary, V> loadedTimers) {
-        map.putAll(loadedTimers.map);
+    fun putAll(loadedTimers: DualKeyMap<Primary?, Secondary?, V?>) {
+        map.putAll(loadedTimers.map)
     }
 }

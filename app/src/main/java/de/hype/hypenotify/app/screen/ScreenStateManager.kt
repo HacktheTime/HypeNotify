@@ -1,170 +1,157 @@
-package de.hype.hypenotify.app.screen;
+package de.hype.hypenotify.app.screen
 
-import android.os.Bundle;
-import android.util.Log;
-import de.hype.hypenotify.app.core.interfaces.Core;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import de.hype.hypenotify.app.core.interfaces.Core
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Verwaltet den Zustand von Screens für Wiederherstellung nach Memory-Pressure
  */
-public class ScreenStateManager {
-    private static final String TAG = "ScreenStateManager";
-    private static ScreenStateManager instance;
-    private final Map<String, ScreenState> savedStates = new ConcurrentHashMap<>();
-    private final Map<String, Class<? extends Screen>> screenClasses = new HashMap<>();
+object ScreenStateManager {
+    private val savedStates: MutableMap<String, ScreenState> = ConcurrentHashMap<String, ScreenState>()
+    private val screenClasses: MutableMap<String, Class<out Screen>> = HashMap<String, Class<out Screen>>()
 
-    public static class ScreenState {
-        public Bundle state = new Bundle();
-        public String screenClassName;
-        public long timestamp = System.currentTimeMillis();
+    class ScreenState(screenClassName: String) {
+        var state: Bundle = Bundle()
+        var screenClassName: String
+        var timestamp: Long = System.currentTimeMillis()
 
-        public ScreenState(String screenClassName) {
-            this.screenClassName = screenClassName;
+        init {
+            this.screenClassName = screenClassName
         }
-    }
-
-    private ScreenStateManager() {
-    }
-
-    public static synchronized ScreenStateManager getInstance() {
-        if (instance == null) {
-            instance = new ScreenStateManager();
-        }
-        return instance;
     }
 
     /**
      * Registriert eine Screen-Klasse für die Wiederherstellung
      */
-    public void registerScreenClass(Class<? extends Screen> screenClass) {
-        screenClasses.put(screenClass.getSimpleName(), screenClass);
-        Log.d(TAG, "Registered screen class: " + screenClass.getSimpleName());
+    fun registerScreenClass(screenClass: Class<out Screen>) {
+        screenClasses.put(screenClass.getSimpleName(), screenClass)
+        Log.d(TAG, "Registered screen class: " + screenClass.getSimpleName())
     }
 
     /**
      * Speichert den Zustand eines Screens
      */
-    public void saveScreenState(Screen screen, String screenId) {
+    fun saveScreenState(screen: Screen, screenId: String) {
         try {
-            ScreenState state = new ScreenState(screen.getClass().getSimpleName());
+            val state = ScreenState(screen.javaClass.getSimpleName())
 
-            if (screen instanceof StatefulScreen) {
-                ((StatefulScreen) screen).saveState(state.state);
+            if (screen is StatefulScreen) {
+                (screen as StatefulScreen).saveState(state.state)
             }
 
-            savedStates.put(screenId, state);
-            Log.d(TAG, "Saved state for screen: " + screenId + " (" + screen.getClass().getSimpleName() + ")");
-        } catch (Exception e) {
-            Log.e(TAG, "Error saving screen state for " + screenId, e);
+            savedStates.put(screenId, state)
+            Log.d(TAG, "Saved state for screen: " + screenId + " (" + screen.javaClass.getSimpleName() + ")")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving screen state for " + screenId, e)
         }
     }
 
     /**
      * Gibt das gespeicherte State-Bundle für eine Screen-ID zurück
      */
-    public Bundle getStateBundle(String screenId) {
-        ScreenState savedState = savedStates.get(screenId);
-        return savedState != null ? savedState.state : null;
+    fun getStateBundle(screenId: String): Bundle? {
+        val savedState = savedStates.get(screenId)
+        return if (savedState != null) savedState.state else null
     }
 
     /**
      * Speichert den Zustand eines Screens (vereinfachte Version für Auto-State)
      */
-    public void saveScreenState(Screen screen, String screenId, Bundle state) {
+    fun saveScreenState(screen: Screen, screenId: String, state: Bundle) {
         try {
-            ScreenState screenState = new ScreenState(screen.getClass().getSimpleName());
-            screenState.state = state;
+            val screenState = ScreenState(screen.javaClass.getSimpleName())
+            screenState.state = state
 
-            savedStates.put(screenId, screenState);
-            Log.d(TAG, "Auto-saved state for screen: " + screenId + " (" + screen.getClass().getSimpleName() + ")");
-        } catch (Exception e) {
-            Log.e(TAG, "Error auto-saving screen state for " + screenId, e);
+            savedStates.put(screenId, screenState)
+            Log.d(TAG, "Auto-saved state for screen: " + screenId + " (" + screen.javaClass.getSimpleName() + ")")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error auto-saving screen state for " + screenId, e)
         }
     }
 
     /**
      * Stellt einen Screen aus dem gespeicherten Zustand wieder her
      */
-    public Screen restoreScreen(String screenId, Core core, android.view.View parent) {
+    fun restoreScreen(screenId: String, core: Core, parent: View): Screen? {
         try {
-            ScreenState savedState = savedStates.get(screenId);
+            val savedState = savedStates.get(screenId)
             if (savedState == null) {
-                Log.w(TAG, "No saved state found for screen: " + screenId);
-                return null;
+                Log.w(TAG, "No saved state found for screen: " + screenId)
+                return null
             }
 
-            Class<? extends Screen> screenClass = screenClasses.get(savedState.screenClassName);
+            val screenClass = screenClasses.get(savedState.screenClassName)
             if (screenClass == null) {
-                Log.w(TAG, "Screen class not registered: " + savedState.screenClassName);
-                return null;
+                Log.w(TAG, "Screen class not registered: " + savedState.screenClassName)
+                return null
             }
 
             // Screen über Reflection erstellen
-            Screen restoredScreen = screenClass.getConstructor(Core.class, android.view.View.class)
-                    .newInstance(core, parent);
+            val restoredScreen: Screen = screenClass.getConstructor(Core::class.java, View::class.java)
+                .newInstance(core, parent)
 
             // Zustand wiederherstellen wenn möglich
-            if (restoredScreen instanceof StatefulScreen) {
-                ((StatefulScreen) restoredScreen).restoreState(savedState.state);
+            if (restoredScreen is StatefulScreen) {
+                (restoredScreen as StatefulScreen).restoreState(savedState.state)
             }
 
-            Log.d(TAG, "Restored screen: " + screenId + " (" + savedState.screenClassName + ")");
-            return restoredScreen;
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error restoring screen " + screenId, e);
-            return null;
+            Log.d(TAG, "Restored screen: " + screenId + " (" + savedState.screenClassName + ")")
+            return restoredScreen
+        } catch (e: Exception) {
+            Log.e(TAG, "Error restoring screen " + screenId, e)
+            return null
         }
     }
 
     /**
      * Entfernt gespeicherte Zustände die älter als die angegebene Zeit sind
      */
-    public void cleanupOldStates(long maxAgeMs) {
-        long now = System.currentTimeMillis();
-        savedStates.entrySet().removeIf(entry -> {
-            boolean isOld = (now - entry.getValue().timestamp) > maxAgeMs;
+    fun cleanupOldStates(maxAgeMs: Long) {
+        val now = System.currentTimeMillis()
+        savedStates.entries.removeIf { entry: MutableMap.MutableEntry<String, ScreenState> ->
+            val isOld = (now - entry!!.value!!.timestamp) > maxAgeMs
             if (isOld) {
-                Log.d(TAG, "Cleaned up old state for: " + entry.getKey());
+                Log.d(TAG, "Cleaned up old state for: " + entry.key)
             }
-            return isOld;
-        });
+            isOld
+        }
     }
 
     /**
      * Überprüft ob ein gespeicherter Zustand für eine Screen-ID existiert
      */
-    public boolean hasState(String screenId) {
-        return savedStates.containsKey(screenId);
+    fun hasState(screenId: String): Boolean {
+        return savedStates.containsKey(screenId)
     }
 
     /**
      * Entfernt einen gespeicherten Zustand
      */
-    public void removeState(String screenId) {
-        savedStates.remove(screenId);
-        Log.d(TAG, "Removed state for: " + screenId);
+    fun removeState(screenId: String) {
+        savedStates.remove(screenId)
+        Log.d(TAG, "Removed state for: " + screenId)
     }
 
-    /**
-     * Gibt Debug-Informationen über gespeicherte Zustände zurück
-     */
-    public String getDebugInfo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ScreenStateManager Debug Info:\n");
-        sb.append("Saved states: ").append(savedStates.size()).append("\n");
-        sb.append("Registered classes: ").append(screenClasses.size()).append("\n");
+    val debugInfo: String
+        /**
+         * Gibt Debug-Informationen über gespeicherte Zustände zurück
+         */
+        get() {
+            val sb = StringBuilder()
+            sb.append("ScreenStateManager Debug Info:\n")
+            sb.append("Saved states: ").append(savedStates.size).append("\n")
+            sb.append("Registered classes: ").append(screenClasses.size).append("\n")
 
-        for (Map.Entry<String, ScreenState> entry : savedStates.entrySet()) {
-            sb.append("  - ").append(entry.getKey())
-                    .append(" (").append(entry.getValue().screenClassName).append(") ")
-                    .append("age: ").append((System.currentTimeMillis() - entry.getValue().timestamp) / 1000).append("s\n");
+            for (entry in savedStates.entries) {
+                sb.append("  - ").append(entry.key)
+                    .append(" (").append(entry.value!!.screenClassName).append(") ")
+                    .append("age: ").append((System.currentTimeMillis() - entry.value!!.timestamp) / 1000).append("s\n")
+            }
+
+            return sb.toString()
         }
-
-        return sb.toString();
-    }
+    private const val TAG = "ScreenStateManager"
 }

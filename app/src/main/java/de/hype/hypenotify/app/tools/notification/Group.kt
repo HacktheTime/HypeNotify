@@ -1,11 +1,10 @@
-package de.hype.hypenotify.app.tools.notification;
+package de.hype.hypenotify.app.tools.notification
 
-public enum Group {
-        GROUP_MESSAGES,
-        GROUP_CALLS,
-        GROUP_NOTIFICATIONS;
+enum class Group {
+    GROUP_MESSAGES,
+    GROUP_CALLS,
+    GROUP_NOTIFICATIONS;
 
-        public String getKey() {
-            return name();
-        }
-    }
+    val key: String
+        get() = name
+}

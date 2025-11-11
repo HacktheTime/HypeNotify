@@ -1,114 +1,89 @@
-package de.hype.hypenotify.app.core;
+package de.hype.hypenotify.app.core
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import de.hype.hypenotify.app.Config;
-import de.hype.hypenotify.app.ExecutionService;
-import de.hype.hypenotify.app.MainActivity;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.tools.bazaar.BazaarService;
-import de.hype.hypenotify.app.tools.timers.TimerService;
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import de.hype.hypenotify.app.Config
+import de.hype.hypenotify.app.ExecutionService
+import de.hype.hypenotify.app.MainActivity
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.tools.bazaar.BazaarService
+import de.hype.hypenotify.app.tools.timers.TimerService
 
-public class CoreImpl implements Core {
-    private String TAG = "CoreImpl";
-    public MainActivity context;
-    MiniCore miniCore;
+class CoreImpl // Load stored values
+    (var context: MainActivity?, var miniCore: MiniCore?) : Core {
+    private val TAG = "CoreImpl"
 
-    public CoreImpl(MainActivity context, MiniCore core) {
-        this.miniCore = core;
-        this.context = context;
-        // Load stored values
+    override fun context(): MainActivity? {
+        return context
     }
 
-    @Override
-    public MainActivity context() {
-        return context;
+    override fun areKeysSet(): Boolean {
+        return miniCore!!.areKeysSet()
     }
 
-    @Override
-    public boolean areKeysSet() {
-        return miniCore.areKeysSet();
+    override fun timerService(): TimerService? {
+        return miniCore!!.timerService
     }
 
-    @Override
-    public TimerService timerService() {
-        return miniCore.timerService;
+    override fun wakeLock(): WakeLockManager? {
+        return miniCore!!.wakeLock
     }
 
-    @Override
-    public WakeLockManager wakeLock() {
-        return miniCore.wakeLock;
+    override fun userAPIKey(): String? {
+        return miniCore!!.userAPIKey
     }
 
-    @Override
-    public String userAPIKey() {
-        return miniCore.userAPIKey;
+    override fun userId(): Int {
+        return miniCore!!.userId
     }
 
-    @Override
-    public int userId() {
-        return miniCore.userId;
+    override fun setUserData(userId: Int, bbAPIKey: String?, deviceName: String?) {
+        miniCore!!.setUserData(userId, bbAPIKey, deviceName)
     }
 
-    @Override
-    public void setUserData(int userId, String bbAPIKey, String deviceName) {
-        miniCore.setUserData(userId, bbAPIKey, deviceName);
+    override fun bazaarService(): BazaarService? {
+        return miniCore!!.bazaarService
     }
 
-    @Override
-    public BazaarService bazaarService() {
-        return miniCore.bazaarService;
+    override fun isInFreeNetwork(): Boolean {
+        return miniCore!!.isInFreeNetwork()
     }
 
-    @Override
-    public boolean isInFreeNetwork() {
-        return miniCore.isInFreeNetwork();
+    override fun executionService(): ExecutionService {
+        return miniCore!!.executionService
     }
 
-    @Override
-    public ExecutionService executionService() {
-        return miniCore.executionService;
+    override fun onDestroy() {
     }
 
-    @Override
-    public void onDestroy() {
+    override fun saveData(key: String?, data: Any?) {
+        miniCore!!.saveData(key, data)
     }
 
-    @Override
-    public void saveData(String key, Object data) {
-        miniCore.saveData(key, data);
+    override fun gson(): Gson? {
+        return miniCore!!.gson()
     }
 
-    @Override
-    public Gson gson() {
-        return miniCore.gson();
+    override fun <T> getData(timers: String?, type: TypeToken<T?>?): T? {
+        return miniCore!!.getData<T?>(timers, type)
     }
 
-    @Override
-    public <T> T getData(String timers, TypeToken<T> type) {
-        return miniCore.getData(timers, type);
+    override fun getStringData(key: String?): String? {
+        return miniCore!!.getStringData(key)
     }
 
-    @Override
-    public String getStringData(String key) {
-        return miniCore.getStringData(key);
-    }
-
-    @Override
-    public Config config() {
-        return miniCore.config();
+    override fun config(): Config? {
+        return miniCore!!.config()
     }
 
 
-    @Override
-    public boolean isLowBatteryStop() {
-        return miniCore != null && miniCore.isLowBatteryStop();
+    override fun isLowBatteryStop(): Boolean {
+        return miniCore != null && miniCore!!.isLowBatteryStop()
     }
 
-    @Override
-    public void setLowBatteryStop(boolean stop) {
+    override fun setLowBatteryStop(stop: Boolean) {
         if (miniCore != null) {
-            miniCore.setLowBatteryStop(stop);
+            miniCore!!.setLowBatteryStop(stop)
         }
     }
 }

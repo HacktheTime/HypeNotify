@@ -1,48 +1,41 @@
-package de.hype.hypenotify.app.screen.features.bazaar;
+package de.hype.hypenotify.app.screen.features.bazaar
 
-import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import de.hype.hypenotify.R;
-import org.jetbrains.annotations.Nullable;
+import android.content.Context
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.TextView
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.skyblockconstants.NeuRepoManager.getItem
+import java.security.AccessController.getContext
 
-import java.util.List;
+internal class BazaarSuggestionItem(itemId: String?, displayName: String?) {
+    val itemId: String?
+    val displayName: String?
 
-class BazaarSuggestionItem {
-    final String itemId;
-    final String displayName;
-
-    public BazaarSuggestionItem(String itemId, String displayName) {
-        this.itemId = itemId;
-        this.displayName = displayName;
+    init {
+        this.itemId = itemId
+        this.displayName = displayName
     }
 }
 
-class BazaarSuggestionAdapter extends ArrayAdapter<BazaarSuggestionItem> {
-
-    public BazaarSuggestionAdapter(Context context, List<BazaarSuggestionItem> items) {
-        super(context, 0, items);
-    }
-
-    @NonNull
-    @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+internal class BazaarSuggestionAdapter(context: Context, items: MutableList<BazaarSuggestionItem>) : ArrayAdapter<BazaarSuggestionItem>
+(context, 0, items) {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        var convertView = convertView
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_bazaar_suggestion, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_bazaar_suggestion, parent, false)
         }
 
-        BazaarSuggestionItem item = getItem(position);
+        val item: BazaarSuggestionItem = getItem(position)!!
 
-        TextView tvItemName = convertView.findViewById(R.id.tv_item_name);
-        TextView tvItemId = convertView.findViewById(R.id.tv_item_id);
+        val tvItemName = convertView.findViewById<TextView>(R.id.tv_item_name)
+        val tvItemId = convertView.findViewById<TextView>(R.id.tv_item_id)
 
-        tvItemName.setText(item.displayName);
-        tvItemId.setText(item.itemId);
+        tvItemName.setText(item.displayName)
+        tvItemId.setText(item.itemId)
 
-        return convertView;
+        return convertView
     }
 }

@@ -1,38 +1,22 @@
-package de.hype.hypenotify.app.services;
+package de.hype.hypenotify.app.services
 
-import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Binder;
-import android.os.IBinder;
-import androidx.annotation.Nullable;
-import de.hype.hypenotify.app.core.interfaces.MiniCore;
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Binder
+import android.os.IBinder
+import de.hype.hypenotify.app.core.interfaces.MiniCore
 
-public class HypeNotifyService<EXTENDING_CLASS extends HypeNotifyService<EXTENDING_CLASS>> extends Service {
-    protected MiniCore core;
-    protected Context context;
+open class HypeNotifyService<EXTENDING_CLASS : HypeNotifyService<EXTENDING_CLASS>> : Service() {
+    open var core: MiniCore? = null
+        protected set
+    protected var context: Context? = null
 
-    @Nullable
-    @Override
-    @SuppressWarnings("unchecked")
-    public IBinder onBind(Intent intent) {
-        return new HypeNotifyServiceBinder((EXTENDING_CLASS) this);
+    override fun onBind(intent: Intent): IBinder {
+        return HypeNotifyServiceBinder(this as EXTENDING_CLASS)
     }
 
 
-    public MiniCore getCore() {
-        return core;
-    }
-
-    public class HypeNotifyServiceBinder extends Binder {
-        private final EXTENDING_CLASS service;
-
-        public HypeNotifyServiceBinder(EXTENDING_CLASS service) {
-            this.service = service;
-        }
-
-        public EXTENDING_CLASS getService() {
-            return service;
-        }
+    inner class HypeNotifyServiceBinder(val service: EXTENDING_CLASS) : Binder() {
     }
 }

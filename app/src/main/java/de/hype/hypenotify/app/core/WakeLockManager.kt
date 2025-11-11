@@ -1,83 +1,70 @@
-package de.hype.hypenotify.app.core;
+package de.hype.hypenotify.app.core
 
-import android.content.Context;
-import android.os.PowerManager;
-import org.jetbrains.annotations.Nullable;
+import android.content.Context
+import android.os.PowerManager
+import android.os.PowerManager.WakeLock
+import java.util.List
+import java.util.function.Consumer
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+class WakeLockManager(core: MiniCore) {
+    private val core: MiniCore?
+    var powerManager: PowerManager
+    var wakeLocks: MutableMap<WakeLockRequests?, WakeLock?> = HashMap<WakeLockRequests?, WakeLock?>()
 
-public class WakeLockManager {
-    private final MiniCore core;
-    PowerManager powerManager;
-    Map<WakeLockRequests, PowerManager.WakeLock> wakeLocks = new HashMap<>();
-
-    public WakeLockManager(MiniCore core) {
-        this.core = core;
-        powerManager = (PowerManager) core.context.getSystemService(Context.POWER_SERVICE);
+    init {
+        this.core = core
+        powerManager = core.context.getSystemService(Context.POWER_SERVICE) as PowerManager
     }
 
-    public void acquire(WakeLockRequests request) {
-        if (wakeLocks.get(request) != null) return;
-        PowerManager.WakeLock wakeLock = request.getWakeLock(powerManager);
-        wakeLocks.put(request, wakeLock);
-        Integer timeLimit = request.getTimeLockLimit();
-        if (timeLimit == null) wakeLock.acquire();
-        else wakeLock.acquire(timeLimit * 1000L);
+    fun acquire(request: WakeLockRequests) {
+        if (wakeLocks.get(request) != null) return
+        val wakeLock = request.getWakeLock(powerManager)
+        wakeLocks.put(request, wakeLock)
+        val timeLimit = request.timeLockLimit
+        if (timeLimit == null) wakeLock.acquire()
+        else wakeLock.acquire(timeLimit * 1000L)
     }
 
 
-    public void onDestroy() {
-        releaseAll();
+    fun onDestroy() {
+        releaseAll()
     }
 
-    public void releaseAll() {
-        Set<Map.Entry<WakeLockRequests, PowerManager.WakeLock>> entries = wakeLocks.entrySet();
-        entries.forEach(entry -> {
-            PowerManager.WakeLock wakeLock = entry.getValue();
+    fun releaseAll() {
+        val entries: MutableSet<MutableMap.MutableEntry<WakeLockRequests?, WakeLock?>?> = wakeLocks.entries
+        entries.forEach(Consumer { entry: MutableMap.MutableEntry<WakeLockRequests?, WakeLock?>? ->
+            val wakeLock = entry!!.value
             if (wakeLock != null && wakeLock.isHeld()) {
-                wakeLock.release();
+                wakeLock.release()
             }
-        });
+        })
     }
 
-    public void release(WakeLockRequests request) {
-        PowerManager.WakeLock wakeLock = wakeLocks.get(request);
+    fun release(request: WakeLockRequests?) {
+        val wakeLock = wakeLocks.get(request)
         if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release();
+            wakeLock.release()
         }
     }
 
-    public List<WakeLockRequests> getActiveWakeLocks() {
-        return List.copyOf(wakeLocks.keySet());
-    }
+    val activeWakeLocks: MutableList<WakeLockRequests?>
+        get() = List.copyOf<WakeLockRequests?>(wakeLocks.keys)
 
-    public enum WakeLockRequests {
+    enum class WakeLockRequests(private val tagName: String) {
         TIMER_WAKE_LOCK("TimerWakeLock"),
         ;
-        private String tagName;
 
-        WakeLockRequests(String tagName) {
-            this.tagName = tagName;
+        val asTag: String
+            get() = "HypeNotify::" + tagName
+
+        fun getWakeLock(powerManager: PowerManager): WakeLock {
+            return powerManager.newWakeLock(this.wakeLockType, this.asTag)
         }
 
-        public String getAsTag() {
-            return "HypeNotify::" + tagName;
-        }
+        val timeLockLimit: Int?
+            get() = null
 
-        public PowerManager.WakeLock getWakeLock(PowerManager powerManager) {
-            return powerManager.newWakeLock(getWakeLockType(), getAsTag());
-        }
-
-        @Nullable
-        public Integer getTimeLockLimit() {
-            return null;
-        }
-
-        public int getWakeLockType() {
-            return PowerManager.PARTIAL_WAKE_LOCK;
-        }
+        val wakeLockType: Int
+            get() = PowerManager.PARTIAL_WAKE_LOCK
     }
 }

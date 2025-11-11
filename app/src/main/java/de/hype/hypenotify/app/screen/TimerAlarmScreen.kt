@@ -1,77 +1,76 @@
-package de.hype.hypenotify.app.screen;
+package de.hype.hypenotify.app.screen
 
-import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.core.interfaces.Core;
-import de.hype.hypenotify.app.tools.timers.TimerWrapper;
+import android.content.Context
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.core.interfaces.Core
+import de.hype.hypenotify.app.tools.timers.TimerWrapper
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+class TimerAlarmScreen(core: Core, timer: TimerWrapper) : LinearLayout(core.context()) {
+    private val increaseVolumeFuture: ScheduledFuture<*>?
+    private val stopAlarmFuture: ScheduledFuture<*>?
+    private var mediaPlayer: MediaPlayer?
+    private val core: Core
+    private val audioManager: AudioManager
+    private val previousVolume: Int
+    private val parent: View?
 
-public class TimerAlarmScreen extends LinearLayout {
-    private final ScheduledFuture<?> increaseVolumeFuture;
-    private final ScheduledFuture<?> stopAlarmFuture;
-    private MediaPlayer mediaPlayer;
-    private Core core;
-    private AudioManager audioManager;
-    private int previousVolume;
-    private View parent;
+    init {
+        this.parent = (core.context()).findViewById<View?>(android.R.id.content)
+        this.core = core
+        val context: Context = core.context()
+        LayoutInflater.from(context).inflate(R.layout.alarm_screen, this, true)
+        mediaPlayer = MediaPlayer.create(context, timer.sound)
+        mediaPlayer!!.setLooping(true)
+        mediaPlayer!!.start()
 
-    public TimerAlarmScreen(Core core, TimerWrapper timer) {
-        super(core.context());
-        this.parent = (core.context()).findViewById(android.R.id.content);
-        this.core = core;
-        Context context = core.context();
-        LayoutInflater.from(context).inflate(R.layout.alarm_screen, this, true);
-        mediaPlayer = MediaPlayer.create(context, timer.getSound());
-        mediaPlayer.setLooping(true);
-        mediaPlayer.start();
+        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        previousVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
 
-        audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        previousVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+        this.increaseVolumeFuture =
+            core.executionService().scheduleWithFixedDelay(Runnable { this.increaseVolume() }, 15, 15, TimeUnit.SECONDS)
 
-        this.increaseVolumeFuture = core.executionService().scheduleWithFixedDelay(this::increaseVolume, 15, 15, TimeUnit.SECONDS);
-
-        Button sleepButton = findViewById(R.id.alarm_screen_alarm_sleep);
-        sleepButton.setOnClickListener(view -> {
-            stopAlarm();
-            timer.sleep(5, TimeUnit.MINUTES);
-        });
-        stopAlarmFuture = core.executionService().schedule(this::stopAlarm, 5, TimeUnit.MINUTES);
-        Button stopButton = findViewById(R.id.alarm_screen_alarm_stop);
-        stopButton.setOnClickListener(view -> stopAlarm());
-        TextView message = findViewById(R.id.alarm_screen_message);
-        message.setText(timer.getMessage());
+        val sleepButton = findViewById<Button>(R.id.alarm_screen_alarm_sleep)
+        sleepButton.setOnClickListener(OnClickListener { view: View? ->
+            stopAlarm()
+            timer.sleep(5, TimeUnit.MINUTES)
+        })
+        stopAlarmFuture = core.executionService().schedule(Runnable { this.stopAlarm() }, 5, TimeUnit.MINUTES)
+        val stopButton = findViewById<Button>(R.id.alarm_screen_alarm_stop)
+        stopButton.setOnClickListener(OnClickListener { view: View? -> stopAlarm() })
+        val message = findViewById<TextView>(R.id.alarm_screen_message)
+        message.setText(timer.message)
     }
 
-    private void increaseVolume() {
-        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+    private fun increaseVolume() {
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (currentVolume < maxVolume) {
-            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentVolume + 1, AudioManager.FLAG_SHOW_UI);
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentVolume + 1, AudioManager.FLAG_SHOW_UI)
         }
     }
 
-    private void stopAlarm() {
+    private fun stopAlarm() {
         if (mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.release();
-            mediaPlayer = null;
+            mediaPlayer!!.stop()
+            mediaPlayer!!.release()
+            mediaPlayer = null
         }
         if (increaseVolumeFuture != null) {
-            increaseVolumeFuture.cancel(false);
+            increaseVolumeFuture.cancel(false)
         }
         if (stopAlarmFuture != null) {
-            stopAlarmFuture.cancel(false);
+            stopAlarmFuture.cancel(false)
         }
-        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, previousVolume, AudioManager.FLAG_SHOW_UI);
-        core.context().finish();
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, previousVolume, AudioManager.FLAG_SHOW_UI)
+        core.context().finish()
     }
 }

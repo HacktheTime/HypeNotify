@@ -1,90 +1,79 @@
-package de.hype.hypenotify.app.tools.timers;
+package de.hype.hypenotify.app.tools.timers
 
-import com.google.gson.JsonElement;
-import de.hype.hypenotify.R;
-import de.hype.hypenotify.app.core.interfaces.MiniCore;
-
-import java.time.Instant;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import com.google.gson.JsonElement
+import de.hype.hypenotify.R
+import de.hype.hypenotify.app.core.interfaces.MiniCore
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 /**
  * Timer Wrapper - Manages timers without needing direct TimerService calls.
  */
-public class TimerWrapper {
-    private BaseTimer timer;
-    private TimerService timerService;
+class TimerWrapper(timer: BaseTimer, timerService: TimerService) {
+    val baseTimer: BaseTimer
+    private val timerService: TimerService
 
-    public TimerWrapper(BaseTimer timer, TimerService timerService) {
-        this.timer = timer;
-        this.timerService = timerService;
+    init {
+        this.baseTimer = timer
+        this.timerService = timerService
     }
 
-    public void setTime(Instant newTime) {
-        timerService.cancelAndRemoveTimer(this);
-        timer.setTime(newTime);
-        timerService.addOrReplaceTimer(this);
-    }
+    val sound: Int
+        get() = R.raw.alarm
 
-    public int getSound() {
-        return R.raw.alarm;
-    }
+    var time: Instant?
+        get() = baseTimer.getTime()
+        set(newTime) {
+            timerService.cancelAndRemoveTimer(this)
+            baseTimer.setTime(newTime)
+            timerService.addOrReplaceTimer(this)
+        }
 
-    public Instant getTime() {
-        return timer.getTime();
-    }
-
-    public void cancel() {
-        timerService.cancelAndRemoveTimer(timer.getClientId());
+    fun cancel() {
+        timerService.cancelAndRemoveTimer(baseTimer.getClientId())
     }
 
     /**
-     * @param core Core object to run custom checks in {@link #wouldRing(MiniCore)}
-     *             return true if the timers condition matches as well as it not being deactivated.
+     * @param core Core object to run custom checks in [.wouldRing]
+     * return true if the timers condition matches as well as it not being deactivated.
      */
-    public final boolean shouldRing(MiniCore core) {
-        return timer.shouldRing(core);
+    fun shouldRing(core: MiniCore?): Boolean {
+        return baseTimer.shouldRing(core)
     }
 
     /**
      * @param core Core object to run custom checks.
-     *             return true if the timers condition matches.
-     *             <p>
-     *             You may use blocking code or throw exceptions. if you do not return a false until the timer is supposed to ring it will ring anyway.
+     * return true if the timers condition matches.
+     *
+     *
+     * You may use blocking code or throw exceptions. if you do not return a false until the timer is supposed to ring it will ring anyway.
      */
-    public boolean wouldRing(MiniCore core) {
-        return timer.wouldRing(core);
+    fun wouldRing(core: MiniCore?): Boolean {
+        return baseTimer.wouldRing(core)
     }
 
-    public UUID getClientId() {
-        return timer.getClientId();
+    val clientId: UUID?
+        get() = baseTimer.getClientId()
+
+    val serverId: UUID?
+        get() = baseTimer.getServerId()
+
+    fun sleep(timeAmount: Int, timeUnit: TimeUnit) {
+        cancel()
+        baseTimer.time = Instant.now().plusSeconds(timeUnit.toSeconds(timeAmount.toLong()))
+        timerService.addOrReplaceTimer(TimerWrapper(this.baseTimer, timerService))
     }
 
-    public BaseTimer getBaseTimer() {
-        return timer;
+    val message: String?
+        get() = baseTimer.message
+
+    fun deactivate() {
+        baseTimer.deactivate()
+        cancel()
     }
 
-    public UUID getServerId() {
-        return timer.getServerId();
-    }
-
-    public void sleep(int timeAmount, TimeUnit timeUnit) {
-        cancel();
-        timer.time = Instant.now().plusSeconds(timeUnit.toSeconds(timeAmount));
-        timerService.addOrReplaceTimer(new TimerWrapper(timer, timerService));
-    }
-
-    public String getMessage() {
-        return timer.message;
-    }
-
-    public void deactivate() {
-        timer.deactivate();
-        cancel();
-    }
-
-    public void replaceTimer(JsonElement replacementTimer) {
-        deactivate();
-        timerService.addTimer(replacementTimer);
+    fun replaceTimer(replacementTimer: JsonElement?) {
+        deactivate()
+        timerService.addTimer(replacementTimer)
     }
 }

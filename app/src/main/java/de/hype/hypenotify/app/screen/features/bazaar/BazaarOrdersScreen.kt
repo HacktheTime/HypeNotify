@@ -191,7 +191,7 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
         }
     }
 
-    override fun getDynamicScreen(): LinearLayout? {
+    override fun getDynamicScreen(): LinearLayout {
         dynamicScreen = findViewById(R.id.bazaar_item_layout)
         core.executionService().execute {
             checkPrice()
@@ -202,7 +202,7 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
 
 
     private fun registerNextCheck() {
-        val timeBetweenChecks = bazaarService.getCheckInterval()
+        val timeBetweenChecks = bazaarService.checkInterval
         startProgressBarCountdown(timeBetweenChecks)
         nextCheck = core.executionService().schedule({
             try {
@@ -275,7 +275,7 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
                 }
                 return
             }
-            val items = response.getProducts()
+            val items = response.products
             val displayTables = LinkedHashMap<TrackedBazaarItem, MutableList<Offer>>()
             for (toTrackItem in bazaarService.trackedItems) {
                 if (!toTrackItem.showInOrderScreen()) continue
@@ -365,7 +365,7 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
         suggestedSellOfferList!!.removeAllViews()
         val response = bazaarService.getMaxAgeResponse()
         if (response == null) return
-        val products = response.getProducts()
+        val products = response.products
         for (product in products.values) {
             // Filter: stackable to 64, all materials sackable, meets profit thresholds
             if (product.maxAmountPerStack < 32) continue

@@ -1,23 +1,19 @@
-package de.hype.hypenotify.app.tools.bazaar;
+package de.hype.hypenotify.app.tools.bazaar
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
+import java.time.Duration
+import java.time.Instant
 
-public class BazaarResponse {
-    private boolean success;
-    private Long lastUpdated;
-    private Map<String, BazaarProduct> products;
+class BazaarResponse {
+    private val success = false
+    private val lastUpdated: Long? = null
+    val products: MutableMap<String, BazaarProduct> = mutableMapOf()
 
-    public Map<String, BazaarProduct> getProducts() {
-        return products;
+    fun getLastUpdated(): Instant? {
+        return if (lastUpdated == null) null else Instant.ofEpochMilli(lastUpdated)
     }
 
-    public Instant getLastUpdated() {
-        return Instant.ofEpochMilli(lastUpdated);
-    }
-
-    public boolean isOlderThan(Duration maxAge){
-        return Instant.now().toEpochMilli() - lastUpdated > maxAge.getSeconds();
+    fun isOlderThan(maxAge: Duration): Boolean {
+        if (lastUpdated == null) return true
+        return Instant.now().toEpochMilli() - lastUpdated > maxAge.seconds
     }
 }
