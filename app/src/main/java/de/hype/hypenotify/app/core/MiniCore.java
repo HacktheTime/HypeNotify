@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.wifi.WifiInfo;
+import android.os.BatteryManager;
 import androidx.annotation.RequiresPermission;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -40,7 +41,7 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
     public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public BackgroundService context;
     protected SharedPreferences prefs;
-    public final ExecutionService executionService = new ExecutionService(30);
+    public final ExecutionService executionService = new ExecutionService(5);
 
     protected BazaarService bazaarService = new BazaarService(this);
     protected TimerService timerService;
@@ -70,6 +71,32 @@ abstract class MiniCore implements de.hype.hypenotify.app.core.interfaces.MiniCo
         executionService.execute(() -> {
             NeuRepoManager.INSTANCE.init(this);
         });
+
+        // Periodic battery watcher: pause tracking while battery is low (<=15%) and resume when >15% or charging
+        executionService.scheduleAtFixedRate(() -> {
+            try {
+                BatteryManager bm = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
+                if (bm == null) return;
+                int pct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+                boolean charging = bm.isCharging();
+
+                if (!charging && pct <= 15) {
+                    // If tracking is active, pause it to avoid draining the device further
+                    try {
+                        bazaarService.pauseTrackingForLowBattery();
+                    } catch (Exception ignored) {
+                    }
+                } else {
+                    // battery recovered or charging -> resume tracking
+                    try {
+                        bazaarService.resumeTrackingAfterBatteryOK();
+                    } catch (Exception ignored) {
+                    }
+                }
+            } catch (Throwable t) {
+                // swallow errors from battery check
+            }
+        }, 10, 60, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     public WifiInfo getCurrentWifiNetwork() {

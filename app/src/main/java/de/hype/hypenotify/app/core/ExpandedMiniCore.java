@@ -49,4 +49,17 @@ public class ExpandedMiniCore extends MiniCore {
     public ExecutionService executionService() {
         return super.executionService;
     }
+
+    private boolean lowBatteryStop = false;
+
+    @Override
+    public boolean isLowBatteryStop() {
+        return lowBatteryStop;
+    }
+
+    @Override
+    public void setLowBatteryStop(boolean stop) {
+        this.lowBatteryStop = stop;
+    }
+
 }

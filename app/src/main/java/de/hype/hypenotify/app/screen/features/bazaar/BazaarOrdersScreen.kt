@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.*
+import androidx.appcompat.widget.SwitchCompat
 import de.hype.hypenotify.R
 import de.hype.hypenotify.app.core.interfaces.Core
 import de.hype.hypenotify.app.screen.Screen
@@ -102,23 +104,64 @@ class BazaarOrdersScreen(core: Core, parent: View?) : Screen(core, parent) {
             }
         }
 
-        checkNowButton!!.setOnClickListener { v: View? ->
-            checkNowButton!!.setText(R.string.checking)
-            checkNowButton!!.requestLayout()
-            nextCheck!!.cancel(false)
-            core.executionService().execute {
-                try {
-                    checkPrice(bazaarService.getMaxAgeResponse(Duration.ZERO))
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-                registerNextCheck()
-                post {
-                    checkNowButton!!.setText(R.string.check_now)
-                    checkNowButton!!.requestLayout()
+        // Put check now and silent update buttons next to each other
+        val buttonContainer = LinearLayout(context)
+        buttonContainer.orientation = LinearLayout.HORIZONTAL
+
+        checkNowButton!!.let { btn ->
+            btn.setOnClickListener { v: View? ->
+                btn.setText(R.string.checking)
+                btn.requestLayout()
+                nextCheck!!.cancel(false)
+                core.executionService().execute {
+                    try {
+                        checkPrice(bazaarService.getMaxAgeResponse(Duration.ZERO))
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                    registerNextCheck()
+                    post {
+                        btn.setText(R.string.check_now)
+                        btn.requestLayout()
+                    }
                 }
             }
         }
+
+        // New silent update button (acknowledged by user)
+        val silentUpdateButton = Button(context)
+        silentUpdateButton.text = "Update (ack)"
+        val silentParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        silentParams.setMargins(8, 0, 0, 0)
+        silentUpdateButton.layoutParams = silentParams
+        silentUpdateButton.setOnClickListener {
+            silentUpdateButton.text = "Updating..."
+            silentUpdateButton.isEnabled = false
+            core.executionService().execute {
+                try {
+                    bazaarService.updateNow(true)
+                    // Run a check on main thread to update the UI immediately
+                    post { checkPrice() }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    post {
+                        silentUpdateButton.text = "Update (ack)"
+                        silentUpdateButton.isEnabled = true
+                    }
+                }
+            }
+        }
+
+        // Attempt to replace the existing checkNowButton in its parent with the container
+        (checkNowButton!!.parent as? ViewGroup)?.let { parentView ->
+            val index = parentView.indexOfChild(checkNowButton)
+            parentView.removeViewAt(index)
+            parentView.addView(buttonContainer, index)
+        }
+        // Add both buttons to container and replace existing checkNowButton position
+        buttonContainer.addView(checkNowButton)
+        buttonContainer.addView(silentUpdateButton)
 
         editTrackersButton!!.setOnClickListener { v: View? ->
             context.setContentView(CurrentTrackersScreen(core, this))

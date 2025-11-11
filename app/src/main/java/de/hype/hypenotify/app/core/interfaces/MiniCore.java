@@ -39,4 +39,10 @@ public interface MiniCore {
     String getStringData(String key);
 
     Config config();
+
+    // Mark that the service was stopped due to low battery and should not be auto-restarted.
+    void setLowBatteryStop(boolean value);
+
+    // Query whether a low-battery stop was set previously.
+    boolean isLowBatteryStop();
 }

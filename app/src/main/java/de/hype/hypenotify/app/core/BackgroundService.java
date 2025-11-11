@@ -101,6 +101,12 @@ public class BackgroundService extends HypeNotifyService<BackgroundService> {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        // If we previously stopped service due to low battery, don't restart automatically.
+        if (core != null && core.isLowBatteryStop()) {
+            super.onTaskRemoved(rootIntent);
+            return;
+        }
+
         Intent restart = new Intent(getApplicationContext(),
                 BackgroundService.class)
                 .setPackage(getPackageName());

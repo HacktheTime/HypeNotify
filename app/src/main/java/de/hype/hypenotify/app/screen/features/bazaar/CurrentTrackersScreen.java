@@ -219,10 +219,12 @@ class CreateTrackerScreen extends Screen {
 
         Toast.makeText(context, "Tracker created for " + itemId, Toast.LENGTH_SHORT).show();
 
-        // Return to parent screen
-        context.setContentView(parent);
+        // Return to parent screen and refresh it (so newly created tracker appears in order screen immediately)
+        core.context().setContentView(parent);
+        if (parent instanceof Screen) {
+            ((Screen) parent).updateScreen();
+        }
     }
-
     @Override
     protected void inflateLayouts() {
         LayoutInflater.from(context).inflate(R.layout.create_bazaar_tracker, this, true);
@@ -239,6 +241,11 @@ class CreateTrackerScreen extends Screen {
         // Set up item suggestions with custom adapter
         setupItemSuggestions();
 
+        // Ensure the "show in order screen" checkbox defaults to true so newly created trackers are visible
+        CheckBox showInOrderCheckbox = findViewById(R.id.show_in_order_screen);
+        if (showInOrderCheckbox != null) {
+            showInOrderCheckbox.setChecked(true);
+        }
         // Set up dependent checkboxes
         trackPriceChangesCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) {

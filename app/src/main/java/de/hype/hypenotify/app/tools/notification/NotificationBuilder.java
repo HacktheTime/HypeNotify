@@ -131,5 +131,15 @@ public class NotificationBuilder {
     public void setPriority(Priority priority) {
         builder.setPriority(priority.getInt());
     }
-}
 
+    /**
+     * Request that this notification is delivered silently (no sound/vibration).
+     * This maps to the compat API where available.
+     */
+    public NotificationBuilder setSilent(boolean silent) {
+        // NotificationCompat.Builder#setSilent(boolean) exists in recent support libs.
+        // Fallback: if not available at runtime it's a no-op, but calling it is safe.
+        builder.setSilent(silent);
+        return this;
+    }
+}

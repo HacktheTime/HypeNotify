@@ -2,6 +2,7 @@ package de.hype.hypenotify.app.screen;
 
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -183,6 +184,10 @@ public abstract class Screen extends LinearLayout {
             removeView(dynamicScreen);
         }
         dynamicScreen = getDynamicScreen();
+        var parent = dynamicScreen.getParent();
+        if (parent instanceof ViewGroup viewGroup) {
+            viewGroup.removeView(dynamicScreen);
+        }
         addView(dynamicScreen);
     }
 
@@ -230,8 +235,11 @@ public abstract class Screen extends LinearLayout {
             backPressedCallback.remove();
         }
     }
+
     public abstract void onPause();
+
     public abstract void onResume();
+
     protected abstract LinearLayout getDynamicScreen();
 
     @NonNull

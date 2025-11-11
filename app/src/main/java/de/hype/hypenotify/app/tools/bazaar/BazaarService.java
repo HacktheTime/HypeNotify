@@ -33,6 +33,9 @@ public class BazaarService {
     private static OrderTrackingService orderTracker;
     private static Instant lastUpdate;
 
+    // Flag to suppress the very next notification that would be sent after a manual update
+    private volatile boolean suppressNextNotification = false;
+
     public BazaarService(MiniCore core) {
         this.core = core;
         initTrackedItems();
@@ -69,12 +72,24 @@ public class BazaarService {
         fetchBazaar();
     }
 
-    /**
-     * Returns the last fetched Bazaar response if it is not older than the given maxAge.
-     */
     public BazaarResponse getMaxAgeResponse(Duration maxAge) throws IOException {
         if (lastResponse == null || lastUpdate.plusSeconds(maxAge.getSeconds()).isBefore(Instant.now())) fetchBazaar();
         return lastResponse;
+    }
+
+    /**
+     * Returns the last fetched Bazaar response if it is not older than the given maxAge.
+     * <p>
+     * /**
+     * Manual immediate update. If suppressNotification is true, the next notification that would be
+     * generated because of this update will be suppressed (no sound/alert).
+     */
+    public void updateNow(boolean suppressNotification) throws IOException {
+        // set suppression for this manual run
+        this.suppressNextNotification = suppressNotification;
+        fetchBazaar();
+        // run a check immediately so any notifications related to this update happen now (and will be suppressed if requested)
+        if (orderTracker != null) orderTracker.checkPrice();
     }
 
     public BazaarResponse getMaxAgeResponse() throws IOException {
@@ -83,6 +98,24 @@ public class BazaarService {
             return null;
         }
         return getMaxAgeResponse(Duration.ofSeconds(delay - 1));
+    }
+
+    /**
+     * Pause any active tracking (called when low battery detected). This cancels scheduled checks but keeps the service alive.
+     */
+    public void pauseTrackingForLowBattery() {
+        if (orderTracker != null) orderTracker.stop();
+    }
+
+    /**
+     * Resume tracking after battery recovered.
+     */
+    public void resumeTrackingAfterBatteryOK() {
+        if (orderTracker == null) {
+            orderTracker = new OrderTrackingService(core, this);
+        } else {
+            orderTracker.start();
+        }
     }
 
     private static void fetchBazaar() {

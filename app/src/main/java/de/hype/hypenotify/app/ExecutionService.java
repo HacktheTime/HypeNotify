@@ -13,6 +13,12 @@ public class ExecutionService {
 
     public ExecutionService(int threadPoolSize) {
         provider = Executors.newScheduledThreadPool(threadPoolSize);
+        if (provider instanceof ScheduledThreadPoolExecutor) {
+            ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) provider;
+            exec.setRemoveOnCancelPolicy(true);
+            exec.setKeepAliveTime(60, TimeUnit.SECONDS);
+            exec.allowCoreThreadTimeOut(true); // erlaubt, dass Threads nach Inaktivität beendet werden
+        }
     }
 
     private void handleError(Throwable e) {

@@ -98,4 +98,17 @@ public class CoreImpl implements Core {
     public Config config() {
         return miniCore.config();
     }
+
+
+    @Override
+    public boolean isLowBatteryStop() {
+        return miniCore != null && miniCore.isLowBatteryStop();
+    }
+
+    @Override
+    public void setLowBatteryStop(boolean stop) {
+        if (miniCore != null) {
+            miniCore.setLowBatteryStop(stop);
+        }
+    }
 }

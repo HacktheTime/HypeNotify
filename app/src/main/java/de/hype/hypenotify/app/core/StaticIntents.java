@@ -147,7 +147,7 @@ public enum StaticIntents implements de.hype.hypenotify.app.core.Intent {
             notifyicationBuilder = new NotificationCompat.Builder(context, NotificationChannels.PRIORITY_LAUNCH.channelId);
             notifyicationBuilder.setCategory(category.categoryId);
             notifyicationBuilder.setSmallIcon(R.mipmap.icon);
-            notifyicationBuilder.setContentText("The Fact your seeing this means that your Functionality with Timers is extremely limited on this Device and are likely to not work SILENTLY\nLauch App Bypass for Category: ’%s’ | Id: ’%s’".formatted(category, dynamicIntent.intentId));
+            notifyicationBuilder.setContentText("The Fact your seeing this means that your Functionality with Timers is extremely limited on this Device and are likely to not work SILENTLY\nLauch App Bypass for Category: ’%s’ | Id: ’%s'".formatted(category, dynamicIntent.intentId));
             intent = dynamicIntent.getAsIntent(context).getAsIntent();
         }
 
